@@ -18,7 +18,16 @@
         #jerseyCanvas { display: block; }
     </style>
 </head>
+
 <body class="bg-slate-900 flex h-screen w-screen">
+    
+    <!-- Loading UI -->
+    <div id="loadingUI" style="display:none"
+        class="fixed inset-0 z-50 bg-slate-900/90 flex flex-col items-center justify-center">
+        <div class="text-white text-2xl font-black mb-4">Loading Jersey...</div>
+        <div class="text-indigo-400 text-4xl font-black" id="loadingPercent">0%</div>
+        <div class="mt-4 text-slate-500 text-sm">Drop jersey.glb in assets/models/ to use a real model</div>
+    </div>
 
     <!-- Left Panel -->
     <div class="w-72 bg-slate-800 text-white flex flex-col z-10 shadow-2xl overflow-y-auto">

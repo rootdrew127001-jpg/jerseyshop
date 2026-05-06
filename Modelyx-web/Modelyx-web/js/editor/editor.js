@@ -50,13 +50,11 @@ function bindControls() {
 }
 
 function applyDesign(design) {
-    // Apply colors to mesh parts
     setPartColor('body', design.baseColor);
     setPartColor('sleeve_left', design.accentColor);
     setPartColor('sleeve_right', design.accentColor);
     setPartColor('collar', design.baseColor);
 
-    // Build and apply canvas texture to panel
     const texture = buildTexture(design);
     applyTextureToPanel(texture);
 }
