@@ -50,7 +50,7 @@ export function initViewer(canvasId) {
     controls.maxDistance = 8;
     controls.target.set(0, 0, 0);
 
-    tryLoadGLB('assets/models/jersey.glb');
+    tryLoadGLB('/static/assets/models/jersey.glb');
 
     // Resize
     window.addEventListener('resize', () => {

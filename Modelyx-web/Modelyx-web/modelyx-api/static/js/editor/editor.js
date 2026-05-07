@@ -1,7 +1,6 @@
 import { initViewer, setPartColor, applyTextureToPanel } from './threeViewer.js';
 import { buildTexture } from './textureBuilder.js';
 import { generateRandomDesign } from './randomDesign.js';
-import { getAISuggestion } from './aiDesign.js';
 
 let currentDesign = {
     baseColor: '#4F46E5',
@@ -55,37 +54,41 @@ function bindControls() {
     document.getElementById('aiBtn').addEventListener('click', async () => {
         const teamName = document.getElementById('teamName').value.trim() || 'TEAM';
         const btn = document.getElementById('aiBtn');
-        const spinner = document.getElementById('aiSpinner');
 
-        // Loading state
         btn.disabled = true;
-        btn.textContent = '';
-        spinner.style.display = 'inline-block';
-        btn.prepend(spinner);
-        btn.insertAdjacentText('beforeend', ' Thinking...');
+        btn.textContent = '🤖 Thinking...';
         hideReasoning();
 
-        const suggestion = await getAISuggestion(teamName);
+        try {
+            const res = await fetch('/ai/suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_name: teamName })
+            });
 
-        // Reset button
-        btn.disabled = false;
-        spinner.style.display = 'none';
-        btn.textContent = '🤖 AI Suggest Design';
+            const suggestion = await res.json();
 
-        if (suggestion) {
-            currentDesign = {
-                baseColor: suggestion.baseColor || currentDesign.baseColor,
-                accentColor: suggestion.accentColor || currentDesign.accentColor,
-                pattern: suggestion.pattern || 'none',
-                teamName: suggestion.teamName || teamName,
-                number: suggestion.number || '23'
-            };
-            syncUI(currentDesign);
-            applyDesign(currentDesign);
-            showReasoning(suggestion.reasoning);
-        } else {
-            showReasoning('AI suggestion failed. Check your API key or try again.');
+            if (res.ok && suggestion) {
+                currentDesign = {
+                    baseColor: suggestion.baseColor || currentDesign.baseColor,
+                    accentColor: suggestion.accentColor || currentDesign.accentColor,
+                    pattern: suggestion.pattern || 'none',
+                    teamName: suggestion.teamName || teamName,
+                    number: suggestion.number || '23'
+                };
+                syncUI(currentDesign);
+                applyDesign(currentDesign);
+                showReasoning(suggestion.reasoning);
+            } else {
+                showReasoning('AI suggestion failed. Try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            showReasoning('Server error. Is the API running?');
         }
+
+        btn.disabled = false;
+        btn.textContent = '🤖 AI Suggest Design';
     });
 }
 

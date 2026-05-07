@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+# API routers
 app.include_router(auth.router)
 app.include_router(orders.router)
 app.include_router(ai.router)
@@ -36,37 +36,30 @@ def root():
         "version": "1.0.0"
     }
 
+# Paths
+base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
+static_path = os.path.join(base_path, "static")
+templates_path = os.path.join(base_path, "templates")
 
-frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'))
+# Static files
+app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
-app.mount("/js", StaticFiles(directory=os.path.join(frontend_path, "js")), name="js")
-
-
-@app.get("/styles.css")
-def styles():
-    return FileResponse(os.path.join(frontend_path, "styles.css"))
-
-@app.get("/sw.js")
-def sw():
-    return FileResponse(os.path.join(frontend_path, "sw.js"))
-
-@app.get("/utils.js")
-def utils():
-    return FileResponse(os.path.join(frontend_path, "utils.js"))
-
-@app.get("/manifest.json")
-def manifest():
-    return FileResponse(os.path.join(frontend_path, "manifest.json"))
-
-
+# HTML pages
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(frontend_path, "index.html"))
+    return FileResponse(os.path.join(templates_path, "index.html"))
 
 @app.get("/{page}.html")
 def serve_page(page: str):
-    file_path = os.path.join(frontend_path, f"{page}.html")
+    file_path = os.path.join(templates_path, f"{page}.html")
     if os.path.exists(file_path):
         return FileResponse(file_path)
-    return FileResponse(os.path.join(frontend_path, "index.html"))
+    return FileResponse(os.path.join(templates_path, "index.html"))
+
+
+@app.get("/favicon.ico")
+def favicon():
+    favicon_path = os.path.join(static_path, "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return FileResponse(os.path.join(templates_path, "index.html"), status_code=204)
