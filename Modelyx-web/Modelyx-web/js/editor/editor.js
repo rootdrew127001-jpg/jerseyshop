@@ -1,6 +1,7 @@
 import { initViewer, setPartColor, applyTextureToPanel } from './threeViewer.js';
 import { buildTexture } from './textureBuilder.js';
 import { generateRandomDesign } from './randomDesign.js';
+import { getAISuggestion } from './aiDesign.js';
 
 let currentDesign = {
     baseColor: '#4F46E5',
@@ -42,10 +43,49 @@ function bindControls() {
         applyDesign(currentDesign);
     });
 
+    // Random button
     document.getElementById('randomBtn').addEventListener('click', () => {
         currentDesign = generateRandomDesign();
         syncUI(currentDesign);
         applyDesign(currentDesign);
+        hideReasoning();
+    });
+
+    // AI button
+    document.getElementById('aiBtn').addEventListener('click', async () => {
+        const teamName = document.getElementById('teamName').value.trim() || 'TEAM';
+        const btn = document.getElementById('aiBtn');
+        const spinner = document.getElementById('aiSpinner');
+
+        // Loading state
+        btn.disabled = true;
+        btn.textContent = '';
+        spinner.style.display = 'inline-block';
+        btn.prepend(spinner);
+        btn.insertAdjacentText('beforeend', ' Thinking...');
+        hideReasoning();
+
+        const suggestion = await getAISuggestion(teamName);
+
+        // Reset button
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btn.textContent = '🤖 AI Suggest Design';
+
+        if (suggestion) {
+            currentDesign = {
+                baseColor: suggestion.baseColor || currentDesign.baseColor,
+                accentColor: suggestion.accentColor || currentDesign.accentColor,
+                pattern: suggestion.pattern || 'none',
+                teamName: suggestion.teamName || teamName,
+                number: suggestion.number || '23'
+            };
+            syncUI(currentDesign);
+            applyDesign(currentDesign);
+            showReasoning(suggestion.reasoning);
+        } else {
+            showReasoning('AI suggestion failed. Check your API key or try again.');
+        }
     });
 }
 
@@ -65,4 +105,16 @@ function syncUI(design) {
     document.getElementById('pattern').value = design.pattern;
     document.getElementById('teamName').value = design.teamName;
     document.getElementById('number').value = design.number;
+}
+
+function showReasoning(text) {
+    const el = document.getElementById('aiReasoning');
+    el.textContent = text;
+    el.style.display = 'block';
+}
+
+function hideReasoning() {
+    const el = document.getElementById('aiReasoning');
+    el.style.display = 'none';
+    el.textContent = '';
 }

@@ -16,6 +16,18 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; font-family: 'Inter', sans-serif; }
         #jerseyCanvas { display: block; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+        }
     </style>
 </head>
 <body class="bg-slate-900 flex h-screen w-screen">
@@ -25,7 +37,7 @@
         class="fixed inset-0 z-50 bg-slate-900/90 flex flex-col items-center justify-center">
         <div class="text-white text-2xl font-black mb-4">Loading Jersey...</div>
         <div class="text-indigo-400 text-4xl font-black" id="loadingPercent">0%</div>
-        <div class="mt-4 text-slate-500 text-sm">Drop jersey.glb in assets/models/ to use a real model</div>
+        <div class="mt-4 text-slate-500 text-sm">Please wait</div>
     </div>
 
     <!-- Left Panel -->
@@ -35,12 +47,29 @@
             <p class="text-xs text-slate-400 mt-1">3D Jersey Studio</p>
         </div>
 
-        <div class="p-6 space-y-6 flex-1">
+        <div class="p-6 space-y-4 flex-1">
 
             <!-- Random Button -->
-            <button id="randomBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-2xl transition text-sm">
+            <button id="randomBtn"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-2xl transition text-sm">
                 🎲 Generate Random Design
             </button>
+
+            <!-- AI Button -->
+            <button id="aiBtn"
+                class="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 px-4 rounded-2xl transition text-sm">
+                🤖 AI Suggest Design
+            </button>
+            <span id="aiSpinner" class="spinner" style="display:none"></span>
+
+            <!-- AI Reasoning -->
+            <p id="aiReasoning"
+                style="display:none"
+                class="text-xs text-slate-300 bg-slate-700/60 rounded-xl p-3 leading-relaxed italic">
+            </p>
+
+            <!-- Divider -->
+            <div class="border-t border-slate-700 pt-2"></div>
 
             <!-- Colors -->
             <div>

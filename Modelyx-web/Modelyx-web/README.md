@@ -390,3 +390,10 @@ MODELYX © 2026. All rights reserved.
 
 **Last Updated**: May 1, 2026
 **Status**: Active Development ✅
+
+
+
+cd ~/Modelyx-web
+venv modelyx-api/venv
+source modelyx-api/venv/bin/activate
+pip install -r modelyx-api/requirements.txt
