@@ -24,7 +24,6 @@ export function generateRandomDesign() {
     let baseColor = randomFrom(COLORS);
     let accentColor = randomFrom(COLORS);
 
-    // Make sure accent is different from base
     while (accentColor === baseColor) {
         accentColor = randomFrom(COLORS);
     }
