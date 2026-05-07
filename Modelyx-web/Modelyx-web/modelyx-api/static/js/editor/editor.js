@@ -42,10 +42,53 @@ function bindControls() {
         applyDesign(currentDesign);
     });
 
+    // Random button
     document.getElementById('randomBtn').addEventListener('click', () => {
         currentDesign = generateRandomDesign();
         syncUI(currentDesign);
         applyDesign(currentDesign);
+        hideReasoning();
+    });
+
+    // AI button
+    document.getElementById('aiBtn').addEventListener('click', async () => {
+        const teamName = document.getElementById('teamName').value.trim() || 'TEAM';
+        const btn = document.getElementById('aiBtn');
+
+        btn.disabled = true;
+        btn.textContent = '🤖 Thinking...';
+        hideReasoning();
+
+        try {
+            const res = await fetch('/ai/suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ team_name: teamName })
+            });
+
+            const suggestion = await res.json();
+
+            if (res.ok && suggestion) {
+                currentDesign = {
+                    baseColor: suggestion.baseColor || currentDesign.baseColor,
+                    accentColor: suggestion.accentColor || currentDesign.accentColor,
+                    pattern: suggestion.pattern || 'none',
+                    teamName: suggestion.teamName || teamName,
+                    number: suggestion.number || '23'
+                };
+                syncUI(currentDesign);
+                applyDesign(currentDesign);
+                showReasoning(suggestion.reasoning);
+            } else {
+                showReasoning('AI suggestion failed. Try again.');
+            }
+        } catch (err) {
+            console.error(err);
+            showReasoning('Server error. Is the API running?');
+        }
+
+        btn.disabled = false;
+        btn.textContent = '🤖 AI Suggest Design';
     });
 }
 
@@ -65,4 +108,16 @@ function syncUI(design) {
     document.getElementById('pattern').value = design.pattern;
     document.getElementById('teamName').value = design.teamName;
     document.getElementById('number').value = design.number;
+}
+
+function showReasoning(text) {
+    const el = document.getElementById('aiReasoning');
+    el.textContent = text;
+    el.style.display = 'block';
+}
+
+function hideReasoning() {
+    const el = document.getElementById('aiReasoning');
+    el.style.display = 'none';
+    el.textContent = '';
 }
