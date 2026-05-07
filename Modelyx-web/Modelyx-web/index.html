@@ -107,14 +107,16 @@
 
     <script>
         const $ = id => document.getElementById(id);
+        const API = 'http://127.0.0.1:9000';
         const params = new URLSearchParams(window.location.search);
         const redirectTarget = params.get('redirect') === 'editor' ? 'editor.html' : null;
+
         const toast = (msg, err) => {
             const t = document.createElement('div');
-            t.className = `fixed top-6 right-6 px-6 py-4 rounded-2xl text-white font-bold shadow-xl transition-opacity ${err ? 'bg-red-500' : 'bg-green-500'}`;
+            t.className = `fixed top-6 right-6 px-6 py-4 rounded-2xl text-white font-bold shadow-xl ${err ? 'bg-red-500' : 'bg-green-500'}`;
             t.textContent = msg;
             document.body.appendChild(t);
-            setTimeout(() => { t.style.animation = 'fadeOut 0.3s forwards'; setTimeout(() => t.remove(), 300); }, 2500);
+            setTimeout(() => t.remove(), 2500);
         };
 
         const setError = (id, msg) => {
@@ -144,11 +146,12 @@
             $('rTab').className = l ? inactive : active;
         };
 
-        const handleAuth = mode => {
+        const handleAuth = async mode => {
             const email = $(mode + 'Email').value.trim().toLowerCase();
             const pass = $(mode + 'Pass').value;
             const errId = mode === 'l' ? 'lError' : 'rError';
             setError(errId, '');
+
             if (!/^\S+@\S+\.\S+$/.test(email)) return setError(errId, 'Enter a valid email');
             if (pass.length < 6) return setError(errId, 'Password must be at least 6 characters');
 
@@ -156,41 +159,78 @@
                 const name = $('rName').value.trim();
                 const confirm = $('rConfirmPass').value;
                 const role = document.querySelector('input[name=role]:checked').value;
-                if (pass !== confirm) return setError(errId, 'Passwords do not match');
-                localStorage.setItem(`user_${email}`, JSON.stringify({
-                    name,
-                    role
-                }));
-                localStorage.setItem('modelyx_user_name', name);
-                localStorage.setItem('modelyx_user_email', email);
-                localStorage.setItem('modelyx_user_created', new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
-                localStorage.setItem('modelyx_shipping_address', $('rAddress').value.trim());
-                localStorage.setItem('modelyx_shipping_city', $('rCity').value.trim());
-                localStorage.setItem('modelyx_shipping_state', $('rState').value.trim());
-                localStorage.setItem('modelyx_shipping_zip', $('rZip').value.trim());
-                localStorage.setItem('modelyx_shipping_country', $('rCountry').value.trim());
-                toast('Account created!');
-                return setTimeout(() => toggle('l'), 1000);
-            }
 
-            const stored = JSON.parse(localStorage.getItem(`user_${email}`));
-            const role = email.includes('admin') || email.includes('owner') ? 'owner' : stored?.role;
-            if (!role) return setError(errId, 'User not found');
-            localStorage.setItem('modelyx_user_role', role);
-            localStorage.setItem('modelyx_user_email', email);
-            localStorage.setItem('modelyx_user_name', stored?.name || email.split('@')[0]);
-            toast('Redirecting...');
-            const nextPage = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
-            setTimeout(() => location.href = nextPage, 1000);
+                if (!name) return setError(errId, 'Name is required');
+                if (pass !== confirm) return setError(errId, 'Passwords do not match');
+
+                try {
+                    const res = await fetch(`${API}/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            password: pass,
+                            role,
+                            phone: $('rPhone').value.trim(),
+                            address: $('rAddress').value.trim(),
+                            city: $('rCity').value.trim(),
+                            state: $('rState').value.trim(),
+                            zip_code: $('rZip').value.trim(),
+                            country: $('rCountry').value.trim()
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) return setError(errId, data.detail || 'Registration failed');
+
+                    toast('Account created! Please login.');
+                    setTimeout(() => toggle('l'), 1000);
+
+                } catch (err) {
+                    setError(errId, 'Server error. Is the API running?');
+                }
+
+            } else {
+                try {
+                    const res = await fetch(`${API}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password: pass })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) return setError(errId, data.detail || 'Login failed');
+
+                    // Store token and user info
+                    localStorage.setItem('modelyx_token', data.access_token);
+                    localStorage.setItem('modelyx_user_role', data.role);
+                    localStorage.setItem('modelyx_user_name', data.name);
+                    localStorage.setItem('modelyx_user_email', email);
+
+                    toast('Redirecting...');
+                    const nextPage = data.role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+                    setTimeout(() => location.href = nextPage, 1000);
+
+                } catch (err) {
+                    setError(errId, 'Server error. Is the API running?');
+                }
+            }
         };
 
+        // Auto fill remembered email
         const rememberedEmail = localStorage.getItem('modelyx_user_email');
         if (rememberedEmail) {
             $('lEmail').value = rememberedEmail;
             $('remember').checked = true;
         }
+
+        // Auto redirect if already logged in
+        const token = localStorage.getItem('modelyx_token');
         const role = localStorage.getItem('modelyx_user_role');
-        if (role) location.href = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        if (token && role) {
+            location.href = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        }
     </script>
 </body>
 </html>

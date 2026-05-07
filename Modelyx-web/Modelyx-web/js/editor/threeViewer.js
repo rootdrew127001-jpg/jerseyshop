@@ -90,11 +90,11 @@ function tryLoadGLB(path) {
 
             jerseyGroup.traverse((child) => {
                 if (child.isMesh) {
-                    const name = child.name.toLowerCase();
                     child.castShadow = true;
                     child.receiveShadow = true;
+                    const name = child.name.toLowerCase();
 
-                    if (name.includes('body') || name.includes('torso') || name.includes('front')) {
+                    if (name.includes('body') || name.includes('torso') || name.includes('front') || name.includes('jersey') || name.includes('shirt')) {
                         meshParts['body'] = child;
                     } else if (name.includes('sleeve') || name.includes('arm')) {
                         if (!meshParts['sleeve_left']) {
@@ -111,7 +111,6 @@ function tryLoadGLB(path) {
                             meshParts['body'] = child;
                         }
                     }
-
                     console.log('Mesh found:', child.name);
                 }
             });
