@@ -88,109 +88,184 @@
             <div id="gallery" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
         </section>
     </main>
-    <script>
-        const $ = id => document.getElementById(id);
-        const orders = () => JSON.parse(localStorage.getItem('modelyx_orders') || '[]');
-        const saveOrders = o => localStorage.setItem('modelyx_orders', JSON.stringify(o));
-        const render = () => {
+<script>
+    const $ = id => document.getElementById(id);
+    const token = localStorage.getItem('modelyx_token');
+    const role = localStorage.getItem('modelyx_user_role');
+
+    if (!token || role !== 'owner') location.href = 'index.html';
+
+    const render = async () => {
+        try {
+            const res = await fetch('/orders/all', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) {
+                if (res.status === 401) { localStorage.clear(); location.href = '/index.html'; }
+                return;
+            }
+
             const query = $('orderSearch')?.value.trim().toLowerCase();
-            const data = orders().filter(o => !query || [o.customer, o.email, o.team, o.color, o.status].some(v => String(v || '').toLowerCase().includes(query)));
+            const data = (await res.json()).filter(o => !query ||
+                [o.team_name, o.player_number, o.status].some(v =>
+                    String(v || '').toLowerCase().includes(query)
+                )
+            );
+
             $('table').innerHTML = data.length ? data.map(o => `
                 <tr class="glass-row transition">
-                    <td class="p-6 font-mono font-bold text-indigo-600">${String(o.id).slice(-6)}</td>
-                    <td class="p-6"><div class="font-bold">${o.customer || 'Guest'}</div><div class="text-[10px] text-slate-400">${o.email || ''}</div></td>
-                    <td class="p-6 font-bold">#${o.number || '00'} ${o.team || 'Design'}</td>
-                    <td class="p-6 flex items-center gap-2"><div class="w-6 h-6 rounded-md border" style="background:${o.color || '#ddd'}"></div><span class="font-mono text-xs">${o.color || '-'}</span></td>
-                    <td class="p-6 font-bold text-slate-900">${o.price || '$0'}</td>
+                    <td class="p-6 font-mono font-bold text-indigo-600">#${o.id}</td>
                     <td class="p-6">
-                        <select onchange="updateOrder('${o.id}',this.value)" class="text-xs font-bold border rounded p-1 bg-white">
+                        <div class="font-bold">${o.user?.name || 'Unknown'}</div>
+                        <div class="text-[10px] text-slate-400">${o.user?.email || ''}</div>
+                    </td>
+                    <td class="p-6 font-bold">#${o.player_number || '00'} ${o.team_name || 'Design'}</td>
+                    <td class="p-6">
+                        <div class="flex items-center gap-2">
+                            <div class="w-6 h-6 rounded-md border" style="background:${o.base_color || '#ddd'}"></div>
+                            <div class="w-6 h-6 rounded-md border" style="background:${o.accent_color || '#ddd'}"></div>
+                            <span class="font-mono text-xs">${o.base_color || '-'}</span>
+                        </div>
+                    </td>
+                    <td class="p-6 font-bold text-slate-900">₱${Number(o.price || 0).toLocaleString()}</td>
+                    <td class="p-6">
+                        <select onchange="updateOrder(${o.id}, this.value)"
+                            class="text-xs font-bold border rounded p-1 bg-white">
                             <option ${o.status==='Pending Review'?'selected':''}>Pending Review</option>
                             <option ${o.status==='In Production'?'selected':''}>In Production</option>
                             <option ${o.status==='Completed'?'selected':''}>Completed</option>
                         </select>
                     </td>
-                    <td class="p-6 text-right"><button onclick="deleteOrder('${o.id}')" class="text-red-400 font-bold text-xs hover:underline">Remove</button></td>
+                    <td class="p-6 text-right">
+                        <button onclick="deleteOrder(${o.id})"
+                            class="text-red-400 font-bold text-xs hover:underline">Remove</button>
+                    </td>
                 </tr>
             `).join('') : '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-bold">No active orders found.</td></tr>';
-            const stats = data.reduce((a,o)=>{a.new+=o.status==='Pending Review';a.prod+=o.status==='In Production';a.done+=o.status==='Completed';a.rev+=parseFloat(o.price?.replace('$','')||0);return a;},{new:0,prod:0,done:0,rev:0});
-            $('sNew').innerText=stats.new;
-            $('sPro').innerText=stats.prod;
-            $('sDone').innerText=stats.done;
-            $('sRev').innerText=`$${stats.rev.toFixed(2)}`;
-        };
-        const updateOrder = (id,status) => {
-            const data=orders();
-            const row=data.find(o=>o.id==id);
-            if(!row) return;
-            row.status=status;
-            saveOrders(data);
+
+            const stats = data.reduce((a, o) => {
+                a.new += o.status === 'Pending Review' ? 1 : 0;
+                a.prod += o.status === 'In Production' ? 1 : 0;
+                a.done += o.status === 'Completed' ? 1 : 0;
+                a.rev += Number(o.price || 0);
+                return a;
+            }, { new: 0, prod: 0, done: 0, rev: 0 });
+
+            $('sNew').innerText = stats.new;
+            $('sPro').innerText = stats.prod;
+            $('sDone').innerText = stats.done;
+            $('sRev').innerText = `₱${stats.rev.toLocaleString()}`;
+
+        } catch (err) {
+            console.error('Failed to load orders:', err);
+        }
+    };
+
+    const updateOrder = async (id, status) => {
+        try {
+            await fetch(`/orders/${id}/status?status=${encodeURIComponent(status)}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             render();
-        };
-        const deleteOrder = id => {
-            if(!confirm('Delete this order?')) return;
-            saveOrders(orders().filter(o=>o.id!=id));
+        } catch (err) {
+            console.error('Failed to update order:', err);
+        }
+    };
+
+    const deleteOrder = async (id) => {
+        if (!confirm('Delete this order?')) return;
+        try {
+            await fetch(`/orders/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             render();
-        };
-        const exportCSV = () => {
-            const csv='ID,Customer,Team,Price,Status\n'+orders().map(o=>`${o.id},${o.customer},${o.team},${o.price},${o.status}`).join('\n');
-            const a=document.createElement('a');
-            a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-            a.download='modelyx_export.csv';
+        } catch (err) {
+            console.error('Failed to delete order:', err);
+        }
+    };
+
+    const exportCSV = () => {
+        fetch('/orders/all', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+        .then(r => r.json())
+        .then(data => {
+            const csv = 'ID,Team,Number,Price,Status\n' +
+                data.map(o => `${o.id},${o.team_name},${o.player_number},${o.price},${o.status}`).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'modelyx_orders.csv';
             a.click();
-        };
-        const galleryItems = () => JSON.parse(localStorage.getItem('modelyx_gallery') || '[]');
-        const saveGalleryItems = items => localStorage.setItem('modelyx_gallery', JSON.stringify(items));
-        const fileToDataUrl = (file) => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
         });
-        const renderGallery = () => {
-            const items = galleryItems();
-            $('gallery').innerHTML = items.length
-                ? items.map((item, idx) => `
-                    <div class="bg-white border rounded-2xl overflow-hidden shadow-sm">
-                        <img src="${item.image}" alt="${item.title}" class="w-full h-32 object-cover">
-                        <div class="p-3">
-                            <p class="text-sm font-bold text-slate-900">${item.title}</p>
-                            <button onclick="removeGallery(${idx})" class="mt-2 text-xs text-red-500 font-bold hover:underline">Remove</button>
-                        </div>
+    };
+
+    const galleryItems = () => JSON.parse(localStorage.getItem('modelyx_gallery') || '[]');
+    const saveGalleryItems = items => localStorage.setItem('modelyx_gallery', JSON.stringify(items));
+
+    const fileToDataUrl = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+
+    const renderGallery = () => {
+        const items = galleryItems();
+        $('gallery').innerHTML = items.length
+            ? items.map((item, idx) => `
+                <div class="bg-white border rounded-2xl overflow-hidden shadow-sm">
+                    <img src="${item.image}" alt="${item.title}" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <p class="text-sm font-bold text-slate-900">${item.title}</p>
+                        <button onclick="removeGallery(${idx})"
+                            class="mt-2 text-xs text-red-500 font-bold hover:underline">Remove</button>
                     </div>
-                `).join('')
-                : '<p class="text-sm text-slate-500 col-span-full">No gallery designs yet.</p>';
-        };
-        const addGallery = async () => {
-            const title = $('galleryTitle').value.trim();
-            const file = $('galleryImageFile').files[0];
-            if (!title) return alert('Please enter a design title.');
-            if (!file) return alert('Please choose an image file.');
-            if (!file.type.startsWith('image/')) return alert('Only image files are allowed.');
-            if (file.size > 5 * 1024 * 1024) return alert('Image must be smaller than 5MB.');
-            try {
-                const imageDataUrl = await fileToDataUrl(file);
-                const items = galleryItems();
-                items.unshift({ title, image: imageDataUrl, createdAt: new Date().toISOString() });
-                saveGalleryItems(items);
-                $('galleryTitle').value = '';
-                $('galleryImageFile').value = '';
-                renderGallery();
-            } catch {
-                alert('Failed to read the selected image file.');
-            }
-        };
-        const removeGallery = (index) => {
+                </div>
+            `).join('')
+            : '<p class="text-sm text-slate-500 col-span-full">No gallery designs yet.</p>';
+    };
+
+    const addGallery = async () => {
+        const title = $('galleryTitle').value.trim();
+        const file = $('galleryImageFile').files[0];
+        if (!title) return alert('Please enter a design title.');
+        if (!file) return alert('Please choose an image file.');
+        if (!file.type.startsWith('image/')) return alert('Only image files are allowed.');
+        if (file.size > 5 * 1024 * 1024) return alert('Image must be smaller than 5MB.');
+        try {
+            const imageDataUrl = await fileToDataUrl(file);
             const items = galleryItems();
-            items.splice(index, 1);
+            items.unshift({ title, image: imageDataUrl, createdAt: new Date().toISOString() });
             saveGalleryItems(items);
+            $('galleryTitle').value = '';
+            $('galleryImageFile').value = '';
             renderGallery();
-        };
-        const logout = () => { localStorage.clear(); location.href='index.html'; };
-        window.onload = () => {
-            if(localStorage.getItem('modelyx_user_role')!=='owner') location.href='index.html';
-            render();
-            renderGallery();
-        };
-    </script>
+        } catch {
+            alert('Failed to read the selected image file.');
+        }
+    };
+
+    const removeGallery = (index) => {
+        const items = galleryItems();
+        items.splice(index, 1);
+        saveGalleryItems(items);
+        renderGallery();
+    };
+
+    const logout = () => {
+        localStorage.clear();
+        location.href = '/index.html';
+    };
+
+    window.onload = () => {
+        render();
+        renderGallery();
+    };
+
+    $('orderSearch').addEventListener('input', render);
+</script>
 </body>
 </html>

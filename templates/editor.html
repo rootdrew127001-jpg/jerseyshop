@@ -30,16 +30,7 @@
         }
     </style>
 </head>
-
 <body class="bg-slate-900 flex h-screen w-screen">
-    
-    <!-- Loading UI -->
-    <div id="loadingUI" style="display:none"
-        class="fixed inset-0 z-50 bg-slate-900/90 flex flex-col items-center justify-center">
-        <div class="text-white text-2xl font-black mb-4">Loading Jersey...</div>
-        <div class="text-indigo-400 text-4xl font-black" id="loadingPercent">0%</div>
-        <div class="mt-4 text-slate-500 text-sm">Drop jersey.glb in assets/models/ to use a real model</div>
-    </div>
 
     <!-- Loading UI -->
     <div id="loadingUI" style="display:none"
@@ -47,6 +38,120 @@
         <div class="text-white text-2xl font-black mb-4">Loading Jersey...</div>
         <div class="text-indigo-400 text-4xl font-black" id="loadingPercent">0%</div>
         <div class="mt-4 text-slate-500 text-sm">Please wait</div>
+    </div>
+
+    <!-- Order Modal -->
+    <div id="orderModal" style="display:none"
+        class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-700">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-white">Submit Order</h3>
+                <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+
+            <!-- Design Summary -->
+            <div class="bg-slate-700/50 rounded-2xl p-4 mb-6">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Design Summary</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <p class="text-xs text-slate-400">Team</p>
+                        <p class="text-sm font-bold text-white" id="summaryTeam">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Number</p>
+                        <p class="text-sm font-bold text-white" id="summaryNumber">-</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Base Color</p>
+                        <div class="flex items-center gap-2">
+                            <div id="summaryBaseColor" class="w-5 h-5 rounded-md border border-slate-500"></div>
+                            <p class="text-xs font-mono text-white" id="summaryBaseColorText">-</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Accent Color</p>
+                        <div class="flex items-center gap-2">
+                            <div id="summaryAccentColor" class="w-5 h-5 rounded-md border border-slate-500"></div>
+                            <p class="text-xs font-mono text-white" id="summaryAccentColorText">-</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">Pattern</p>
+                        <p class="text-sm font-bold text-white" id="summaryPattern">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Details -->
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="text-xs text-slate-300 mb-1 block">Size</label>
+                    <select id="orderSize"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none">
+                        <option value="XS">XS</option>
+                        <option value="S">S</option>
+                        <option value="M" selected>M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="XXL">XXL</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300 mb-1 block">Quantity</label>
+                    <input type="number" id="orderQuantity" value="1" min="1" max="100"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none"
+                        oninput="updatePrice()">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300 mb-1 block">Notes (optional)</label>
+                    <textarea id="orderNotes" rows="2" placeholder="Any special instructions..."
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none resize-none placeholder-slate-500"></textarea>
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div class="bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-4 mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-xs text-indigo-300">Price per jersey</p>
+                        <p class="text-sm font-bold text-white">₱850.00</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-indigo-300">Total</p>
+                        <p class="text-2xl font-black text-white" id="totalPrice">₱850.00</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <button id="submitOrderBtn" onclick="submitOrder()"
+                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition text-sm">
+                Place Order
+            </button>
+
+            <p id="orderError" class="text-xs text-red-400 mt-3 text-center hidden"></p>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" style="display:none"
+        class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-slate-700 text-center">
+            <div class="text-5xl mb-4">🎉</div>
+            <h3 class="text-xl font-black text-white mb-2">Order Placed!</h3>
+            <p class="text-slate-400 text-sm mb-2">Your jersey order has been submitted.</p>
+            <p class="text-indigo-400 text-xs mb-6" id="successOrderId"></p>
+            <div class="space-y-3">
+                <button onclick="location.href='/dashboard.html'"
+                    class="w-full bg-indigo-600 text-white font-bold py-3 rounded-2xl text-sm">
+                    View Dashboard
+                </button>
+                <button onclick="closeSuccessModal()"
+                    class="w-full bg-slate-700 text-white font-bold py-3 rounded-2xl text-sm">
+                    Design Another
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Left Panel -->
@@ -130,9 +235,13 @@
             </div>
         </div>
 
-        <!-- Back button -->
-        <div class="p-6 border-t border-slate-700">
-            <button onclick="location.href='dashboard.html'"
+        <!-- Bottom buttons -->
+        <div class="p-6 border-t border-slate-700 space-y-3">
+            <button onclick="openOrderModal()"
+                class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-2xl transition text-sm">
+                🛒 Submit Order
+            </button>
+            <button onclick="location.href='/dashboard.html'"
                 class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-2xl transition text-sm">
                 ← Back to Dashboard
             </button>
@@ -148,8 +257,100 @@
     </div>
 
     <script type="module">
-        import { initEditor } from '/static/js/editor/editor.js';
+        import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js';
         initEditor();
+
+        const PRICE_PER_JERSEY = 850;
+
+        window.updatePrice = function() {
+            const qty = parseInt(document.getElementById('orderQuantity').value) || 1;
+            const total = qty * PRICE_PER_JERSEY;
+            document.getElementById('totalPrice').textContent = `₱${total.toLocaleString()}.00`;
+        };
+
+        window.openOrderModal = function() {
+            const token = localStorage.getItem('modelyx_token');
+            if (!token) {
+                location.href = '/index.html?redirect=editor';
+                return;
+            }
+
+            const design = getCurrentDesign();
+            document.getElementById('summaryTeam').textContent = design.teamName || '-';
+            document.getElementById('summaryNumber').textContent = design.number || '-';
+            document.getElementById('summaryPattern').textContent = design.pattern || 'none';
+            document.getElementById('summaryBaseColor').style.background = design.baseColor;
+            document.getElementById('summaryBaseColorText').textContent = design.baseColor;
+            document.getElementById('summaryAccentColor').style.background = design.accentColor;
+            document.getElementById('summaryAccentColorText').textContent = design.accentColor;
+            document.getElementById('orderModal').style.display = 'flex';
+        };
+
+        window.closeOrderModal = function() {
+            document.getElementById('orderModal').style.display = 'none';
+            document.getElementById('orderError').classList.add('hidden');
+        };
+
+        window.closeSuccessModal = function() {
+            document.getElementById('successModal').style.display = 'none';
+        };
+
+        window.submitOrder = async function() {
+            const token = localStorage.getItem('modelyx_token');
+            if (!token) {
+                location.href = '/index.html?redirect=editor';
+                return;
+            }
+
+            const design = getCurrentDesign();
+            const quantity = parseInt(document.getElementById('orderQuantity').value) || 1;
+            const size = document.getElementById('orderSize').value;
+            const notes = document.getElementById('orderNotes').value.trim();
+            const price = quantity * 850;
+
+            const btn = document.getElementById('submitOrderBtn');
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                const res = await fetch('/orders/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        team_name: design.teamName,
+                        player_number: design.number,
+                        base_color: design.baseColor,
+                        accent_color: design.accentColor,
+                        pattern: design.pattern,
+                        quantity: quantity,
+                        price: price,
+                        notes: `Size: ${size}${notes ? ' | ' + notes : ''}`
+                    })
+                });
+
+                const data = await res.json();
+
+                if (res.ok) {
+                    document.getElementById('orderModal').style.display = 'none';
+                    document.getElementById('successOrderId').textContent = `Order ID: #${data.id}`;
+                    document.getElementById('successModal').style.display = 'flex';
+                } else {
+                    const errEl = document.getElementById('orderError');
+                    errEl.textContent = data.detail || 'Order failed. Try again.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                const errEl = document.getElementById('orderError');
+                errEl.textContent = 'Server error. Is the API running?';
+                errEl.classList.remove('hidden');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Place Order';
+        };
     </script>
 </body>
 </html>
