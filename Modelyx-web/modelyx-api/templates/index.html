@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelyx | Design Your Legacy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-slate-900 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Blobs -->
+    <div class="absolute -top-20 -left-20 w-96 h-96 bg-indigo-600/20 rounded-full blur-[100px] -z-10"></div>
+    <div class="absolute -bottom-20 -right-20 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] -z-10"></div>
+
+    <div class="max-w-5xl w-full grid md:grid-cols-2 shadow-2xl rounded-[2.5rem] overflow-hidden glass">
+        <!-- Brand Side -->
+        <div class="hidden md:flex bg-indigo-600 p-12 flex-col justify-between text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <h1 class="text-4xl font-black italic tracking-tighter">MODELYX.</h1>
+                <p class="mt-6 text-indigo-100 text-lg leading-relaxed">Precision engineering for the <br>
+                    <span class="text-white font-bold underline decoration-indigo-400 underline-offset-4">Modern Athlete</span></p>
+            </div>
+            <div class="flex items-center space-x-2 text-indigo-200 text-xs font-bold uppercase tracking-widest relative z-10">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span>System Online: v3.0</span>
+            </div>
+            <div class="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full"></div>
+        </div>
+
+        <!-- Auth Side -->
+        <div class="p-8 md:p-12 overflow-y-auto max-h-[90vh] bg-slate-950/95 text-slate-200">
+            <div class="space-y-6 mb-8">
+                <div class="flex bg-slate-800/90 p-1 rounded-2xl border border-slate-700">
+                    <button id="lTab" onclick="toggle('l')" class="flex-1 py-2 rounded-xl font-bold text-xs uppercase bg-white shadow text-indigo-600">Login</button>
+                    <button id="rTab" onclick="toggle('r')" class="flex-1 py-2 rounded-xl font-bold text-xs uppercase text-gray-400">Register</button>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-black text-white">Welcome back.</h2>
+                    <p class="text-slate-300 text-sm mt-2">Sign in to continue designing your custom kit.</p>
+                </div>
+                <div class="rounded-3xl border border-slate-700 bg-slate-900/70 p-4 text-slate-200 shadow-sm">
+                    <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Why Modelyx?</p>
+                    <ul class="mt-3 space-y-2 text-sm text-slate-300">
+                        <li class="flex items-start gap-2"><span class="mt-1 h-2 w-2 rounded-full bg-indigo-400"></span>One account for profiles, settings and payment.</li>
+                        <li class="flex items-start gap-2"><span class="mt-1 h-2 w-2 rounded-full bg-indigo-400"></span>Saved registration data appears instantly in your profile.</li>
+                        <li class="flex items-start gap-2"><span class="mt-1 h-2 w-2 rounded-full bg-indigo-400"></span>Secure sign-in and easy registration.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Login -->
+            <form id="lForm" class="space-y-4">
+                <input type="email" id="lEmail" placeholder="Email" class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                <div id="lError" aria-live="polite" class="hidden text-xs text-red-300"></div>
+                <div class="relative">
+                    <input type="password" id="lPass" placeholder="Password" class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <button type="button" onclick="togglePassword('lPass','lToggle')" id="lToggle" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">Show</button>
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-300">
+                    <label class="inline-flex items-center gap-2">
+                        <input type="checkbox" id="remember" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        Remember me
+                    </label>
+                    <span>Secure sign-in</span>
+                </div>
+                <button type="button" onclick="handleAuth('l')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg uppercase text-xs tracking-widest">Enter Studio</button>
+            </form>
+
+            <!-- Register -->
+            <form id="rForm" class="space-y-4 hidden">
+                <input type="text" id="rName" placeholder="Full Name" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="email" id="rEmail" placeholder="Email" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
+                    <input type="tel" id="rPhone" placeholder="Phone" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                </div>
+                <input type="text" id="rAddress" placeholder="Shipping Address" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="rCity" placeholder="City" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                    <input type="text" id="rState" placeholder="State" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="text" id="rZip" placeholder="Zip Code" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                    <input type="text" id="rCountry" placeholder="Country" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                </div>
+                <div id="rError" aria-live="polite" class="hidden text-xs text-red-300"></div>
+                <div class="relative">
+                    <input type="password" id="rPass" placeholder="Password (Min 6 chars)" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
+                    <button type="button" onclick="togglePassword('rPass','rToggle')" id="rToggle" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">Show</button>
+                </div>
+                <div class="relative">
+                    <input type="password" id="rConfirmPass" placeholder="Retype Password" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
+                    <button type="button" onclick="togglePassword('rConfirmPass','rConfirmToggle')" id="rConfirmToggle" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">Show</button>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <label><input type="radio" name="role" value="customer" class="hidden" checked>
+                        <div class="role-card p-3 rounded-xl text-center text-xs font-bold">👕 Customer</div>
+                    </label>
+                    <label><input type="radio" name="role" value="owner" class="hidden">
+                        <div class="role-card p-3 rounded-xl text-center text-xs font-bold">⚙️ Outfitter</div>
+                    </label>
+                </div>
+                <button type="button" onclick="handleAuth('r')" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest">Create Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const API = '';
+        const params = new URLSearchParams(window.location.search);
+        const redirectTarget = params.get('redirect') === 'editor' ? 'editor.html' : null;
+
+        const toast = (msg, err) => {
+            const t = document.createElement('div');
+            t.className = `fixed top-6 right-6 px-6 py-4 rounded-2xl text-white font-bold shadow-xl ${err ? 'bg-red-500' : 'bg-green-500'}`;
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2500);
+        };
+
+        const setError = (id, msg) => {
+            const el = $(id);
+            if (!el) return;
+            el.textContent = msg;
+            el.classList.toggle('hidden', !msg);
+        };
+
+        const togglePassword = (id, toggleId) => {
+            const input = $(id);
+            const button = $(toggleId);
+            if (!input || !button) return;
+            input.type = input.type === 'password' ? 'text' : 'password';
+            button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+        };
+
+        const toggle = m => {
+            const l = m === 'l';
+            $('lForm').classList.toggle('hidden', !l);
+            $('rForm').classList.toggle('hidden', l);
+            setError('lError', '');
+            setError('rError', '');
+            const active = 'flex-1 py-2 rounded-xl font-bold text-xs bg-white shadow text-indigo-600';
+            const inactive = 'flex-1 py-2 rounded-xl font-bold text-xs text-gray-400';
+            $('lTab').className = l ? active : inactive;
+            $('rTab').className = l ? inactive : active;
+        };
+
+        const handleAuth = async mode => {
+            const email = $(mode + 'Email').value.trim().toLowerCase();
+            const pass = $(mode + 'Pass').value;
+            const errId = mode === 'l' ? 'lError' : 'rError';
+            setError(errId, '');
+
+            if (!/^\S+@\S+\.\S+$/.test(email)) return setError(errId, 'Enter a valid email');
+            if (pass.length < 6) return setError(errId, 'Password must be at least 6 characters');
+
+            if (mode === 'r') {
+                const name = $('rName').value.trim();
+                const confirm = $('rConfirmPass').value;
+                const role = document.querySelector('input[name=role]:checked').value;
+
+                if (!name) return setError(errId, 'Name is required');
+                if (pass !== confirm) return setError(errId, 'Passwords do not match');
+
+                try {
+                    const res = await fetch(`${API}/auth/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name,
+                            email,
+                            password: pass,
+                            role,
+                            phone: $('rPhone').value.trim(),
+                            address: $('rAddress').value.trim(),
+                            city: $('rCity').value.trim(),
+                            state: $('rState').value.trim(),
+                            zip_code: $('rZip').value.trim(),
+                            country: $('rCountry').value.trim()
+                        })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) return setError(errId, data.detail || 'Registration failed');
+
+                    toast('Account created! Please login.');
+                    setTimeout(() => toggle('l'), 1000);
+
+                } catch (err) {
+                    setError(errId, 'Server error. Is the API running?');
+                }
+
+            } else {
+                try {
+                    const res = await fetch(`${API}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password: pass })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) return setError(errId, data.detail || 'Login failed');
+
+                    // Store token and user info
+                    localStorage.setItem('modelyx_token', data.access_token);
+                    localStorage.setItem('modelyx_user_role', data.role);
+                    localStorage.setItem('modelyx_user_name', data.name);
+                    localStorage.setItem('modelyx_user_email', email);
+
+                    toast('Redirecting...');
+                    const nextPage = data.role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+                    setTimeout(() => location.href = nextPage, 1000);
+
+                } catch (err) {
+                    setError(errId, 'Server error. Is the API running?');
+                }
+            }
+        };
+
+        // Auto fill remembered email
+        const rememberedEmail = localStorage.getItem('modelyx_user_email');
+        if (rememberedEmail) {
+            $('lEmail').value = rememberedEmail;
+            $('remember').checked = true;
+        }
+
+        // Auto redirect if already logged in
+        const token = localStorage.getItem('modelyx_token');
+        const role = localStorage.getItem('modelyx_user_role');
+        if (token && role) {
+            location.href = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        }
+    </script>
+</body>
+</html>

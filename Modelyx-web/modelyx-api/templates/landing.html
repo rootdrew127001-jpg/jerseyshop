@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modelyx | Elite Custom Gear</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <style>
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-float { animation: float 5s ease-in-out infinite; }
+    .animate-fade-in { animation: fadeIn .7s ease-out both; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-950 antialiased">
+
+  <nav class="fixed top-0 z-20 flex w-full items-center justify-between border-b border-slate-200 bg-white/95 px-5 py-4 shadow-sm backdrop-blur md:px-8">
+    <a href="landing.html" class="text-2xl font-extrabold tracking-tight text-indigo-700">Modelyx</a>
+    <div class="flex items-center gap-3 text-sm font-semibold sm:gap-5 sm:text-base">
+      <a href="index.html" class="text-slate-700 hover:text-indigo-700">Login</a>
+      <a href="editor.html?exit=index" class="text-slate-700 hover:text-indigo-700">Studio</a>
+      <a href="#features" class="rounded-md bg-indigo-600 px-3 py-2 text-white hover:bg-indigo-500">Features</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="relative flex min-h-screen items-center overflow-hidden bg-slate-950 px-5 pt-24 text-white md:px-8">
+      <div class="mx-auto grid w-full max-w-6xl items-center gap-10 pb-16 md:grid-cols-[1fr_.85fr]">
+        <div class="animate-fade-in">
+          <p class="mb-4 text-sm font-bold uppercase tracking-[.18em] text-cyan-300">Custom teamwear platform</p>
+          <h1 class="max-w-3xl text-5xl font-black leading-tight tracking-tight md:text-7xl">
+            Modelyx
+          </h1>
+          <p class="mt-5 max-w-2xl text-lg leading-8 text-slate-300 md:text-xl">
+            Design high-performance athletic wear with AI color matching, live jersey previews, and production tracking for every order.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="editor.html?exit=index" class="rounded-lg bg-yellow-400 px-7 py-3 text-center font-bold text-slate-950 shadow-lg shadow-yellow-400/20 hover:bg-yellow-300">
+              Start Designing
+            </a>
+            <a href="editor.html?exit=index" class="rounded-lg border border-white/35 px-7 py-3 text-center font-bold text-white hover:bg-white hover:text-slate-950">
+              Try the Studio
+            </a>
+          </div>
+        </div>
+
+        <div class="animate-float mx-auto w-full max-w-sm">
+          <div class="relative rounded-[2rem] border border-white/10 bg-white/10 p-6 shadow-2xl shadow-black/30">
+            <svg viewBox="0 0 360 430" role="img" aria-labelledby="jerseyTitle" class="h-auto w-full drop-shadow-2xl">
+              <title id="jerseyTitle">Modelyx jersey preview</title>
+              <path d="M112 42 70 70 28 108l55 71 28-25v224h138V154l28 25 55-71-42-38-42-28-43 40h-50L112 42Z" fill="#f8fafc"/>
+              <path d="M112 42 70 70 28 108l55 71 28-25v224h138V154l28 25 55-71-42-38-42-28-43 40h-50L112 42Z" fill="none" stroke="#cbd5e1" stroke-width="8" stroke-linejoin="round"/>
+              <path d="M112 42c20 27 43 40 68 40s48-13 68-40" fill="none" stroke="#4f46e5" stroke-width="18" stroke-linecap="round"/>
+              <path d="M111 155h138v223H111z" fill="#4f46e5"/>
+              <path d="M132 176h96v181h-96z" fill="#0f172a" opacity=".16"/>
+              <path d="M143 210h74M143 238h74M143 266h74" stroke="#facc15" stroke-width="12" stroke-linecap="round"/>
+              <text x="180" y="335" fill="#fff" font-size="64" font-weight="900" font-family="Inter, Arial, sans-serif" text-anchor="middle">24</text>
+              <text x="180" y="142" fill="#0f172a" font-size="34" font-weight="900" font-family="Inter, Arial, sans-serif" text-anchor="middle">MLX</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white py-20" id="features">
+      <div class="mx-auto max-w-6xl px-5 md:px-8">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">Why teams choose Modelyx</h2>
+          <p class="mt-3 text-slate-600">Core tools for fast custom gear design, review, and production handoff.</p>
+        </div>
+
+        <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <article class="rounded-lg border border-slate-200 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-cyan-100 text-lg font-black text-cyan-800">AI</div>
+            <h3 class="text-xl font-bold">AI Color Matching</h3>
+            <p class="mt-2 leading-7 text-slate-600">Capture a team's exact colors and preview accurate combinations before production.</p>
+          </article>
+
+          <article class="rounded-lg border border-slate-200 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-indigo-100 text-lg font-black text-indigo-800">3D</div>
+            <h3 class="text-xl font-bold">Jersey Studio</h3>
+            <p class="mt-2 leading-7 text-slate-600">Customize materials, numbers, names, and patterns from a focused design workspace.</p>
+          </article>
+
+          <article class="rounded-lg border border-slate-200 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
+            <div class="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-yellow-100 text-lg font-black text-yellow-800">PM</div>
+            <h3 class="text-xl font-bold">Production Tracking</h3>
+            <p class="mt-2 leading-7 text-slate-600">Track submissions, approvals, order status, and revenue from the admin panel.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-indigo-700 py-16 text-white">
+      <div class="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 px-5 md:flex-row md:items-center md:px-8">
+        <div>
+          <h2 class="text-3xl font-black tracking-tight">Build your next team kit.</h2>
+          <p class="mt-2 max-w-xl text-indigo-100">Move from color capture to design approval with one browser-based workflow.</p>
+        </div>
+        <a href="index.html" class="rounded-lg bg-yellow-400 px-7 py-3 font-bold text-slate-950 shadow hover:bg-yellow-300">
+          Get Started
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-slate-950 py-8 text-center text-slate-300">
+    <p class="text-sm">
+      &copy; 2026 <strong>Modelyx</strong>. Designed for performance.
+    </p>
+  </footer>
+</body>
+</html>
