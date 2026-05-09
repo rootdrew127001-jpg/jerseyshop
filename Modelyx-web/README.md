@@ -397,3 +397,10 @@ cd ~/Modelyx-web
 venv modelyx-api/venv
 source modelyx-api/venv/bin/activate
 pip install -r modelyx-api/requirements.txt
+
+
+
+
+powershell:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+.\venv\Scripts\Activate.ps1
