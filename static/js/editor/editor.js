@@ -121,3 +121,7 @@ function hideReasoning() {
     el.style.display = 'none';
     el.textContent = '';
 }
+
+export function getCurrentDesign() {
+    return { ...currentDesign };
+}

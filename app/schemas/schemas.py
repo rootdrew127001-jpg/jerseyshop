@@ -36,8 +36,18 @@ class OrderCreate(BaseModel):
     price: Optional[float] = 0.0
     notes: Optional[str] = None
 
+class UserInfo(BaseModel):
+    id: int
+    name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+        
 class OrderResponse(BaseModel):
     id: int
+    user_id: int
+    user: Optional[UserInfo] = None
     team_name: Optional[str]
     player_number: Optional[str]
     base_color: Optional[str]
@@ -46,6 +56,7 @@ class OrderResponse(BaseModel):
     quantity: int
     price: float
     status: str
+    notes: Optional[str] = None
     created_at: datetime
 
     class Config:
