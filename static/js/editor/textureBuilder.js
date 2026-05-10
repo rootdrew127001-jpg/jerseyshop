@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+
 export function buildTexture(options = {}) {
     const {
         teamName = 'TEAM',
@@ -13,11 +14,69 @@ export function buildTexture(options = {}) {
     canvas.height = 512;
     const ctx = canvas.getContext('2d');
 
-    // Base fill
     ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, 512, 512);
 
-    // Pattern
+    drawPattern(ctx, pattern, accentColor, baseColor);
+
+    // Player number
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 180px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(number, 256, 300);
+    ctx.shadowBlur = 0;
+
+    // Team name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(teamName.toUpperCase(), 256, 120);
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+export function buildBackTexture(options = {}) {
+    const {
+        teamName = 'TEAM',
+        baseColor = '#4F46E5',
+        accentColor = '#7C3AED',
+        pattern = 'none'
+    } = options;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 512, 512);
+
+    drawPattern(ctx, pattern, accentColor, baseColor);
+
+    // Flip horizontally to fix mirroring on back
+    ctx.save();
+    ctx.translate(512, 0);
+    ctx.scale(-1, 1);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 72px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 8;
+    ctx.fillText(teamName.toUpperCase(), 256, 256);
+    ctx.shadowBlur = 0;
+
+    ctx.restore();
+
+    return new THREE.CanvasTexture(canvas);
+}
+
+function drawPattern(ctx, pattern, accentColor, baseColor) {
     if (pattern === 'stripes') {
         ctx.fillStyle = accentColor;
         for (let i = 0; i < 512; i += 40) {
@@ -43,23 +102,4 @@ export function buildTexture(options = {}) {
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 512, 512);
     }
-
-    // Player number
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 180px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.3)';
-    ctx.shadowBlur = 8;
-    ctx.fillText(number, 256, 280);
-    ctx.shadowBlur = 0;
-
-    // Team name
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 48px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(teamName.toUpperCase(), 256, 120);
-
-    return new THREE.CanvasTexture(canvas);
 }

@@ -23,10 +23,10 @@ export function initViewer(canvasId) {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     renderer.setSize(w, h);
     renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = false;
 
     // Lights
-    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambient = new THREE.AmbientLight(0xffffff, 3.0);
     scene.add(ambient);
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 2);
@@ -63,7 +63,28 @@ export function initViewer(canvasId) {
 
     animate();
 }
-
+const cleanMaterial = (color) => {
+    const mat = new THREE.MeshStandardMaterial({
+        color: color,
+        roughness: 1.0,
+        metalness: 0.0,
+        side: THREE.FrontSide,
+        vertexColors: false
+    });
+    mat.map = null;
+    mat.normalMap = null;
+    mat.roughnessMap = null;
+    mat.metalnessMap = null;
+    mat.aoMap = null;
+    mat.emissiveMap = null;
+    mat.envMap = null;
+    mat.alphaMap = null;
+    mat.bumpMap = null;
+    mat.displacementMap = null;
+    mat.lightMap = null;
+    mat.needsUpdate = true;
+    return mat;
+};
 function tryLoadGLB(path) {
     const loader = new GLTFLoader();
 
@@ -93,27 +114,43 @@ function tryLoadGLB(path) {
                     child.castShadow = true;
                     child.receiveShadow = true;
                     const name = child.name.toLowerCase();
-
-                    if (name.includes('body') || name.includes('torso') || name.includes('front') || name.includes('jersey') || name.includes('shirt')) {
-                        meshParts['body'] = child;
-                    } else if (name.includes('sleeve') || name.includes('arm')) {
-                        if (!meshParts['sleeve_left']) {
-                            meshParts['sleeve_left'] = child;
-                        } else {
-                            meshParts['sleeve_right'] = child;
-                        }
-                    } else if (name.includes('collar') || name.includes('neck')) {
-                        meshParts['collar'] = child;
-                    } else if (name.includes('panel') || name.includes('number')) {
-                        meshParts['panel'] = child;
-                    } else {
-                        if (!meshParts['body']) {
-                            meshParts['body'] = child;
-                        }
-                    }
                     console.log('Mesh found:', child.name);
+
+            if (name === 'jersey_front' || name.includes('jersey_front')) {
+                child.material = cleanMaterial('#4F46E5');
+                if (child.geometry.attributes.color) {
+                    delete child.geometry.attributes.color;
+                    child.geometry.needsUpdate = true;
+                }
+                meshParts['jersey_front'] = child;
+            } else if (name === 'jersey_back' || name.includes('jersey_back')) {
+                child.material = cleanMaterial('#4F46E5');
+                if (child.geometry.attributes.color) {
+                    delete child.geometry.attributes.color;
+                    child.geometry.needsUpdate = true;
+                }
+                meshParts['jersey_back'] = child;
+            } else if (name === 'jersey_body' || name.includes('jersey_body')) {
+                child.material = cleanMaterial('#4F46E5');
+                if (child.geometry.attributes.color) {
+                    delete child.geometry.attributes.color;
+                    child.geometry.needsUpdate = true;
+                }
+                meshParts['jersey_body'] = child;
+            } else if (name === 'shorts' || name.includes('shorts')) {
+                child.material = cleanMaterial('#7C3AED');
+                if (child.geometry.attributes.color) {
+                    delete child.geometry.attributes.color;
+                    child.geometry.needsUpdate = true;
+                }
+                meshParts['shorts'] = child;
+            } else if (name === 'body_mannequin' || name.includes('mannequin')) {
+                meshParts['mannequin'] = child;
+            }
                 }
             });
+
+            console.log('Mapped parts:', Object.keys(meshParts));
 
             if (Object.keys(meshParts).length === 0) {
                 jerseyGroup.traverse((child) => {
@@ -136,6 +173,7 @@ function tryLoadGLB(path) {
         }
     );
 }
+
 
 function buildPlaceholderJersey() {
     jerseyGroup = new THREE.Group();
@@ -199,14 +237,33 @@ function updateLoadingProgress(percent) {
 export function setPartColor(partName, color) {
     if (meshParts[partName]) {
         meshParts[partName].material.color.set(color);
+        meshParts[partName].material.needsUpdate = true;
+    }
+}
+
+export function setMannequinColor(color) {
+    if (meshParts['mannequin']) {
+        meshParts['mannequin'].material.color.set(color);
+        meshParts['mannequin'].material.needsUpdate = true;
+    }
+}
+
+export function applyTextureToFront(canvasTexture) {
+    if (meshParts['jersey_front']) {
+        meshParts['jersey_front'].material.map = canvasTexture;
+        meshParts['jersey_front'].material.needsUpdate = true;
+    }
+}
+
+export function applyTextureToBack(canvasTexture) {
+    if (meshParts['jersey_back']) {
+        meshParts['jersey_back'].material.map = canvasTexture;
+        meshParts['jersey_back'].material.needsUpdate = true;
     }
 }
 
 export function applyTextureToPanel(canvasTexture) {
-    if (meshParts['panel']) {
-        meshParts['panel'].material.map = canvasTexture;
-        meshParts['panel'].material.needsUpdate = true;
-    }
+    applyTextureToFront(canvasTexture);
 }
 
 export function setAllMeshesColor(color) {
