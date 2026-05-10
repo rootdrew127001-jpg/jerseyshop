@@ -137,19 +137,35 @@
     <div id="successModal" style="display:none"
         class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-slate-800 w-full max-w-sm rounded-3xl p-8 shadow-2xl border border-slate-700 text-center">
-            <div class="text-5xl mb-4">🎉</div>
-            <h3 class="text-xl font-black text-white mb-2">Order Placed!</h3>
-            <p class="text-slate-400 text-sm mb-2">Your jersey order has been submitted.</p>
-            <p class="text-indigo-400 text-xs mb-6" id="successOrderId"></p>
-            <div class="space-y-3">
-                <button onclick="location.href='/dashboard.html'"
-                    class="w-full bg-indigo-600 text-white font-bold py-3 rounded-2xl text-sm">
-                    View Dashboard
+            <div id="paypalSection">
+                <div class="text-4xl mb-4">🛒</div>
+                <h3 class="text-xl font-black text-white mb-2">Complete Payment</h3>
+                <p class="text-slate-400 text-sm mb-2">Your order has been saved.</p>
+                <p class="text-indigo-400 text-xs mb-4" id="successOrderId"></p>
+                <p class="text-2xl font-black text-white mb-6" id="successTotal"></p>
+                <!-- PayPal Button -->
+                <div id="paypal-button-container" class="mb-4"></div>
+                <button onclick="skipPayment()"
+                    class="w-full bg-slate-700 text-slate-300 font-bold py-3 rounded-2xl text-sm">
+                    Pay Later
                 </button>
-                <button onclick="closeSuccessModal()"
-                    class="w-full bg-slate-700 text-white font-bold py-3 rounded-2xl text-sm">
-                    Design Another
-                </button>
+            </div>
+
+            <div id="paidSection" style="display:none">
+                <div class="text-5xl mb-4">🎉</div>
+                <h3 class="text-xl font-black text-white mb-2">Payment Successful!</h3>
+                <p class="text-slate-400 text-sm mb-2">Your jersey order is confirmed.</p>
+                <p class="text-indigo-400 text-xs mb-6" id="paidOrderId"></p>
+                <div class="space-y-3">
+                    <button onclick="location.href='/orders.html'"
+                        class="w-full bg-indigo-600 text-white font-bold py-3 rounded-2xl text-sm">
+                        Track Order
+                    </button>
+                    <button onclick="closeSuccessModal()"
+                        class="w-full bg-slate-700 text-white font-bold py-3 rounded-2xl text-sm">
+                        Design Another
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -256,101 +272,209 @@
         </div>
     </div>
 
-    <script type="module">
-        import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js';
-        initEditor();
+<script type="module">
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js';
+    initEditor();
 
-        const PRICE_PER_JERSEY = 850;
+    const PRICE_PER_JERSEY = 850;
+    let currentOrderId = null;
+    let currentTotal = 0;
+    let paypalLoaded = false;
 
-        window.updatePrice = function() {
-            const qty = parseInt(document.getElementById('orderQuantity').value) || 1;
-            const total = qty * PRICE_PER_JERSEY;
-            document.getElementById('totalPrice').textContent = `₱${total.toLocaleString()}.00`;
-        };
+    // Load PayPal config then SDK
+    async function loadPayPal() {
+        if (paypalLoaded) return;
+        try {
+            const res = await fetch('/payments/config');
+            const config = await res.json();
+            await loadPayPalSDK(config.client_id);
+            paypalLoaded = true;
+        } catch (err) {
+            console.error('Failed to load PayPal config:', err);
+        }
+    }
 
-        window.openOrderModal = function() {
-            const token = localStorage.getItem('modelyx_token');
-            if (!token) {
-                location.href = '/index.html?redirect=editor';
-                return;
-            }
+    function loadPayPalSDK(clientId) {
+        return new Promise((resolve, reject) => {
+            if (document.getElementById('paypal-sdk')) { resolve(); return; }
+            const script = document.createElement('script');
+            script.id = 'paypal-sdk';
+            script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&currency=PHP`;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+        });
+    }
 
-            const design = getCurrentDesign();
-            document.getElementById('summaryTeam').textContent = design.teamName || '-';
-            document.getElementById('summaryNumber').textContent = design.number || '-';
-            document.getElementById('summaryPattern').textContent = design.pattern || 'none';
-            document.getElementById('summaryBaseColor').style.background = design.baseColor;
-            document.getElementById('summaryBaseColorText').textContent = design.baseColor;
-            document.getElementById('summaryAccentColor').style.background = design.accentColor;
-            document.getElementById('summaryAccentColorText').textContent = design.accentColor;
-            document.getElementById('orderModal').style.display = 'flex';
-        };
+    function renderPayPalButton(orderId, total) {
+        const container = document.getElementById('paypal-button-container');
+        container.innerHTML = '';
 
-        window.closeOrderModal = function() {
-            document.getElementById('orderModal').style.display = 'none';
-            document.getElementById('orderError').classList.add('hidden');
-        };
+        paypal.Buttons({
+            style: {
+                layout: 'vertical',
+                color: 'blue',
+                shape: 'pill',
+                label: 'pay'
+            },
+            createOrder: (data, actions) => {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: total.toFixed(2),
+                            currency_code: 'PHP'
+                        },
+                        description: `Modelyx Jersey Order #${orderId}`
+                    }]
+                });
+            },
+            onApprove: async (data, actions) => {
+                console.log('PayPal approved, order ID:', data.orderID);
 
-        window.closeSuccessModal = function() {
-            document.getElementById('successModal').style.display = 'none';
-        };
-
-        window.submitOrder = async function() {
-            const token = localStorage.getItem('modelyx_token');
-            if (!token) {
-                location.href = '/index.html?redirect=editor';
-                return;
-            }
-
-            const design = getCurrentDesign();
-            const quantity = parseInt(document.getElementById('orderQuantity').value) || 1;
-            const size = document.getElementById('orderSize').value;
-            const notes = document.getElementById('orderNotes').value.trim();
-            const price = quantity * 850;
-
-            const btn = document.getElementById('submitOrderBtn');
-            btn.disabled = true;
-            btn.textContent = 'Submitting...';
-
-            try {
-                const res = await fetch('/orders/', {
+                const token = localStorage.getItem('modelyx_token');
+                const res = await fetch('/payments/capture', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        team_name: design.teamName,
-                        player_number: design.number,
-                        base_color: design.baseColor,
-                        accent_color: design.accentColor,
-                        pattern: design.pattern,
-                        quantity: quantity,
-                        price: price,
-                        notes: `Size: ${size}${notes ? ' | ' + notes : ''}`
+                        order_id: currentOrderId,
+                        paypal_order_id: data.orderID
                     })
                 });
 
-                const data = await res.json();
+                const result = await res.json();
 
                 if (res.ok) {
-                    document.getElementById('orderModal').style.display = 'none';
-                    document.getElementById('successOrderId').textContent = `Order ID: #${data.id}`;
-                    document.getElementById('successModal').style.display = 'flex';
+                    document.getElementById('paypalSection').style.display = 'none';
+                    document.getElementById('paidSection').style.display = 'block';
+                    document.getElementById('paidOrderId').textContent = 
+                        `Order #${currentOrderId} · PayPal: ${data.orderID}`;
                 } else {
-                    const errEl = document.getElementById('orderError');
-                    errEl.textContent = data.detail || 'Order failed. Try again.';
-                    errEl.classList.remove('hidden');
+                    alert('Payment verification failed: ' + (result.detail || 'Try again'));
                 }
-            } catch (err) {
+            },
+            onError: (err) => {
+                console.error('PayPal error:', err);
+                alert('Payment failed. Please try again.');
+            }
+        }).render('#paypal-button-container');
+    }
+
+    window.updatePrice = function() {
+        const qty = parseInt(document.getElementById('orderQuantity').value) || 1;
+        const total = qty * PRICE_PER_JERSEY;
+        document.getElementById('totalPrice').textContent = `₱${total.toLocaleString()}.00`;
+    };
+
+    window.openOrderModal = function() {
+        const token = localStorage.getItem('modelyx_token');
+        if (!token) { location.href = '/index.html?redirect=editor'; return; }
+
+        const design = getCurrentDesign();
+        document.getElementById('summaryTeam').textContent = design.teamName || '-';
+        document.getElementById('summaryNumber').textContent = design.number || '-';
+        document.getElementById('summaryPattern').textContent = design.pattern || 'none';
+        document.getElementById('summaryBaseColor').style.background = design.baseColor;
+        document.getElementById('summaryBaseColorText').textContent = design.baseColor;
+        document.getElementById('summaryAccentColor').style.background = design.accentColor;
+        document.getElementById('summaryAccentColorText').textContent = design.accentColor;
+        document.getElementById('orderModal').style.display = 'flex';
+    };
+
+    window.closeOrderModal = function() {
+        document.getElementById('orderModal').style.display = 'none';
+        document.getElementById('orderError').classList.add('hidden');
+    };
+
+    window.closeSuccessModal = function() {
+        document.getElementById('successModal').style.display = 'none';
+        document.getElementById('paypalSection').style.display = 'block';
+        document.getElementById('paidSection').style.display = 'none';
+    };
+
+    window.skipPayment = async function() {
+        const token = localStorage.getItem('modelyx_token');
+        
+        document.getElementById('paypalSection').innerHTML = `
+            <div class="text-4xl mb-4">📋</div>
+            <h3 class="text-xl font-black text-white mb-2">Order Saved!</h3>
+            <p class="text-slate-400 text-sm mb-2">Your design has been saved.</p>
+            <p class="text-amber-400 text-xs mb-6">⚠️ Payment pending — complete payment to confirm production.</p>
+            <div class="space-y-3">
+                <button onclick="location.href='/orders.html'"
+                    class="w-full bg-indigo-600 text-white font-bold py-3 rounded-2xl text-sm">
+                    View My Orders
+                </button>
+                <button onclick="closeSuccessModal()"
+                    class="w-full bg-slate-700 text-white font-bold py-3 rounded-2xl text-sm">
+                    Continue Designing
+                </button>
+            </div>
+        `;
+    };
+
+    window.submitOrder = async function() {
+        const token = localStorage.getItem('modelyx_token');
+        if (!token) { location.href = '/index.html?redirect=editor'; return; }
+
+        const design = getCurrentDesign();
+        const quantity = parseInt(document.getElementById('orderQuantity').value) || 1;
+        const size = document.getElementById('orderSize').value;
+        const notes = document.getElementById('orderNotes').value.trim();
+        const price = quantity * PRICE_PER_JERSEY;
+
+        const btn = document.getElementById('submitOrderBtn');
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+
+        try {
+            const res = await fetch('/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    team_name: design.teamName,
+                    player_number: design.number,
+                    base_color: design.baseColor,
+                    accent_color: design.accentColor,
+                    pattern: design.pattern,
+                    quantity: quantity,
+                    price: price,
+                    notes: `Size: ${size}${notes ? ' | ' + notes : ''}`
+                })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                currentOrderId = data.id;
+                currentTotal = price;
+                document.getElementById('orderModal').style.display = 'none';
+                document.getElementById('successOrderId').textContent = `Order #${data.id}`;
+                document.getElementById('successTotal').textContent = `₱${price.toLocaleString()}.00`;
+                document.getElementById('successModal').style.display = 'flex';
+
+                // Load PayPal and render button
+                await loadPayPal();
+                renderPayPalButton(data.id, price);
+            } else {
                 const errEl = document.getElementById('orderError');
-                errEl.textContent = 'Server error. Is the API running?';
+                errEl.textContent = data.detail || 'Order failed. Try again.';
                 errEl.classList.remove('hidden');
             }
+        } catch (err) {
+            const errEl = document.getElementById('orderError');
+            errEl.textContent = 'Server error. Is the API running?';
+            errEl.classList.remove('hidden');
+        }
 
-            btn.disabled = false;
-            btn.textContent = 'Place Order';
-        };
-    </script>
+        btn.disabled = false;
+        btn.textContent = 'Place Order';
+    };
+</script>
 </body>
 </html>

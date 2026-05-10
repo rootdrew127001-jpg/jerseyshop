@@ -58,6 +58,8 @@ class OrderResponse(BaseModel):
     status: str
     notes: Optional[str] = None
     created_at: datetime
+    payment_status: Optional[str] = "Unpaid"
+    paypal_order_id: Optional[str] = None
 
     class Config:
         from_attributes = True

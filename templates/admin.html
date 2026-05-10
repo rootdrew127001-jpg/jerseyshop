@@ -27,7 +27,7 @@
                 <div>
                     <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Outfitter Dashboard</p>
                     <h2 class="text-3xl font-black">Pipeline</h2>
-                    <p class="text-slate-500 text-sm">Manage incoming jersey designs and production.</p>
+                    <p class="text-slate-500 text-sm">Showing paid orders ready for production.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <button onclick="exportCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
@@ -248,16 +248,17 @@
 
                 const allData = await res.json();
                 const query = $('orderSearch')?.value.trim().toLowerCase();
-                const data = allData.filter(o => !query ||
-                    [o.team_name, o.player_number, o.status, o.user?.name].some(v =>
+                const data = allData.filter(o => {
+                    const isPaid = o.payment_status === 'Paid';
+                    if (!isPaid) return false;
+                    if (!query) return true;
+                    return [o.team_name, o.player_number, o.status, o.user?.name].some(v =>
                         String(v || '').toLowerCase().includes(query)
-                    )
-                );
+                    );
+                });
 
-                // Render charts with all data
                 renderCharts(allData);
 
-                // Render table
                 $('table').innerHTML = data.length ? data.map(o => `
                     <tr class="glass-row transition">
                         <td class="p-6 font-mono font-bold text-indigo-600">#${o.id}</td>
@@ -273,7 +274,12 @@
                                 <span class="font-mono text-xs">${o.base_color || '-'}</span>
                             </div>
                         </td>
-                        <td class="p-6 font-bold text-slate-900">₱${Number(o.price || 0).toLocaleString()}</td>
+                        <td class="p-6">
+                            <p class="font-bold text-slate-900">₱${Number(o.price || 0).toLocaleString()}</p>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${o.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                                ${o.payment_status === 'Paid' ? '✅ Paid' : '⏳ Unpaid'}
+                            </span>
+                        </td>
                         <td class="p-6">
                             <select onchange="updateOrder(${o.id}, this.value)"
                                 class="text-xs font-bold border rounded p-1 bg-white">
@@ -289,7 +295,6 @@
                     </tr>
                 `).join('') : '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-bold">No active orders found.</td></tr>';
 
-                // Stats
                 const stats = allData.reduce((a, o) => {
                     a.new += o.status === 'Pending Review' ? 1 : 0;
                     a.prod += o.status === 'In Production' ? 1 : 0;

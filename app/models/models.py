@@ -37,5 +37,7 @@ class Order(Base):
     status = Column(String(50), default="Pending Review")
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    payment_status = Column(String(50), default="Unpaid")
+    paypal_order_id = Column(String(255), nullable=True)
 
     user = relationship("User", back_populates="orders")
