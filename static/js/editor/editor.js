@@ -1,7 +1,6 @@
-import { initViewer, setPartColor, applyTextureToPanel } from './threeViewer.js';
-import { buildTexture } from './textureBuilder.js';
+import { initViewer, setPartColor, applyTextureToPanel, applyTextureToBack } from './threeViewer.js';
+import { buildTexture, buildBackTexture } from './textureBuilder.js';
 import { generateRandomDesign } from './randomDesign.js';
-
 let currentDesign = {
     baseColor: '#4F46E5',
     accentColor: '#7C3AED',
@@ -93,13 +92,16 @@ function bindControls() {
 }
 
 function applyDesign(design) {
-    setPartColor('body', design.baseColor);
-    setPartColor('sleeve_left', design.accentColor);
-    setPartColor('sleeve_right', design.accentColor);
-    setPartColor('collar', design.baseColor);
+    setPartColor('jersey_body', design.baseColor);
+    setPartColor('jersey_front', design.baseColor);
+    setPartColor('jersey_back', design.baseColor);
+    setPartColor('shorts', design.accentColor);
 
-    const texture = buildTexture(design);
-    applyTextureToPanel(texture);
+    const frontTexture = buildTexture(design);
+    applyTextureToPanel(frontTexture);
+
+    const backTexture = buildBackTexture(design);
+    applyTextureToBack(backTexture);
 }
 
 function syncUI(design) {
