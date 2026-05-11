@@ -18,6 +18,10 @@ class User(Base):
     zip_code = Column(String(20), nullable=True)
     country = Column(String(100), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    is_verified = Column(Integer, default=0)
+    otp_code = Column(String(10), nullable=True)
+    otp_expires = Column(DateTime, nullable=True)
+    google_id = Column(String(255), nullable=True)
 
     orders = relationship("Order", back_populates="user")
 

@@ -10,3 +10,8 @@ anthropic
 pydantic[email]
 bcrypt==4.0.1
 aiofiles
+python-multipart
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+aiosmtplib

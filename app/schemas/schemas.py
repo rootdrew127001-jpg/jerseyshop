@@ -24,6 +24,7 @@ class TokenResponse(BaseModel):
     token_type: str
     role: str
     name: str
+    is_verified: Optional[int] = 0
 
 
 class OrderCreate(BaseModel):

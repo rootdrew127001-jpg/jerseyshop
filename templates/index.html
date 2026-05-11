@@ -64,9 +64,31 @@
                     </label>
                     <span>Secure sign-in</span>
                 </div>
-                <button type="button" onclick="handleAuth('l')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg uppercase text-xs tracking-widest">Enter Studio</button>
+             
+              <button type="button" onclick="handleAuth('l')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg uppercase text-xs tracking-widest">Enter Studio</button>
+
+                <!-- Divider -->
+                <div class="flex items-center gap-3 my-2">
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                    <span class="text-xs text-slate-500 font-bold">OR</span>
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                </div>
+
+                <!-- Google Login -->
+                <a href="/auth/google"
+                    class="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-900 font-bold py-3.5 rounded-2xl transition text-sm border border-slate-200">
+                    <svg width="18" height="18" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                        <path fill="none" d="M0 0h48v48H0z"/>
+                    </svg>
+                    Continue with Google
+                </a>
             </form>
 
+            
             <!-- Register -->
             <form id="rForm" class="space-y-4 hidden">
                 <input type="text" id="rName" placeholder="Full Name" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
@@ -102,135 +124,278 @@
                 </div>
                 <button type="button" onclick="handleAuth('r')" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest">Create Profile</button>
             </form>
+            <!-- OTP Verification Form -->
+            <div id="otpForm" class="hidden space-y-4">
+                <div class="text-center">
+                    <div class="text-4xl mb-3">📧</div>
+                    <h3 class="text-xl font-black text-white">Check your email</h3>
+                    <p class="text-slate-400 text-sm mt-2">We sent a 6-digit code to</p>
+                    <p class="text-indigo-400 font-bold text-sm" id="otpEmail"></p>
+                </div>
+
+                <div>
+                    <input type="text" id="otpInput" maxlength="6" placeholder="000000"
+                        class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 text-center text-2xl font-black tracking-widest outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div id="otpError" aria-live="polite" class="hidden text-xs text-red-300 text-center"></div>
+
+                <button type="button" onclick="verifyOTP()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest">
+                    Verify Email
+                </button>
+
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span>Code expires in <span id="otpTimer" class="text-white font-bold">10:00</span></span>
+                    <button type="button" onclick="resendOTP()" class="text-indigo-400 hover:text-indigo-300 font-bold">Resend Code</button>
+                </div>
+
+                <button type="button" onclick="toggle('l')" class="w-full text-slate-500 text-xs hover:text-slate-300 transition">
+                    ← Back to Login
+                </button>
+            </div>
         </div>
     </div>
 
-    <script>
-        const $ = id => document.getElementById(id);
-        const API = '';
-        const params = new URLSearchParams(window.location.search);
-        const redirectTarget = params.get('redirect') === 'editor' ? 'editor.html' : null;
+<script>
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(window.location.search);
+    const redirectTarget = params.get('redirect') === 'editor' ? 'editor.html' : null;
 
-        const toast = (msg, err) => {
-            const t = document.createElement('div');
-            t.className = `fixed top-6 right-6 px-6 py-4 rounded-2xl text-white font-bold shadow-xl ${err ? 'bg-red-500' : 'bg-green-500'}`;
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 2500);
-        };
+    const toast = (msg, err) => {
+        const t = document.createElement('div');
+        t.className = `fixed top-6 right-6 px-6 py-4 rounded-2xl text-white font-bold shadow-xl z-50 ${err ? 'bg-red-500' : 'bg-green-500'}`;
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 2500);
+    };
 
-        const setError = (id, msg) => {
-            const el = $(id);
-            if (!el) return;
-            el.textContent = msg;
-            el.classList.toggle('hidden', !msg);
-        };
+    const setError = (id, msg) => {
+        const el = $(id);
+        if (!el) return;
+        el.textContent = msg;
+        el.classList.toggle('hidden', !msg);
+    };
 
-        const togglePassword = (id, toggleId) => {
-            const input = $(id);
-            const button = $(toggleId);
-            if (!input || !button) return;
-            input.type = input.type === 'password' ? 'text' : 'password';
-            button.textContent = input.type === 'password' ? 'Show' : 'Hide';
-        };
+    const togglePassword = (id, toggleId) => {
+        const input = $(id);
+        const button = $(toggleId);
+        if (!input || !button) return;
+        input.type = input.type === 'password' ? 'text' : 'password';
+        button.textContent = input.type === 'password' ? 'Show' : 'Hide';
+    };
 
-        const toggle = m => {
-            const l = m === 'l';
-            $('lForm').classList.toggle('hidden', !l);
-            $('rForm').classList.toggle('hidden', l);
-            setError('lError', '');
-            setError('rError', '');
-            const active = 'flex-1 py-2 rounded-xl font-bold text-xs bg-white shadow text-indigo-600';
-            const inactive = 'flex-1 py-2 rounded-xl font-bold text-xs text-gray-400';
-            $('lTab').className = l ? active : inactive;
-            $('rTab').className = l ? inactive : active;
-        };
+    const toggle = m => {
+        const l = m === 'l';
+        $('lForm').classList.toggle('hidden', !l);
+        $('rForm').classList.toggle('hidden', l);
+        $('otpForm').classList.add('hidden');
+        setError('lError', '');
+        setError('rError', '');
+        const active = 'flex-1 py-2 rounded-xl font-bold text-xs bg-white shadow text-indigo-600';
+        const inactive = 'flex-1 py-2 rounded-xl font-bold text-xs text-gray-400';
+        $('lTab').className = l ? active : inactive;
+        $('rTab').className = l ? inactive : active;
+    };
 
-        const handleAuth = async mode => {
-            const email = $(mode + 'Email').value.trim().toLowerCase();
-            const pass = $(mode + 'Pass').value;
-            const errId = mode === 'l' ? 'lError' : 'rError';
-            setError(errId, '');
+    let pendingEmail = '';
 
-            if (!/^\S+@\S+\.\S+$/.test(email)) return setError(errId, 'Enter a valid email');
-            if (pass.length < 6) return setError(errId, 'Password must be at least 6 characters');
+    const handleAuth = async mode => {
+        const email = $(mode + 'Email').value.trim().toLowerCase();
+        const pass = $(mode + 'Pass').value;
+        const errId = mode === 'l' ? 'lError' : 'rError';
+        setError(errId, '');
 
-            if (mode === 'r') {
-                const name = $('rName').value.trim();
-                const confirm = $('rConfirmPass').value;
-                const role = document.querySelector('input[name=role]:checked').value;
+        if (!/^\S+@\S+\.\S+$/.test(email)) return setError(errId, 'Enter a valid email');
+        if (pass.length < 6) return setError(errId, 'Password must be at least 6 characters');
 
-                if (!name) return setError(errId, 'Name is required');
-                if (pass !== confirm) return setError(errId, 'Passwords do not match');
+        if (mode === 'r') {
+            const name = $('rName').value.trim();
+            const confirm = $('rConfirmPass').value;
+            const role = document.querySelector('input[name=role]:checked').value;
+            if (!name) return setError(errId, 'Name is required');
+            if (pass !== confirm) return setError(errId, 'Passwords do not match');
 
-                try {
-                    const res = await fetch(`${API}/auth/register`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name,
-                            email,
-                            password: pass,
-                            role,
-                            phone: $('rPhone').value.trim(),
-                            address: $('rAddress').value.trim(),
-                            city: $('rCity').value.trim(),
-                            state: $('rState').value.trim(),
-                            zip_code: $('rZip').value.trim(),
-                            country: $('rCountry').value.trim()
-                        })
-                    });
+            // Password strength check
+            if (pass.length < 8) return setError(errId, 'Password must be at least 8 characters');
+            if (!/[A-Z]/.test(pass)) return setError(errId, 'Password must have at least one uppercase letter');
+            if (!/[0-9]/.test(pass)) return setError(errId, 'Password must have at least one number');
 
-                    const data = await res.json();
-                    if (!res.ok) return setError(errId, data.detail || 'Registration failed');
+            try {
+                const res = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name, email, password: pass, role,
+                        phone: $('rPhone').value.trim(),
+                        address: $('rAddress').value.trim(),
+                        city: $('rCity').value.trim(),
+                        state: $('rState').value.trim(),
+                        zip_code: $('rZip').value.trim(),
+                        country: $('rCountry').value.trim()
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) return setError(errId, data.detail || 'Registration failed');
 
-                    toast('Account created! Please login.');
-                    setTimeout(() => toggle('l'), 1000);
-
-                } catch (err) {
-                    setError(errId, 'Server error. Is the API running?');
-                }
-
-            } else {
-                try {
-                    const res = await fetch(`${API}/auth/login`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password: pass })
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok) return setError(errId, data.detail || 'Login failed');
-
-                    // Store token and user info
-                    localStorage.setItem('modelyx_token', data.access_token);
-                    localStorage.setItem('modelyx_user_role', data.role);
-                    localStorage.setItem('modelyx_user_name', data.name);
-                    localStorage.setItem('modelyx_user_email', email);
-
-                    toast('Redirecting...');
-                    const nextPage = data.role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
-                    setTimeout(() => location.href = nextPage, 1000);
-
-                } catch (err) {
-                    setError(errId, 'Server error. Is the API running?');
-                }
+                pendingEmail = email;
+                toast('Check your email for the OTP code!');
+                showOTPForm(email);
+            } catch (err) {
+                setError(errId, 'Server error. Is the API running?');
             }
-        };
 
-        // Auto fill remembered email
-        const rememberedEmail = localStorage.getItem('modelyx_user_email');
-        if (rememberedEmail) {
-            $('lEmail').value = rememberedEmail;
-            $('remember').checked = true;
+        } else {
+            try {
+                const res = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password: pass })
+                });
+                const data = await res.json();
+                if (!res.ok) return setError(errId, data.detail || 'Login failed');
+
+                saveAndRedirect(data);
+            } catch (err) {
+                setError(errId, 'Server error. Is the API running?');
+            }
+        }
+    };
+
+    const showOTPForm = (email) => {
+        $('lForm').classList.add('hidden');
+        $('rForm').classList.add('hidden');
+        $('otpForm').classList.remove('hidden');
+        $('otpEmail').textContent = email;
+        startOTPTimer();
+    };
+
+    let timerInterval = null;
+    const startOTPTimer = () => {
+        let seconds = 600;
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            seconds--;
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            $('otpTimer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+            if (seconds <= 0) {
+                clearInterval(timerInterval);
+                $('otpTimer').textContent = 'Expired';
+            }
+        }, 1000);
+    };
+
+    const verifyOTP = async () => {
+        const otp = $('otpInput').value.trim();
+        setError('otpError', '');
+        if (otp.length !== 6) return setError('otpError', 'Enter the 6-digit code');
+
+        try {
+            const res = await fetch('/auth/verify-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: pendingEmail, otp })
+            });
+            const data = await res.json();
+            if (!res.ok) return setError('otpError', data.detail || 'Invalid OTP');
+
+            toast('Email verified! Redirecting...');
+            saveAndRedirect(data);
+        } catch (err) {
+            setError('otpError', 'Server error. Try again.');
+        }
+    };
+
+    const resendOTP = async () => {
+        try {
+            const res = await fetch('/auth/resend-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: pendingEmail })
+            });
+            if (res.ok) {
+                toast('New OTP sent!');
+                startOTPTimer();
+            }
+        } catch (err) {
+            toast('Failed to resend OTP', true);
+        }
+    };
+
+    const saveAndRedirect = (data) => {
+        const remember = $('remember')?.checked;
+
+        localStorage.setItem('modelyx_token', data.access_token);
+        localStorage.setItem('modelyx_user_role', data.role);
+        localStorage.setItem('modelyx_user_name', data.name);
+
+        // Remember me — save email for next visit
+        if (remember) {
+            localStorage.setItem('modelyx_remembered_email', $('lEmail').value.trim().toLowerCase());
+        } else {
+            localStorage.removeItem('modelyx_remembered_email');
         }
 
-        // Auto redirect if already logged in
-        const token = localStorage.getItem('modelyx_token');
-        const role = localStorage.getItem('modelyx_user_role');
-        if (token && role) {
-            location.href = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
-        }
-    </script>
+        const nextPage = data.role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        setTimeout(() => location.href = nextPage, 800);
+    };
+
+    // Handle Google OAuth cookie on return
+    const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
+    if (cookieToken) {
+        const token = cookieToken.split('=')[1];
+        const cookieRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
+        const cookieName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
+        const role = cookieRole ? cookieRole.split('=')[1] : 'customer';
+        const name = cookieName ? cookieName.split('=')[1] : '';
+        localStorage.setItem('modelyx_token', token);
+        localStorage.setItem('modelyx_user_role', role);
+        localStorage.setItem('modelyx_user_name', decodeURIComponent(name));
+        document.cookie = 'modelyx_token=; Max-Age=0';
+        document.cookie = 'modelyx_role=; Max-Age=0';
+        document.cookie = 'modelyx_name=; Max-Age=0';
+        location.href = role === 'owner' ? 'admin.html' : 'dashboard.html';
+    }
+
+    const token = localStorage.getItem('modelyx_token');
+    const role = localStorage.getItem('modelyx_user_role');
+    if (token && role) {
+        location.href = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+    }
+
+    const rememberedEmail = localStorage.getItem('modelyx_remembered_email');
+    if (rememberedEmail) {
+        $('lEmail').value = rememberedEmail;
+        $('remember').checked = true;
+    }
+
+    document.getElementById('rPass')?.addEventListener('input', function() {
+    const pass = this.value;
+    const fill = document.getElementById('strengthFill');
+    const text = document.getElementById('strengthText');
+    if (!fill || !text) return;
+
+    let strength = 0;
+    if (pass.length >= 8) strength++;
+    if (/[A-Z]/.test(pass)) strength++;
+    if (/[0-9]/.test(pass)) strength++;
+    if (/[^A-Za-z0-9]/.test(pass)) strength++;
+
+    const configs = [
+        { width: '0%', color: '', label: '' },
+        { width: '25%', color: 'bg-red-500', label: '⚠️ Weak', textColor: 'text-red-400' },
+        { width: '50%', color: 'bg-amber-500', label: '⚡ Fair', textColor: 'text-amber-400' },
+        { width: '75%', color: 'bg-blue-500', label: '👍 Good', textColor: 'text-blue-400' },
+        { width: '100%', color: 'bg-green-500', label: '✅ Strong', textColor: 'text-green-400' }
+    ];
+
+    const config = configs[strength];
+    fill.className = `h-full rounded-full transition-all duration-300 ${config.color}`;
+    fill.style.width = config.width;
+    text.className = `text-xs mt-1 ${config.textColor}`;
+    text.textContent = config.label;
+});
+</script>
 </body>
 </html>

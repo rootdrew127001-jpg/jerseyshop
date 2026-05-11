@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from app.models.models import User
 from app.schemas.schemas import RegisterRequest, LoginRequest
 from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.services.email_service import generate_otp, send_otp_email
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -72,6 +73,59 @@ def update_user(db: Session, user_id: int, data: dict):
         return None
     for key, value in data.items():
         setattr(user, key, value)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+async def send_verification_otp(db: Session, user):
+    otp = generate_otp()
+    expires = datetime.utcnow() + timedelta(minutes=10)
+    user.otp_code = otp
+    user.otp_expires = expires
+    db.commit()
+    await send_otp_email(user.email, otp, user.name)
+    return otp
+
+def verify_otp(db: Session, email: str, otp: str):
+    user = db.query(User).filter(User.email == email).first()
+    if not user:
+        return None, "User not found"
+    if user.is_verified:
+        return user, None
+    if not user.otp_code or user.otp_code != otp:
+        return None, "Invalid OTP code"
+    if user.otp_expires < datetime.utcnow():
+        return None, "OTP has expired"
+    user.is_verified = 1
+    user.otp_code = None
+    user.otp_expires = None
+    db.commit()
+    db.refresh(user)
+    return user, None
+
+def get_or_create_google_user(db: Session, google_info: dict):
+    email = google_info.get("email")
+    google_id = google_info.get("id")
+    name = google_info.get("name", email)
+
+    user = db.query(User).filter(User.email == email).first()
+    if user:
+        if not user.google_id:
+            user.google_id = google_id
+            user.is_verified = 1
+            db.commit()
+        return user
+
+    user = User(
+        name=name,
+        email=email,
+        password="",
+        role="customer",
+        google_id=google_id,
+        is_verified=1
+    )
+    db.add(user)
     db.commit()
     db.refresh(user)
     return user

@@ -15,3 +15,14 @@ CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY", "")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://127.0.0.1:5500")
 ENV = os.getenv("ENV", "development")
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://127.0.0.1:5500").split(",")
+
+
+PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID", "")
+PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")
+
+
+GMAIL_USER = os.getenv("GMAIL_USER", "")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:9100/auth/google/callback")
