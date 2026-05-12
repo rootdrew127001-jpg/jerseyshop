@@ -24,6 +24,20 @@
         </div>
     </header>
 
+    <!-- Pay Now Modal -->
+    <div id="payNowModal" style="display:none"
+        class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 shadow-2xl text-center">
+            <h3 class="text-xl font-black text-slate-900 mb-2">Complete Payment</h3>
+            <p class="text-2xl font-black text-indigo-600 mb-6" id="payNowTotal"></p>
+            <div id="paypal-now-container" class="mb-4"></div>
+            <button onclick="closePayNowModal()"
+                class="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-2xl text-sm mt-2">
+                Cancel
+            </button>
+        </div>
+    </div>
+
     <main class="max-w-4xl mx-auto px-6 py-8">
 
         <!-- Loading -->
@@ -51,6 +65,9 @@
         const token = localStorage.getItem('modelyx_token');
         if (!token) location.href = '/index.html';
 
+        let paypalLoaded = false;
+        let currentPayNowOrderId = null;
+
         const statusConfig = {
             'Pending Review': {
                 color: 'bg-amber-100 text-amber-700',
@@ -69,6 +86,27 @@
             }
         };
 
+        function paymentBadge(order) {
+            if (order.payment_status === 'Paid') {
+                return `
+                    <div class="mt-4 bg-green-500/10 border border-green-500/30 rounded-2xl p-3 flex items-center gap-2">
+                        <span class="text-green-600 text-xs font-bold">✅ Payment Confirmed</span>
+                        ${order.paypal_order_id ? `<span class="text-slate-400 text-xs font-mono">${order.paypal_order_id.slice(0,20)}...</span>` : ''}
+                    </div>`;
+            }
+            return `
+                <div class="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-bold text-amber-600">⚠️ Payment Required</p>
+                        <p class="text-xs text-slate-400 mt-1">Complete payment to start production.</p>
+                    </div>
+                    <button onclick="payNow(${order.id}, ${order.price})"
+                        class="bg-amber-500 hover:bg-amber-400 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                        Pay Now
+                    </button>
+                </div>`;
+        }
+
         async function loadOrders() {
             try {
                 const res = await fetch('/orders/my', {
@@ -82,7 +120,6 @@
                 }
 
                 const orders = await res.json();
-
                 document.getElementById('loadingState').style.display = 'none';
 
                 if (!orders.length) {
@@ -90,7 +127,8 @@
                     return;
                 }
 
-                document.getElementById('orderCount').textContent = `${orders.length} order${orders.length > 1 ? 's' : ''}`;
+                document.getElementById('orderCount').textContent =
+                    `${orders.length} order${orders.length > 1 ? 's' : ''}`;
                 document.getElementById('ordersList').style.display = 'block';
                 document.getElementById('ordersList').innerHTML = orders
                     .slice()
@@ -117,8 +155,8 @@
                             </div>
 
                             <!-- Status Timeline -->
-                            <div class="flex items-center gap-2 mb-4">
-                                <div class="flex-1 h-1.5 rounded-full ${order.status === 'Pending Review' || order.status === 'In Production' || order.status === 'Completed' ? 'bg-indigo-500' : 'bg-slate-200'}"></div>
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="flex-1 h-1.5 rounded-full bg-indigo-500"></div>
                                 <div class="flex-1 h-1.5 rounded-full ${order.status === 'In Production' || order.status === 'Completed' ? 'bg-indigo-500' : 'bg-slate-200'}"></div>
                                 <div class="flex-1 h-1.5 rounded-full ${order.status === 'Completed' ? 'bg-green-500' : 'bg-slate-200'}"></div>
                             </div>
@@ -134,7 +172,7 @@
                             </p>
 
                             <!-- Order Details -->
-                            <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="grid grid-cols-2 gap-3 text-sm mb-2">
                                 <div>
                                     <p class="text-xs text-slate-400">Pattern</p>
                                     <p class="font-bold capitalize">${order.pattern || 'None'}</p>
@@ -146,8 +184,10 @@
                                 <div>
                                     <p class="text-xs text-slate-400">Colors</p>
                                     <div class="flex items-center gap-1 mt-1">
-                                        <div class="w-5 h-5 rounded-md border border-slate-200" style="background:${order.base_color}"></div>
-                                        <div class="w-5 h-5 rounded-md border border-slate-200" style="background:${order.accent_color}"></div>
+                                        <div class="w-5 h-5 rounded-md border border-slate-200"
+                                            style="background:${order.base_color}"></div>
+                                        <div class="w-5 h-5 rounded-md border border-slate-200"
+                                            style="background:${order.accent_color}"></div>
                                     </div>
                                 </div>
                                 <div>
@@ -157,12 +197,13 @@
                             </div>
 
                             ${order.notes ? `
-                            <div class="mt-4 pt-4 border-t border-slate-100">
+                            <div class="pt-3 border-t border-slate-100 mb-2">
                                 <p class="text-xs text-slate-400">Notes</p>
                                 <p class="text-sm text-slate-600 mt-1">${order.notes}</p>
                             </div>` : ''}
-                        </div>
-                    `;
+
+                            ${paymentBadge(order)}
+                        </div>`;
                     }).join('');
 
             } catch (err) {
@@ -170,6 +211,76 @@
                     '<p class="text-red-400 text-sm">Failed to load orders. Is the server running?</p>';
             }
         }
+
+        async function loadPayPal() {
+            if (paypalLoaded) return;
+            const res = await fetch('/payments/config');
+            const config = await res.json();
+            await new Promise((resolve, reject) => {
+                if (document.getElementById('paypal-sdk')) { resolve(); return; }
+                const script = document.createElement('script');
+                script.id = 'paypal-sdk';
+                script.src = `https://www.paypal.com/sdk/js?client-id=${config.client_id}&currency=PHP`;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+            paypalLoaded = true;
+        }
+
+        window.payNow = async function(orderId, price) {
+            currentPayNowOrderId = orderId;
+            document.getElementById('payNowTotal').textContent = `₱${Number(price).toLocaleString()}`;
+            document.getElementById('payNowModal').style.display = 'flex';
+            document.getElementById('paypal-now-container').innerHTML = '<p class="text-slate-400 text-sm">Loading PayPal...</p>';
+
+            await loadPayPal();
+            document.getElementById('paypal-now-container').innerHTML = '';
+
+            paypal.Buttons({
+                style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' },
+                createOrder: (data, actions) => {
+                    return actions.order.create({
+                        purchase_units: [{
+                            amount: {
+                                value: Number(price).toFixed(2),
+                                currency_code: 'PHP'
+                            },
+                            description: `Modelyx Jersey Order #${orderId}`
+                        }]
+                    });
+                },
+                onApprove: async (data, actions) => {
+                    const res = await fetch('/payments/capture', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            order_id: orderId,
+                            paypal_order_id: data.orderID
+                        })
+                    });
+
+                    if (res.ok) {
+                        closePayNowModal();
+                        loadOrders();
+                    } else {
+                        alert('Payment verification failed. Try again.');
+                    }
+                },
+                onError: (err) => {
+                    console.error('PayPal error:', err);
+                    alert('Payment failed. Try again.');
+                }
+            }).render('#paypal-now-container');
+        };
+
+        window.closePayNowModal = function() {
+            document.getElementById('payNowModal').style.display = 'none';
+            document.getElementById('paypal-now-container').innerHTML = '';
+        };
 
         loadOrders();
     </script>

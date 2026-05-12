@@ -39,6 +39,8 @@ class Order(Base):
     quantity = Column(Integer, default=1)
     price = Column(Float, default=0.0)
     status = Column(String(50), default="Pending Review")
+    payment_status = Column(String(50), default="Unpaid")
+    paypal_order_id = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
