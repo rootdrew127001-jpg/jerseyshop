@@ -61,6 +61,7 @@ class OrderResponse(BaseModel):
     created_at: datetime
     payment_status: Optional[str] = "Unpaid"
     paypal_order_id: Optional[str] = None
+    cancelled_reason: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -68,3 +69,17 @@ class OrderResponse(BaseModel):
 
 class AIRequest(BaseModel):
     team_name: str
+    
+    
+class CancelOrderRequest(BaseModel):
+    reason: Optional[str] = None
+
+class NotificationResponse(BaseModel):
+    id: int
+    title: str
+    message: str
+    is_read: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

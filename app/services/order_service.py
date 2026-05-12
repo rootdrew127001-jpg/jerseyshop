@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from app.models.models import Order
 from app.schemas.schemas import OrderCreate
+from app.services import notification_service
 
 def place_order(db: Session, user_id: int, payload: OrderCreate):
     order = Order(
@@ -45,3 +46,64 @@ def remove_order(db: Session, order_id: int):
     db.delete(order)
     db.commit()
     return True
+
+def cancel_order_by_customer(db: Session, order_id: int, user_id: int, reason: str = None):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return None, "Order not found"
+    if order.user_id != user_id:
+        return None, "Not your order"
+    if order.status != "Pending Review":
+        return None, "Only pending orders can be cancelled"
+    if order.status == "Cancelled":
+        return None, "Order already cancelled"
+
+    order.status = "Cancelled"
+    order.cancelled_reason = reason or "Cancelled by customer"
+    db.commit()
+    db.refresh(order)
+
+    notification_service.create_notification(
+        db, user_id,
+        "Order Cancelled",
+        f"Your order #{order.id} ({order.team_name} #{order.player_number}) has been cancelled."
+    )
+
+    from app.models.models import User
+    admins = db.query(User).filter(User.role == 'owner').all()
+    for admin in admins:
+        notification_service.create_notification(
+            db, admin.id,
+            "Order Cancelled by Customer",
+            f"Order #{order.id} ({order.team_name} #{order.player_number}) was cancelled by customer. Reason: {order.cancelled_reason}"
+        )
+
+    return order, None
+
+def cancel_order_by_admin(db: Session, order_id: int, admin_id: int, reason: str = None):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return None, "Order not found"
+    if order.status == "Completed":
+        return None, "Completed orders cannot be cancelled"
+    if order.status == "Cancelled":
+        return None, "Order already cancelled"
+
+    order.status = "Cancelled"
+    order.cancelled_reason = reason or "Cancelled by admin"
+    db.commit()
+    db.refresh(order)
+
+    notification_service.create_notification(
+        db, order.user_id,
+        "Order Cancelled by Admin",
+        f"Your order #{order.id} ({order.team_name} #{order.player_number}) was cancelled. Reason: {order.cancelled_reason}"
+    )
+
+    notification_service.create_notification(
+        db, admin_id,
+        "Order Cancelled",
+        f"You cancelled order #{order.id} ({order.team_name} #{order.player_number})."
+    )
+
+    return order, None

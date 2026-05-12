@@ -43,5 +43,19 @@ class Order(Base):
     paypal_order_id = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    cancelled_reason = Column(Text, nullable=True)
 
     user = relationship("User", back_populates="orders")
+    
+    
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    is_read = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User", backref="notifications")

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from app.core.database import get_db
-from app.schemas.schemas import OrderCreate, OrderResponse
+from app.schemas.schemas import CancelOrderRequest, OrderCreate, OrderResponse
 from app.services import order_service
 from app.routers.deps import get_current_user, require_admin
 
@@ -52,3 +52,33 @@ def delete_order(
     if not result:
         raise HTTPException(status_code=404, detail="Order not found")
     return {"message": "Order deleted"}
+
+
+
+@router.post("/{order_id}/cancel")
+def cancel_order(
+    order_id: int,
+    payload: CancelOrderRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    order, error = order_service.cancel_order_by_customer(
+        db, order_id, current_user["id"], payload.reason
+    )
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"message": "Order cancelled", "order_id": order.id}
+
+@router.post("/{order_id}/admin-cancel")
+def admin_cancel_order(
+    order_id: int,
+    payload: CancelOrderRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_admin)
+):
+    order, error = order_service.cancel_order_by_admin(
+        db, order_id, current_user["id"], payload.reason
+    )
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"message": "Order cancelled by admin", "order_id": order.id}

@@ -87,24 +87,47 @@
         };
 
         function paymentBadge(order) {
+            let html = '';
+
             if (order.payment_status === 'Paid') {
-                return `
-                    <div class="mt-4 bg-green-500/10 border border-green-500/30 rounded-2xl p-3 flex items-center gap-2">
+                html += `
+                    <div class="mt-3 bg-green-500/10 border border-green-500/30 rounded-2xl p-3 flex items-center gap-2">
                         <span class="text-green-600 text-xs font-bold">✅ Payment Confirmed</span>
                         ${order.paypal_order_id ? `<span class="text-slate-400 text-xs font-mono">${order.paypal_order_id.slice(0,20)}...</span>` : ''}
                     </div>`;
+            } else if (order.status !== 'Cancelled') {
+                html += `
+                    <div class="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-amber-600">⚠️ Payment Required</p>
+                            <p class="text-xs text-slate-400 mt-1">Complete payment to start production.</p>
+                        </div>
+                        <button onclick="payNow(${order.id}, ${order.price})"
+                            class="bg-amber-500 hover:bg-amber-400 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                            Pay Now
+                        </button>
+                    </div>`;
             }
-            return `
-                <div class="mt-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
-                    <div>
-                        <p class="text-xs font-bold text-amber-600">⚠️ Payment Required</p>
-                        <p class="text-xs text-slate-400 mt-1">Complete payment to start production.</p>
-                    </div>
-                    <button onclick="payNow(${order.id}, ${order.price})"
-                        class="bg-amber-500 hover:bg-amber-400 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
-                        Pay Now
-                    </button>
-                </div>`;
+
+            if (order.status === 'Pending Review') {
+                html += `
+                    <div class="mt-3">
+                        <button onclick="cancelOrder(${order.id})"
+                            class="w-full border border-red-200 text-red-500 hover:bg-red-50 font-bold py-2.5 rounded-2xl text-xs transition">
+                            Cancel Order
+                        </button>
+                    </div>`;
+            }
+
+            if (order.status === 'Cancelled') {
+                html += `
+                    <div class="mt-3 bg-red-500/10 border border-red-500/30 rounded-2xl p-3">
+                        <p class="text-red-500 text-xs font-bold">❌ Order Cancelled</p>
+                        ${order.cancelled_reason ? `<p class="text-slate-400 text-xs mt-1">${order.cancelled_reason}</p>` : ''}
+                    </div>`;
+            }
+
+            return html;
         }
 
         async function loadOrders() {
@@ -283,6 +306,34 @@
         };
 
         loadOrders();
+
+        window.cancelOrder = async function(orderId) {
+    const reason = prompt('Reason for cancellation (optional):');
+    if (reason === null) return; // User clicked Cancel on prompt
+
+    if (!confirm(`Cancel order #${orderId}? This cannot be undone.`)) return;
+
+    try {
+        const res = await fetch(`/orders/${orderId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ reason: reason || 'Cancelled by customer' })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            setTimeout(() => location.reload(), 500);
+        } else {
+            alert(data.detail || 'Failed to cancel order.');
+        }
+    } catch (err) {
+        alert('Server error. Try again.');
+    }
+};
+
     </script>
 </body>
 </html>

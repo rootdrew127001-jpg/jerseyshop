@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.core.database import engine, Base
-from app.routers import auth, orders, ai, payments
+from app.routers import auth, notifications, orders, ai, payments
 from app.core.config import ALLOWED_ORIGINS, ENV
 import os
 from fastapi import Response
@@ -31,6 +31,7 @@ app.include_router(auth.router)
 app.include_router(orders.router)
 app.include_router(ai.router)
 app.include_router(payments.router)
+app.include_router(notifications.router)
 @app.get("/api")
 def root():
     return {
