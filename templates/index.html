@@ -160,7 +160,12 @@
 <script>
     const $ = id => document.getElementById(id);
     const params = new URLSearchParams(window.location.search);
-    const redirectTarget = params.get('redirect') === 'editor' ? 'editor.html' : null;
+    const redirectMap = {
+        editor: 'editor.html',
+        orders: 'orders.html',
+        profile: 'profile.html'
+    };
+    const redirectTarget = redirectMap[params.get('redirect')] || null;
 
     const toast = (msg, err) => {
         const t = document.createElement('div');

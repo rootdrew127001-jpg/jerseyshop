@@ -13,9 +13,13 @@
     <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shadow-2xl">
         <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span class="text-indigo-500">PORTAL</span></h1>
         <nav class="flex-1 space-y-2">
-            <a href="#" class="flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20">
+            <a href="/admin.html" class="flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/></svg>
                 <span>Orders</span>
+            </a>
+            <a href="/cancelled.html" class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round"/></svg>
+                <span>Cancelled Orders</span>
             </a>
         </nav>
         <button onclick="logout()" class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
@@ -126,9 +130,8 @@
                     <tr>
                         <th class="p-6">ID</th>
                         <th class="p-6">Customer</th>
-                        <th class="p-6">Design</th>
-                        <th class="p-6">Color</th>
-                        <th class="p-6">Price</th>
+                        <th class="p-6">Order Summary</th>
+                        <th class="p-6">Shipping Location</th>
                         <th class="p-6">Status</th>
                         <th class="p-6 text-right">Actions</th>
                     </tr>
@@ -167,10 +170,11 @@
         let patternChartInst = null;
 
         const renderCharts = (data) => {
+            const activeData = data.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid');
             // Status breakdown pie
-            const pending = data.filter(o => o.status === 'Pending Review').length;
-            const production = data.filter(o => o.status === 'In Production').length;
-            const completed = data.filter(o => o.status === 'Completed').length;
+            const pending = activeData.filter(o => o.status === 'Pending Review').length;
+            const production = activeData.filter(o => o.status === 'In Production').length;
+            const completed = activeData.filter(o => o.status === 'Completed').length;
 
             if (statusChartInst) statusChartInst.destroy();
             statusChartInst = new Chart($('statusChart'), {
@@ -191,7 +195,7 @@
 
             // Orders over time bar chart
             const ordersByDate = {};
-            data.forEach(o => {
+            activeData.forEach(o => {
                 const date = new Date(o.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
                 ordersByDate[date] = (ordersByDate[date] || 0) + 1;
             });
@@ -221,7 +225,7 @@
 
             // Pattern breakdown
             const patternCount = {};
-            data.forEach(o => {
+            activeData.forEach(o => {
                 const p = o.pattern || 'none';
                 patternCount[p] = (patternCount[p] || 0) + 1;
             });
@@ -243,7 +247,7 @@
             });
 
             // Recent activity
-            const recent = [...data].reverse().slice(0, 5);
+            const recent = [...activeData].reverse().slice(0, 5);
             $('recentActivity').innerHTML = recent.length ? recent.map(o => `
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
                     <div class="flex items-center gap-3">
@@ -279,6 +283,7 @@
                 const data = allData.filter(o => {
                     const isPaid = o.payment_status === 'Paid';
                     if (!isPaid) return false;
+                    if (o.status === 'Cancelled') return false;
                     if (!query) return true;
                     return [o.team_name, o.player_number, o.status, o.user?.name].some(v =>
                         String(v || '').toLowerCase().includes(query)
@@ -288,26 +293,67 @@
                 renderCharts(allData);
 
                 // Render table
-                $('table').innerHTML = data.length ? data.map(o => `
+                $('table').innerHTML = data.length ? data.map(o => {
+                    const total = Number(o.price || 0);
+                    const shippingFee = Number(o.shipping_fee || 0);
+                    const subtotal = Math.max(total - shippingFee, 0);
+                    const shippingAddress = [o.shipping_address, o.shipping_city, o.shipping_state, o.shipping_zip, o.shipping_country].filter(Boolean).join(', ');
+                    return `
                     <tr class="glass-row transition">
                         <td class="p-6 font-mono font-bold text-indigo-600">#${o.id}</td>
                         <td class="p-6">
                             <div class="font-bold">${o.user?.name || 'Unknown'}</div>
                             <div class="text-[10px] text-slate-400">${o.user?.email || ''}</div>
                         </td>
-                        <td class="p-6 font-bold">#${o.player_number || '00'} ${o.team_name || 'Design'}</td>
-                        <td class="p-6">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-md border" style="background:${o.base_color || '#ddd'}"></div>
-                                <div class="w-6 h-6 rounded-md border" style="background:${o.accent_color || '#ddd'}"></div>
-                                <span class="font-mono text-xs">${o.base_color || '-'}</span>
+                        <td class="p-6 min-w-[260px]">
+                            <p class="font-black text-slate-900">#${o.player_number || '00'} ${o.team_name || 'Design'}</p>
+                            <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                                <div>
+                                    <p class="text-slate-400">Pattern</p>
+                                    <p class="font-bold capitalize">${o.pattern || 'None'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400">Quantity</p>
+                                    <p class="font-bold">${o.quantity || 1} jersey${Number(o.quantity || 1) > 1 ? 's' : ''}</p>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400">Colors</p>
+                                    <div class="flex items-center gap-1 mt-1">
+                                        <div class="w-5 h-5 rounded-md border" style="background:${o.base_color || '#ddd'}"></div>
+                                        <div class="w-5 h-5 rounded-md border" style="background:${o.accent_color || '#ddd'}"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="text-slate-400">Subtotal</p>
+                                    <p class="font-bold">₱${subtotal.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3 rounded-2xl bg-slate-50 p-3 text-xs space-y-1">
+                                <div class="flex justify-between text-slate-500">
+                                    <span>Shipping Fee</span>
+                                    <strong class="text-slate-700">₱${shippingFee.toLocaleString()}</strong>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-black text-slate-900">Total</span>
+                                    <strong class="text-indigo-600">₱${total.toLocaleString()}</strong>
+                                </div>
+                                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${o.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                                    ${o.payment_status === 'Paid' ? 'Paid' : 'Unpaid'}
+                                </span>
                             </div>
                         </td>
-                        <td class="p-6">
-                            <p class="font-bold text-slate-900">₱${Number(o.price || 0).toLocaleString()}</p>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${o.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
-                                ${o.payment_status === 'Paid' ? '✅ Paid' : '⏳ Unpaid'}
-                            </span>
+                        <td class="p-6 max-w-sm">
+                            <p class="font-bold">${o.shipping_name || o.user?.name || 'Recipient'}</p>
+                            <p class="text-[10px] text-slate-400">${o.shipping_phone || ''}</p>
+                            <p class="text-xs text-slate-500">${shippingAddress || 'No shipping address'}</p>
+                            ${o.delivery_notes ? `<p class="mt-1 text-xs text-slate-400">${o.delivery_notes}</p>` : ''}
+                            ${o.latitude && o.longitude ? `<p class="mt-1 font-mono text-[10px] text-slate-400">${Number(o.latitude).toFixed(8)}, ${Number(o.longitude).toFixed(8)}</p>` : ''}
+                            ${o.latitude && o.longitude ? `
+                                <a href="https://www.openstreetmap.org/?mlat=${o.latitude}&mlon=${o.longitude}#map=18/${o.latitude}/${o.longitude}"
+                                    target="_blank" rel="noopener"
+                                    class="text-[10px] font-bold text-indigo-600 hover:underline">
+                                    View pin
+                                </a>` : ''}
                         </td>
                         <td class="p-6">
                             <select onchange="updateOrder(${o.id}, this.value)"
@@ -328,10 +374,10 @@
                         </div>
                     </td>
                     </tr>
-                `).join('') : '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-bold">No active orders found.</td></tr>';
+                `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No active orders found.</td></tr>';
 
                 // Stats
-                const stats = allData.reduce((a, o) => {
+                const stats = allData.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
                     a.new += o.status === 'Pending Review' ? 1 : 0;
                     a.prod += o.status === 'In Production' ? 1 : 0;
                     a.done += o.status === 'Completed' ? 1 : 0;
@@ -378,8 +424,8 @@
             fetch('/orders/all', { headers: { 'Authorization': `Bearer ${token}` } })
                 .then(r => r.json())
                 .then(data => {
-                    const csv = 'ID,Customer,Team,Number,Price,Status\n' +
-                        data.map(o => `${o.id},${o.user?.name || ''},${o.team_name},${o.player_number},${o.price},${o.status}`).join('\n');
+                    const csv = 'ID,Customer,Team,Number,Shipping Address,Latitude,Longitude,Shipping Fee,Price,Status\n' +
+                        data.map(o => `${o.id},${o.user?.name || ''},${o.team_name},${o.player_number},"${[o.shipping_address, o.shipping_city, o.shipping_state, o.shipping_zip, o.shipping_country].filter(Boolean).join(', ')}",${o.latitude || ''},${o.longitude || ''},${o.shipping_fee || 0},${o.price},${o.status}`).join('\n');
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
                     a.download = 'modelyx_orders.csv';

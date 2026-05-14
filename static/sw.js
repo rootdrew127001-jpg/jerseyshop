@@ -3,13 +3,15 @@
  * Enables offline functionality and PWA capabilities
  */
 
-const CACHE_NAME = 'modelyx-v1';
+const CACHE_NAME = 'modelyx-v6';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
     '/dashboard.html',
     '/editor.html',
+    '/orders.html',
     '/admin.html',
+    '/static/js/addressAutocomplete.js',
     '/utils.js',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap'
@@ -44,6 +46,12 @@ self.addEventListener('activate', (event) => {
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') {
+        return;
+    }
+
+    const url = new URL(event.request.url);
+    const apiPrefixes = ['/auth/', '/orders/', '/payments/', '/notifications/', '/geo/', '/api'];
+    if (url.origin === self.location.origin && apiPrefixes.some(prefix => url.pathname.startsWith(prefix))) {
         return;
     }
 

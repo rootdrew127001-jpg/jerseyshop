@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Settings</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/addressAutocomplete.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -69,8 +70,15 @@
                     <input type="email" id="email" name="email" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="you@example.com">
                 </div>
                 <div>
+                    <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="09xx xxx xxxx">
+                </div>
+                <div>
                     <label for="address" class="block text-sm font-semibold text-slate-700 mb-2">Shipping Address</label>
                     <input type="text" id="address" name="address" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Street address">
+                    <input type="hidden" id="latitude" name="latitude">
+                    <input type="hidden" id="longitude" name="longitude">
+                    <p class="mt-2 text-xs text-slate-500">Type at least 3 letters, then choose a suggested address.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
                     <input type="text" id="city" name="city" class="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="City">
@@ -105,7 +113,7 @@
                 $('summaryAvatar').innerHTML = `<img src="${profileImg}" class="w-full h-full object-cover">`;
             }
 
-            const fields = [name, email, localStorage.getItem('modelyx_shipping_address') || '', city, localStorage.getItem('modelyx_shipping_state') || '', localStorage.getItem('modelyx_shipping_zip') || '', country, profileImg];
+            const fields = [name, email, localStorage.getItem('modelyx_user_phone') || '', localStorage.getItem('modelyx_shipping_address') || '', city, localStorage.getItem('modelyx_shipping_state') || '', localStorage.getItem('modelyx_shipping_zip') || '', country, profileImg];
             const filled = fields.filter(value => value && value.trim()).length;
             const percent = Math.round((filled / fields.length) * 100);
             $('completionPercent').innerText = `${percent}%`;
@@ -115,26 +123,42 @@
         window.onload = () => {
             const name = localStorage.getItem('modelyx_user_name') || '';
             const email = localStorage.getItem('modelyx_user_email') || '';
+            const phone = localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '';
             const address = localStorage.getItem('modelyx_shipping_address') || '';
             const city = localStorage.getItem('modelyx_shipping_city') || '';
             const state = localStorage.getItem('modelyx_shipping_state') || '';
             const zip = localStorage.getItem('modelyx_shipping_zip') || '';
             const country = localStorage.getItem('modelyx_shipping_country') || '';
+            const latitude = localStorage.getItem('modelyx_shipping_latitude') || '';
+            const longitude = localStorage.getItem('modelyx_shipping_longitude') || '';
             const profileImg = localStorage.getItem('modelyx_profile_image');
 
             $('name').value = name;
             $('email').value = email;
+            $('phone').value = phone;
             $('address').value = address;
             $('city').value = city;
             $('state').value = state;
             $('zip').value = zip;
             $('country').value = country;
+            $('latitude').value = latitude;
+            $('longitude').value = longitude;
 
             if (profileImg) {
                 $('imagePreview').innerHTML = `<img src="${profileImg}" class="w-full h-full object-cover">`;
             }
 
             updateSummary();
+
+            AddressAutocomplete.init({
+                inputId: 'address',
+                cityId: 'city',
+                stateId: 'state',
+                zipId: 'zip',
+                countryId: 'country',
+                latId: 'latitude',
+                lngId: 'longitude'
+            });
         };
 
         $('profileImage').addEventListener('change', (e) => {
@@ -154,19 +178,28 @@
             e.preventDefault();
             const name = $('name').value.trim();
             const email = $('email').value.trim();
+            const phone = $('phone').value.trim();
             const address = $('address').value.trim();
             const city = $('city').value.trim();
             const state = $('state').value.trim();
             const zip = $('zip').value.trim();
             const country = $('country').value.trim();
+            const latitude = $('latitude').value.trim();
+            const longitude = $('longitude').value.trim();
 
             if (name) localStorage.setItem('modelyx_user_name', name);
             if (email) localStorage.setItem('modelyx_user_email', email);
+            if (phone) {
+                localStorage.setItem('modelyx_user_phone', phone);
+                localStorage.setItem('modelyx_shipping_phone', phone);
+            }
             if (address) localStorage.setItem('modelyx_shipping_address', address);
             if (city) localStorage.setItem('modelyx_shipping_city', city);
             if (state) localStorage.setItem('modelyx_shipping_state', state);
             if (zip) localStorage.setItem('modelyx_shipping_zip', zip);
             if (country) localStorage.setItem('modelyx_shipping_country', country);
+            if (latitude) localStorage.setItem('modelyx_shipping_latitude', latitude);
+            if (longitude) localStorage.setItem('modelyx_shipping_longitude', longitude);
 
             updateSummary();
             alert('Profile information updated successfully!');

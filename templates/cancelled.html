@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelyx Admin | Cancelled Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
+    <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shadow-2xl">
+        <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span class="text-indigo-500">PORTAL</span></h1>
+        <nav class="flex-1 space-y-2">
+            <a href="/admin.html" class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/></svg>
+                <span>Orders</span>
+            </a>
+            <a href="/cancelled.html" class="flex items-center space-x-3 p-3 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-500/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round"/></svg>
+                <span>Cancelled Orders</span>
+            </a>
+        </nav>
+        <button onclick="logout()" class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8">
+        <header class="mb-8 space-y-6">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <p class="text-[10px] font-black text-red-500 uppercase tracking-widest">Cancellation Analytics</p>
+                    <h2 class="text-3xl font-black">Cancelled Orders</h2>
+                    <p class="text-slate-500 text-sm">Track cancelled requests, reasons, and estimated lost revenue.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button onclick="exportCancelledCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
+                    <button onclick="render()" class="bg-red-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-red-700 transition">Refresh</button>
+                </div>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="rounded-3xl bg-slate-50 px-5 py-4 shadow-sm">
+                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Quick View</p>
+                    <p class="mt-2 text-sm text-slate-500">Search cancelled orders by customer, team, reason, or number.</p>
+                </div>
+                <input id="cancelSearch" type="search" placeholder="Search cancelled orders..."
+                    class="w-full sm:w-80 p-3 border rounded-2xl bg-white text-sm outline-none focus:border-red-500" />
+            </div>
+        </header>
+
+        <div class="grid grid-cols-4 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Cancelled</p>
+                <h3 id="sCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Revenue Lost</p>
+                <h3 id="sLost" class="text-2xl font-black text-orange-600 mt-1">₱0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Cancel Rate</p>
+                <h3 id="sRate" class="text-2xl font-black mt-1">0%</h3>
+            </div>
+            <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Admin Cancelled</p>
+                <h3 id="sAdminCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <div class="bg-white border rounded-2xl p-6 shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled By</p>
+                <canvas id="cancelledByChart" height="200"></canvas>
+            </div>
+            <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled Orders by Order Date</p>
+                <canvas id="cancelledTimeChart" height="100"></canvas>
+            </div>
+        </div>
+
+        <div class="bg-white border rounded-[2rem] shadow-sm overflow-hidden">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
+                    <tr>
+                        <th class="p-6">ID</th>
+                        <th class="p-6">Customer</th>
+                        <th class="p-6">Design</th>
+                        <th class="p-6">Price</th>
+                        <th class="p-6">Cancelled By</th>
+                        <th class="p-6">Reason</th>
+                        <th class="p-6 text-right">Order Date</th>
+                    </tr>
+                </thead>
+                <tbody id="table" class="divide-y divide-slate-50"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const token = localStorage.getItem('modelyx_token');
+        const role = localStorage.getItem('modelyx_user_role');
+        if (!token || role !== 'owner') location.href = '/index.html';
+
+        let cancelledByChartInst = null;
+        let cancelledTimeChartInst = null;
+        let cachedCancelled = [];
+
+        const formatPeso = value => `₱${Number(value || 0).toLocaleString()}`;
+        const formatDate = value => new Date(value).toLocaleDateString('en-PH', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+
+        const inferCancelledBy = order => {
+            const reason = String(order.cancelled_reason || '').toLowerCase();
+            if (reason.includes('admin')) return 'Admin';
+            if (reason.includes('customer')) return 'Customer';
+            return 'Unspecified';
+        };
+
+        const renderCharts = data => {
+            const byActor = data.reduce((acc, order) => {
+                const actor = inferCancelledBy(order);
+                acc[actor] = (acc[actor] || 0) + 1;
+                return acc;
+            }, {});
+
+            if (cancelledByChartInst) cancelledByChartInst.destroy();
+            cancelledByChartInst = new Chart($('cancelledByChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(byActor).length ? Object.keys(byActor) : ['No data'],
+                    datasets: [{
+                        data: Object.values(byActor).length ? Object.values(byActor) : [0],
+                        backgroundColor: ['#EF4444', '#F97316', '#94A3B8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+                    cutout: '65%'
+                }
+            });
+
+            const byDate = {};
+            data.forEach(order => {
+                const date = new Date(order.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+                byDate[date] = (byDate[date] || 0) + 1;
+            });
+            const labels = Object.keys(byDate).slice(-7);
+            const counts = labels.map(label => byDate[label]);
+
+            if (cancelledTimeChartInst) cancelledTimeChartInst.destroy();
+            cancelledTimeChartInst = new Chart($('cancelledTimeChart'), {
+                type: 'bar',
+                data: {
+                    labels: labels.length ? labels : ['No data'],
+                    datasets: [{
+                        label: 'Cancelled',
+                        data: counts.length ? counts : [0],
+                        backgroundColor: '#EF4444',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        };
+
+        const render = async () => {
+            try {
+                const res = await fetch('/orders/all', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    if (res.status === 401) { localStorage.clear(); location.href = '/index.html'; }
+                    return;
+                }
+
+                const allData = await res.json();
+                const cancelled = allData.filter(order => order.status === 'Cancelled');
+                cachedCancelled = cancelled;
+
+                const totalCancelled = cancelled.length;
+                const revenueLost = cancelled.reduce((sum, order) => sum + Number(order.price || 0), 0);
+                const adminCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Admin').length;
+                const cancelRate = allData.length ? Math.round((totalCancelled / allData.length) * 100) : 0;
+
+                $('sCancelled').innerText = totalCancelled;
+                $('sLost').innerText = formatPeso(revenueLost);
+                $('sRate').innerText = `${cancelRate}%`;
+                $('sAdminCancelled').innerText = adminCancelled;
+
+                renderCharts(cancelled);
+
+                const query = $('cancelSearch')?.value.trim().toLowerCase();
+                const filtered = cancelled.filter(order => {
+                    if (!query) return true;
+                    return [
+                        order.id,
+                        order.user?.name,
+                        order.user?.email,
+                        order.team_name,
+                        order.player_number,
+                        order.cancelled_reason,
+                        inferCancelledBy(order)
+                    ].some(value => String(value || '').toLowerCase().includes(query));
+                });
+
+                $('table').innerHTML = filtered.length ? filtered.map(order => `
+                    <tr class="glass-row transition">
+                        <td class="p-6 font-mono font-bold text-red-600">#${order.id}</td>
+                        <td class="p-6">
+                            <div class="font-bold">${order.user?.name || 'Unknown'}</div>
+                            <div class="text-[10px] text-slate-400">${order.user?.email || ''}</div>
+                        </td>
+                        <td class="p-6 font-bold">#${order.player_number || '00'} ${order.team_name || 'Design'}</td>
+                        <td class="p-6">
+                            <p class="font-bold text-slate-900">${formatPeso(order.price)}</p>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${order.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                                ${order.payment_status || 'Unpaid'}
+                            </span>
+                        </td>
+                        <td class="p-6">
+                            <span class="text-xs font-black px-3 py-1 rounded-full ${inferCancelledBy(order) === 'Admin' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}">
+                                ${inferCancelledBy(order)}
+                            </span>
+                        </td>
+                        <td class="p-6 max-w-xs">
+                            <p class="text-sm text-slate-700">${order.cancelled_reason || 'No reason provided.'}</p>
+                        </td>
+                        <td class="p-6 text-right text-xs font-bold text-slate-500">${formatDate(order.created_at)}</td>
+                    </tr>
+                `).join('') : '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-bold">No cancelled orders found.</td></tr>';
+            } catch (err) {
+                console.error('Failed to load cancelled orders:', err);
+            }
+        };
+
+        const exportCancelledCSV = () => {
+            const rows = cachedCancelled.map(order => [
+                order.id,
+                order.user?.name || '',
+                order.user?.email || '',
+                order.team_name || '',
+                order.player_number || '',
+                order.price || 0,
+                order.payment_status || '',
+                inferCancelledBy(order),
+                order.cancelled_reason || '',
+                order.created_at || ''
+            ]);
+            const csv = 'ID,Customer,Email,Team,Number,Price,Payment Status,Cancelled By,Reason,Order Date\n' +
+                rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+            a.download = 'modelyx_cancelled_orders.csv';
+            a.click();
+        };
+
+        const logout = () => { localStorage.clear(); location.href = '/index.html'; };
+
+        window.onload = () => {
+            render();
+        };
+
+        $('cancelSearch').addEventListener('input', render);
+    </script>
+</body>
+</html>

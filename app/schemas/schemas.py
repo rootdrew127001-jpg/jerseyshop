@@ -35,6 +35,17 @@ class OrderCreate(BaseModel):
     pattern: Optional[str] = None
     quantity: Optional[int] = 1
     price: Optional[float] = 0.0
+    shipping_fee: Optional[float] = 0.0
+    shipping_name: Optional[str] = None
+    shipping_phone: Optional[str] = None
+    shipping_address: Optional[str] = None
+    shipping_city: Optional[str] = None
+    shipping_state: Optional[str] = None
+    shipping_zip: Optional[str] = None
+    shipping_country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    delivery_notes: Optional[str] = None
     notes: Optional[str] = None
 
 class UserInfo(BaseModel):
@@ -56,6 +67,17 @@ class OrderResponse(BaseModel):
     pattern: Optional[str]
     quantity: int
     price: float
+    shipping_fee: Optional[float] = 0.0
+    shipping_name: Optional[str] = None
+    shipping_phone: Optional[str] = None
+    shipping_address: Optional[str] = None
+    shipping_city: Optional[str] = None
+    shipping_state: Optional[str] = None
+    shipping_zip: Optional[str] = None
+    shipping_country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    delivery_notes: Optional[str] = None
     status: str
     notes: Optional[str] = None
     created_at: datetime

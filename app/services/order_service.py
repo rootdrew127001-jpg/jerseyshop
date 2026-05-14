@@ -13,6 +13,17 @@ def place_order(db: Session, user_id: int, payload: OrderCreate):
         pattern=payload.pattern,
         quantity=payload.quantity or 1,
         price=payload.price or 0.0,
+        shipping_fee=payload.shipping_fee or 0.0,
+        shipping_name=payload.shipping_name,
+        shipping_phone=payload.shipping_phone,
+        shipping_address=payload.shipping_address,
+        shipping_city=payload.shipping_city,
+        shipping_state=payload.shipping_state,
+        shipping_zip=payload.shipping_zip,
+        shipping_country=payload.shipping_country,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        delivery_notes=payload.delivery_notes,
         notes=payload.notes,
         status="Pending Review"
     )
@@ -59,7 +70,7 @@ def cancel_order_by_customer(db: Session, order_id: int, user_id: int, reason: s
         return None, "Order already cancelled"
 
     order.status = "Cancelled"
-    order.cancelled_reason = reason or "Cancelled by customer"
+    order.cancelled_reason = f"Customer: {reason}" if reason else "Cancelled by customer"
     db.commit()
     db.refresh(order)
 
@@ -90,7 +101,7 @@ def cancel_order_by_admin(db: Session, order_id: int, admin_id: int, reason: str
         return None, "Order already cancelled"
 
     order.status = "Cancelled"
-    order.cancelled_reason = reason or "Cancelled by admin"
+    order.cancelled_reason = f"Admin: {reason}" if reason else "Cancelled by admin"
     db.commit()
     db.refresh(order)
 

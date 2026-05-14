@@ -43,6 +43,19 @@ async def capture_payment(
         raise HTTPException(status_code=404, detail="Order not found")
     if order.user_id != current_user["id"]:
         raise HTTPException(status_code=403, detail="Not your order")
+    required_shipping = [
+        order.shipping_name,
+        order.shipping_phone,
+        order.shipping_address,
+        order.shipping_city,
+        order.shipping_state,
+        order.shipping_zip,
+        order.shipping_country,
+        order.latitude,
+        order.longitude,
+    ]
+    if not all(required_shipping):
+        raise HTTPException(status_code=400, detail="Shipping address and map pin are required before payment")
 
     order.payment_status = "Paid"
     order.paypal_order_id = payload.paypal_order_id

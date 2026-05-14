@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
@@ -19,6 +19,39 @@ DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
+
+ORDER_COLUMN_DEFINITIONS = {
+    "shipping_fee": "FLOAT DEFAULT 0",
+    "shipping_name": "VARCHAR(100) NULL",
+    "shipping_phone": "VARCHAR(20) NULL",
+    "shipping_address": "VARCHAR(255) NULL",
+    "shipping_city": "VARCHAR(100) NULL",
+    "shipping_state": "VARCHAR(100) NULL",
+    "shipping_zip": "VARCHAR(20) NULL",
+    "shipping_country": "VARCHAR(100) NULL",
+    "latitude": "DECIMAL(10,8) NULL",
+    "longitude": "DECIMAL(11,8) NULL",
+    "delivery_notes": "TEXT NULL",
+}
+
+def ensure_order_shipping_columns():
+    inspector = inspect(engine)
+    if not inspector.has_table("orders"):
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("orders")}
+    missing_columns = [
+        (name, definition)
+        for name, definition in ORDER_COLUMN_DEFINITIONS.items()
+        if name not in existing_columns
+    ]
+
+    if not missing_columns:
+        return
+
+    with engine.begin() as conn:
+        for name, definition in missing_columns:
+            conn.execute(text(f"ALTER TABLE orders ADD COLUMN {name} {definition}"))
 
 def get_db():
     db = SessionLocal()

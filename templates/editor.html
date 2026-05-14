@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <title>Modelyx | 3D Studio</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="importmap">
     {
         "imports": {
@@ -12,6 +14,7 @@
         }
     }
     </script>
+    <script src="/static/js/addressAutocomplete.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; font-family: 'Inter', sans-serif; }
@@ -43,7 +46,7 @@
     <!-- Order Modal -->
     <div id="orderModal" style="display:none"
         class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-700">
+        <div class="bg-slate-800 w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-8 shadow-2xl border border-slate-700">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-black text-white">Submit Order</h3>
                 <button onclick="closeOrderModal()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
@@ -83,7 +86,9 @@
             </div>
 
             <!-- Order Details -->
-            <div class="space-y-4 mb-6">
+            <div class="grid gap-6 md:grid-cols-2 mb-6">
+            <div class="space-y-4">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jersey Details</p>
                 <div>
                     <label class="text-xs text-slate-300 mb-1 block">Size</label>
                     <select id="orderSize"
@@ -109,30 +114,111 @@
                 </div>
             </div>
 
+            <div class="space-y-4">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shipping Details</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-300 mb-1 block">Recipient</label>
+                        <input id="shippingName" type="text" placeholder="Full name"
+                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300 mb-1 block">Phone</label>
+                        <input id="shippingPhone" type="tel" placeholder="09..."
+                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300 mb-1 block">Street Address</label>
+                    <input id="shippingAddress" type="text" placeholder="House no., street, barangay"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    <p class="mt-1 text-[10px] text-slate-500">Type at least 3 letters, then choose a suggested address.</p>
+                    <input id="shippingLatitude" type="hidden">
+                    <input id="shippingLongitude" type="hidden">
+                    <div id="shippingMapWrap" class="hidden mt-3 overflow-hidden rounded-2xl border border-slate-600">
+                        <div id="shippingMap" class="h-56 w-full"></div>
+                        <div class="bg-slate-700 px-4 py-3">
+                            <p class="text-xs font-bold text-white">Drag the pin to the exact delivery point.</p>
+                            <p id="shippingCoords" class="mt-1 font-mono text-[10px] text-slate-400">No pin selected.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="shippingCity" type="text" placeholder="City"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    <input id="shippingState" type="text" placeholder="Province / State"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <input id="shippingZip" type="text" placeholder="ZIP / Postal code"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    <input id="shippingCountry" type="text" placeholder="Country"
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300 mb-1 block">Delivery Notes (optional)</label>
+                    <textarea id="deliveryNotes" rows="2" placeholder="Landmark, preferred delivery instructions..."
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none resize-none placeholder-slate-500"></textarea>
+                </div>
+            </div>
+            </div>
+
             <!-- Price -->
             <div class="bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-4 mb-6">
-                <div class="flex justify-between items-center">
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <p class="text-xs text-indigo-300">Jersey subtotal</p>
+                        <p class="text-sm font-bold text-white" id="subtotalPrice">₱850.00</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <p class="text-xs text-indigo-300">Shipping fee</p>
+                        <p class="text-sm font-bold text-white" id="shippingFee">₱120.00</p>
+                    </div>
+                    <div class="flex justify-between items-center border-t border-indigo-400/20 pt-3">
                     <div>
                         <p class="text-xs text-indigo-300">Price per jersey</p>
                         <p class="text-sm font-bold text-white">₱850.00</p>
                     </div>
                     <div class="text-right">
-                        <p class="text-xs text-indigo-300">Total</p>
-                        <p class="text-2xl font-black text-white" id="totalPrice">₱850.00</p>
+                        <p class="text-xs text-indigo-300">Checkout Total</p>
+                        <p class="text-2xl font-black text-white" id="totalPrice">₱970.00</p>
+                    </div>
                     </div>
                 </div>
             </div>
 
             <!-- Submit -->
-            <button id="submitOrderBtn" onclick="submitOrder()"
+            <button id="submitOrderBtn" onclick="reviewCheckout()"
                 class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition text-sm">
-                Place Order
+                Review Checkout Summary
             </button>
 
             <p id="orderError" class="text-xs text-red-400 mt-3 text-center hidden"></p>
         </div>
     </div>
 
+    <!-- Checkout Review Modal -->
+    <div id="checkoutReviewModal" style="display:none"
+        class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-md rounded-3xl p-8 shadow-2xl border border-slate-700">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-black text-white">Review Checkout</h3>
+                <button onclick="closeCheckoutReview()" class="text-slate-400 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <div id="reviewSummary" class="bg-slate-700/50 rounded-2xl p-4 mb-6 text-sm text-slate-300 space-y-3"></div>
+            <div class="space-y-3">
+                <button id="confirmPaymentBtn" onclick="submitOrder()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-2xl transition text-sm">
+                    Confirm & Continue to Payment
+                </button>
+                <button onclick="closeCheckoutReview()"
+                    class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-3 rounded-2xl transition text-sm">
+                    Edit Shipping Details
+                </button>
+            </div>
+            <p id="reviewError" class="text-xs text-red-400 mt-3 text-center hidden"></p>
+        </div>
+    </div>
 
     <!-- Success Modal -->
     <div id="successModal" style="display:none"
@@ -143,6 +229,7 @@
                 <h3 class="text-xl font-black text-white mb-2">Complete Payment</h3>
                 <p class="text-slate-400 text-sm mb-2">Your order has been saved.</p>
                 <p class="text-indigo-400 text-xs mb-4" id="successOrderId"></p>
+                <div id="checkoutSummary" class="text-left bg-slate-700/50 rounded-2xl p-4 mb-5 text-xs text-slate-300 space-y-2"></div>
                 <p class="text-2xl font-black text-white mb-6" id="successTotal"></p>
                 <!-- PayPal Button -->
                 <div id="paypal-button-container" class="mb-4"></div>
@@ -277,10 +364,177 @@
     import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js';
     initEditor();
 
+    AddressAutocomplete.init({
+        inputId: 'shippingAddress',
+        cityId: 'shippingCity',
+        stateId: 'shippingState',
+        zipId: 'shippingZip',
+        countryId: 'shippingCountry',
+        latId: 'shippingLatitude',
+        lngId: 'shippingLongitude',
+        theme: 'dark'
+    });
+
+    document.getElementById('shippingAddress').addEventListener('input', () => {
+        document.getElementById('shippingLatitude').value = '';
+        document.getElementById('shippingLongitude').value = '';
+        document.getElementById('shippingCoords').textContent = 'Choose a suggestion to drop the delivery pin.';
+        document.getElementById('shippingMapWrap').classList.add('hidden');
+    });
+
+    document.getElementById('shippingAddress').addEventListener('address:selected', event => {
+        if (Number.isFinite(event.detail.lat) && Number.isFinite(event.detail.lng)) {
+            showShippingMap(event.detail.lat, event.detail.lng);
+        }
+    });
+
     const PRICE_PER_JERSEY = 850;
+    const SHIPPING_FEE = 120;
     let currentOrderId = null;
     let currentTotal = 0;
     let paypalLoaded = false;
+    let shippingMap = null;
+    let shippingMarker = null;
+    const paypalSectionInitial = document.getElementById('paypalSection').innerHTML;
+
+    const peso = value => `₱${Number(value || 0).toLocaleString()}.00`;
+
+    const fieldValue = id => document.getElementById(id).value.trim();
+
+    function updateShippingCoordinates(lat, lng) {
+        const fixedLat = Number(lat).toFixed(8);
+        const fixedLng = Number(lng).toFixed(8);
+        document.getElementById('shippingLatitude').value = fixedLat;
+        document.getElementById('shippingLongitude').value = fixedLng;
+        document.getElementById('shippingCoords').textContent = `${fixedLat}, ${fixedLng}`;
+    }
+
+    function showShippingMap(lat, lng) {
+        const mapWrap = document.getElementById('shippingMapWrap');
+        mapWrap.classList.remove('hidden');
+
+        if (!shippingMap) {
+            if (!window.L) {
+                document.getElementById('shippingCoords').textContent = 'Map failed to load. Check internet connection.';
+                return;
+            }
+            shippingMap = window.L.map('shippingMap');
+            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(shippingMap);
+        }
+
+        const point = [Number(lat), Number(lng)];
+        shippingMap.setView(point, 17);
+
+        if (!shippingMarker) {
+            shippingMarker = window.L.marker(point, { draggable: true }).addTo(shippingMap);
+            shippingMarker.on('dragend', () => {
+                const moved = shippingMarker.getLatLng();
+                updateShippingCoordinates(moved.lat, moved.lng);
+            });
+        } else {
+            shippingMarker.setLatLng(point);
+        }
+
+        updateShippingCoordinates(point[0], point[1]);
+        setTimeout(() => shippingMap.invalidateSize(), 100);
+    }
+
+    function prefillShippingDetails() {
+        document.getElementById('shippingName').value = localStorage.getItem('modelyx_shipping_name') || localStorage.getItem('modelyx_user_name') || '';
+        document.getElementById('shippingPhone').value = localStorage.getItem('modelyx_shipping_phone') || localStorage.getItem('modelyx_user_phone') || '';
+        document.getElementById('shippingAddress').value = localStorage.getItem('modelyx_shipping_address') || '';
+        document.getElementById('shippingCity').value = localStorage.getItem('modelyx_shipping_city') || '';
+        document.getElementById('shippingState').value = localStorage.getItem('modelyx_shipping_state') || '';
+        document.getElementById('shippingZip').value = localStorage.getItem('modelyx_shipping_zip') || '';
+        document.getElementById('shippingCountry').value = localStorage.getItem('modelyx_shipping_country') || 'Philippines';
+        document.getElementById('shippingLatitude').value = localStorage.getItem('modelyx_shipping_latitude') || '';
+        document.getElementById('shippingLongitude').value = localStorage.getItem('modelyx_shipping_longitude') || '';
+    }
+
+    function getShippingDetails() {
+        return {
+            shipping_name: fieldValue('shippingName'),
+            shipping_phone: fieldValue('shippingPhone'),
+            shipping_address: fieldValue('shippingAddress'),
+            shipping_city: fieldValue('shippingCity'),
+            shipping_state: fieldValue('shippingState'),
+            shipping_zip: fieldValue('shippingZip'),
+            shipping_country: fieldValue('shippingCountry'),
+            latitude: Number(fieldValue('shippingLatitude')) || null,
+            longitude: Number(fieldValue('shippingLongitude')) || null,
+            delivery_notes: fieldValue('deliveryNotes')
+        };
+    }
+
+    function saveShippingDetails(shipping) {
+        localStorage.setItem('modelyx_shipping_name', shipping.shipping_name);
+        localStorage.setItem('modelyx_shipping_phone', shipping.shipping_phone);
+        localStorage.setItem('modelyx_shipping_address', shipping.shipping_address);
+        localStorage.setItem('modelyx_shipping_city', shipping.shipping_city);
+        localStorage.setItem('modelyx_shipping_state', shipping.shipping_state);
+        localStorage.setItem('modelyx_shipping_zip', shipping.shipping_zip);
+        localStorage.setItem('modelyx_shipping_country', shipping.shipping_country);
+        if (shipping.latitude && shipping.longitude) {
+            localStorage.setItem('modelyx_shipping_latitude', shipping.latitude.toFixed(8));
+            localStorage.setItem('modelyx_shipping_longitude', shipping.longitude.toFixed(8));
+        }
+    }
+
+    function validateShippingDetails(shipping) {
+        const requiredFields = [
+            ['shipping_name', 'recipient name'],
+            ['shipping_phone', 'phone number'],
+            ['shipping_address', 'street address'],
+            ['shipping_city', 'city'],
+            ['shipping_state', 'province/state'],
+            ['shipping_zip', 'ZIP/postal code'],
+            ['shipping_country', 'country'],
+            ['latitude', 'map pin'],
+            ['longitude', 'map pin']
+        ];
+        const missing = requiredFields.find(([key]) => !shipping[key]);
+        return missing ? `Please enter the shipping ${missing[1]} before payment.` : '';
+    }
+
+    function getCheckoutContext() {
+        const design = getCurrentDesign();
+        const quantity = parseInt(document.getElementById('orderQuantity').value) || 1;
+        const size = document.getElementById('orderSize').value;
+        const notes = document.getElementById('orderNotes').value.trim();
+        const subtotal = quantity * PRICE_PER_JERSEY;
+        const total = subtotal + SHIPPING_FEE;
+        const shipping = getShippingDetails();
+        const shippingError = validateShippingDetails(shipping);
+
+        return { design, quantity, size, notes, subtotal, total, shipping, shippingError };
+    }
+
+    function renderSummary(containerId, context) {
+        document.getElementById(containerId).innerHTML = `
+            <div>
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Order</p>
+                <p class="font-bold text-white">${context.design.teamName || 'Custom Jersey'} #${context.design.number || '00'}</p>
+                <p class="text-xs text-slate-400">Size ${context.size} · ${context.quantity} jersey${context.quantity > 1 ? 's' : ''}</p>
+            </div>
+            <div class="border-t border-slate-600 pt-3">
+                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Ship To</p>
+                <p class="font-bold text-white">${context.shipping.shipping_name}</p>
+                <p class="text-xs">${context.shipping.shipping_phone}</p>
+                <p class="text-xs">${context.shipping.shipping_address}, ${context.shipping.shipping_city}</p>
+                <p class="text-xs">${context.shipping.shipping_state} ${context.shipping.shipping_zip}, ${context.shipping.shipping_country}</p>
+                <p class="mt-1 font-mono text-[10px] text-slate-400">${context.shipping.latitude.toFixed(8)}, ${context.shipping.longitude.toFixed(8)}</p>
+                ${context.shipping.delivery_notes ? `<p class="text-xs text-slate-400 mt-1">${context.shipping.delivery_notes}</p>` : ''}
+            </div>
+            <div class="border-t border-slate-600 pt-3 space-y-2">
+                <div class="flex justify-between"><span>Jersey subtotal</span><strong>${peso(context.subtotal)}</strong></div>
+                <div class="flex justify-between"><span>Shipping fee</span><strong>${peso(SHIPPING_FEE)}</strong></div>
+                <div class="flex justify-between text-white text-base border-t border-slate-600 pt-2"><span>Total</span><strong>${peso(context.total)}</strong></div>
+            </div>
+        `;
+    }
 
     // Load PayPal config then SDK
     async function loadPayPal() {
@@ -365,8 +619,11 @@
 
     window.updatePrice = function() {
         const qty = parseInt(document.getElementById('orderQuantity').value) || 1;
-        const total = qty * PRICE_PER_JERSEY;
-        document.getElementById('totalPrice').textContent = `₱${total.toLocaleString()}.00`;
+        const subtotal = qty * PRICE_PER_JERSEY;
+        const total = subtotal + SHIPPING_FEE;
+        document.getElementById('subtotalPrice').textContent = peso(subtotal);
+        document.getElementById('shippingFee').textContent = peso(SHIPPING_FEE);
+        document.getElementById('totalPrice').textContent = peso(total);
     };
 
     window.openOrderModal = function() {
@@ -381,7 +638,12 @@
         document.getElementById('summaryBaseColorText').textContent = design.baseColor;
         document.getElementById('summaryAccentColor').style.background = design.accentColor;
         document.getElementById('summaryAccentColorText').textContent = design.accentColor;
+        prefillShippingDetails();
+        updatePrice();
         document.getElementById('orderModal').style.display = 'flex';
+        const lat = Number(document.getElementById('shippingLatitude').value);
+        const lng = Number(document.getElementById('shippingLongitude').value);
+        if (lat && lng) setTimeout(() => showShippingMap(lat, lng), 100);
     };
 
     window.closeOrderModal = function() {
@@ -389,8 +651,15 @@
         document.getElementById('orderError').classList.add('hidden');
     };
 
+    window.closeCheckoutReview = function() {
+        document.getElementById('checkoutReviewModal').style.display = 'none';
+        document.getElementById('orderModal').style.display = 'flex';
+        document.getElementById('reviewError').classList.add('hidden');
+    };
+
     window.closeSuccessModal = function() {
         document.getElementById('successModal').style.display = 'none';
+        document.getElementById('paypalSection').innerHTML = paypalSectionInitial;
         document.getElementById('paypalSection').style.display = 'block';
         document.getElementById('paidSection').style.display = 'none';
     };
@@ -416,19 +685,44 @@
         `;
     };
 
+    window.reviewCheckout = function() {
+        const context = getCheckoutContext();
+
+        if (context.shippingError) {
+            const errEl = document.getElementById('orderError');
+            errEl.textContent = context.shippingError;
+            errEl.classList.remove('hidden');
+            return;
+        }
+
+        document.getElementById('orderError').classList.add('hidden');
+        saveShippingDetails(context.shipping);
+        renderSummary('reviewSummary', context);
+        document.getElementById('orderModal').style.display = 'none';
+        document.getElementById('checkoutReviewModal').style.display = 'flex';
+    };
+
     window.submitOrder = async function() {
         const token = localStorage.getItem('modelyx_token');
         if (!token) { location.href = '/index.html?redirect=editor'; return; }
 
-        const design = getCurrentDesign();
-        const quantity = parseInt(document.getElementById('orderQuantity').value) || 1;
-        const size = document.getElementById('orderSize').value;
-        const notes = document.getElementById('orderNotes').value.trim();
-        const price = quantity * PRICE_PER_JERSEY;
+        const context = getCheckoutContext();
 
-        const btn = document.getElementById('submitOrderBtn');
+        if (context.shippingError) {
+            document.getElementById('checkoutReviewModal').style.display = 'none';
+            document.getElementById('orderModal').style.display = 'flex';
+            const errEl = document.getElementById('orderError');
+            errEl.textContent = context.shippingError;
+            errEl.classList.remove('hidden');
+            return;
+        }
+
+        saveShippingDetails(context.shipping);
+        document.getElementById('reviewError').classList.add('hidden');
+
+        const btn = document.getElementById('confirmPaymentBtn');
         btn.disabled = true;
-        btn.textContent = 'Submitting...';
+        btn.textContent = 'Preparing payment...';
 
         try {
             const res = await fetch('/orders/', {
@@ -438,14 +732,16 @@
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    team_name: design.teamName,
-                    player_number: design.number,
-                    base_color: design.baseColor,
-                    accent_color: design.accentColor,
-                    pattern: design.pattern,
-                    quantity: quantity,
-                    price: price,
-                    notes: `Size: ${size}${notes ? ' | ' + notes : ''}`
+                    team_name: context.design.teamName,
+                    player_number: context.design.number,
+                    base_color: context.design.baseColor,
+                    accent_color: context.design.accentColor,
+                    pattern: context.design.pattern,
+                    quantity: context.quantity,
+                    price: context.total,
+                    shipping_fee: SHIPPING_FEE,
+                    ...context.shipping,
+                    notes: `Size: ${context.size}${context.notes ? ' | ' + context.notes : ''}`
                 })
             });
 
@@ -453,28 +749,33 @@
 
             if (res.ok) {
                 currentOrderId = data.id;
-                currentTotal = price;
+                currentTotal = context.total;
                 document.getElementById('orderModal').style.display = 'none';
+                document.getElementById('checkoutReviewModal').style.display = 'none';
+                document.getElementById('paypalSection').innerHTML = paypalSectionInitial;
+                document.getElementById('paypalSection').style.display = 'block';
+                document.getElementById('paidSection').style.display = 'none';
                 document.getElementById('successOrderId').textContent = `Order #${data.id}`;
-                document.getElementById('successTotal').textContent = `₱${price.toLocaleString()}.00`;
+                renderSummary('checkoutSummary', context);
+                document.getElementById('successTotal').textContent = peso(context.total);
                 document.getElementById('successModal').style.display = 'flex';
 
                 // Load PayPal and render button
                 await loadPayPal();
-                renderPayPalButton(data.id, price);
+                renderPayPalButton(data.id, context.total);
             } else {
-                const errEl = document.getElementById('orderError');
+                const errEl = document.getElementById('reviewError');
                 errEl.textContent = data.detail || 'Order failed. Try again.';
                 errEl.classList.remove('hidden');
             }
         } catch (err) {
-            const errEl = document.getElementById('orderError');
+            const errEl = document.getElementById('reviewError');
             errEl.textContent = 'Server error. Is the API running?';
             errEl.classList.remove('hidden');
         }
 
         btn.disabled = false;
-        btn.textContent = 'Place Order';
+        btn.textContent = 'Confirm & Continue to Payment';
     };
 </script>
 </body>

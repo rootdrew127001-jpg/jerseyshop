@@ -4,13 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from app.core.database import engine, Base
-from app.routers import auth, notifications, orders, ai, payments
+from app.core.database import engine, Base, ensure_order_shipping_columns
+from app.routers import auth, notifications, orders, ai, payments, geo
 from app.core.config import ALLOWED_ORIGINS, ENV
 import os
 from fastapi import Response
 
 Base.metadata.create_all(bind=engine)
+ensure_order_shipping_columns()
 
 app = FastAPI(
     title="Modelyx API",
@@ -32,6 +33,7 @@ app.include_router(orders.router)
 app.include_router(ai.router)
 app.include_router(payments.router)
 app.include_router(notifications.router)
+app.include_router(geo.router)
 @app.get("/api")
 def root():
     return {

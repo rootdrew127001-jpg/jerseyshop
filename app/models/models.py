@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Numeric, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -38,6 +38,17 @@ class Order(Base):
     pattern = Column(String(50), nullable=True)
     quantity = Column(Integer, default=1)
     price = Column(Float, default=0.0)
+    shipping_fee = Column(Float, default=0.0)
+    shipping_name = Column(String(100), nullable=True)
+    shipping_phone = Column(String(20), nullable=True)
+    shipping_address = Column(String(255), nullable=True)
+    shipping_city = Column(String(100), nullable=True)
+    shipping_state = Column(String(100), nullable=True)
+    shipping_zip = Column(String(20), nullable=True)
+    shipping_country = Column(String(100), nullable=True)
+    latitude = Column(Numeric(10, 8), nullable=True)
+    longitude = Column(Numeric(11, 8), nullable=True)
+    delivery_notes = Column(Text, nullable=True)
     status = Column(String(50), default="Pending Review")
     payment_status = Column(String(50), default="Unpaid")
     paypal_order_id = Column(String(255), nullable=True)

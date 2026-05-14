@@ -63,10 +63,11 @@
 
     <script>
         const token = localStorage.getItem('modelyx_token');
-        if (!token) location.href = '/index.html';
+        if (!token) location.href = '/index.html?redirect=orders';
 
         let paypalLoaded = false;
         let currentPayNowOrderId = null;
+        let cachedOrders = [];
 
         const statusConfig = {
             'Pending Review': {
@@ -88,6 +89,7 @@
 
         function paymentBadge(order) {
             let html = '';
+            const hasShipping = [order.shipping_name, order.shipping_phone, order.shipping_address, order.shipping_city, order.shipping_state, order.shipping_zip, order.shipping_country, order.latitude, order.longitude].every(Boolean);
 
             if (order.payment_status === 'Paid') {
                 html += `
@@ -95,7 +97,7 @@
                         <span class="text-green-600 text-xs font-bold">✅ Payment Confirmed</span>
                         ${order.paypal_order_id ? `<span class="text-slate-400 text-xs font-mono">${order.paypal_order_id.slice(0,20)}...</span>` : ''}
                     </div>`;
-            } else if (order.status !== 'Cancelled') {
+            } else if (order.status !== 'Cancelled' && hasShipping) {
                 html += `
                     <div class="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
                         <div>
@@ -106,6 +108,12 @@
                             class="bg-amber-500 hover:bg-amber-400 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
                             Pay Now
                         </button>
+                    </div>`;
+            } else if (order.status !== 'Cancelled') {
+                html += `
+                    <div class="mt-3 bg-red-500/10 border border-red-500/30 rounded-2xl p-4">
+                        <p class="text-xs font-bold text-red-500">Shipping details required before payment.</p>
+                        <p class="text-xs text-slate-400 mt-1">Place a new checkout with complete delivery information.</p>
                     </div>`;
             }
 
@@ -138,11 +146,12 @@
 
                 if (res.status === 401) {
                     localStorage.clear();
-                    location.href = '/index.html';
+                    location.href = '/index.html?redirect=orders';
                     return;
                 }
 
                 const orders = await res.json();
+                cachedOrders = orders;
                 document.getElementById('loadingState').style.display = 'none';
 
                 if (!orders.length) {
@@ -161,6 +170,10 @@
                         const date = new Date(order.created_at).toLocaleDateString('en-PH', {
                             year: 'numeric', month: 'long', day: 'numeric'
                         });
+                        const total = Number(order.price || 0);
+                        const shippingFee = Number(order.shipping_fee || 0);
+                        const subtotal = Math.max(total - shippingFee, 0);
+                        const shippingAddress = [order.shipping_address, order.shipping_city, order.shipping_state, order.shipping_zip, order.shipping_country].filter(Boolean).join(', ');
 
                         return `
                         <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
@@ -194,8 +207,10 @@
                                 ${status.desc}
                             </p>
 
-                            <!-- Order Details -->
-                            <div class="grid grid-cols-2 gap-3 text-sm mb-2">
+                            <!-- Checkout Summary -->
+                            <div class="bg-slate-50 rounded-2xl p-4 mb-4">
+                                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Checkout Summary</p>
+                                <div class="grid grid-cols-2 gap-3 text-sm">
                                 <div>
                                     <p class="text-xs text-slate-400">Pattern</p>
                                     <p class="font-bold capitalize">${order.pattern || 'None'}</p>
@@ -214,8 +229,32 @@
                                     </div>
                                 </div>
                                 <div>
-                                    <p class="text-xs text-slate-400">Total</p>
-                                    <p class="font-black text-indigo-600">₱${Number(order.price).toLocaleString()}</p>
+                                    <p class="text-xs text-slate-400">Jersey Subtotal</p>
+                                    <p class="font-bold">₱${subtotal.toLocaleString()}</p>
+                                </div>
+                            </div>
+                                <div class="mt-4 border-t border-slate-200 pt-3 space-y-2 text-sm">
+                                    <div class="flex justify-between text-slate-500">
+                                        <span>Shipping Fee</span>
+                                        <strong class="text-slate-700">₱${shippingFee.toLocaleString()}</strong>
+                                    </div>
+                                    <div class="flex justify-between text-base">
+                                        <span class="font-black text-slate-900">Total Paid / Due</span>
+                                        <strong class="text-indigo-600">₱${total.toLocaleString()}</strong>
+                                    </div>
+                                </div>
+                                <div class="mt-4 border-t border-slate-200 pt-3">
+                                    <p class="text-xs text-slate-400">Ship To</p>
+                                    <p class="text-sm font-bold text-slate-700 mt-1">${order.shipping_name || 'Recipient not set'}</p>
+                                    <p class="text-xs text-slate-500">${order.shipping_phone || ''}</p>
+                                    <p class="text-xs text-slate-500">${shippingAddress || 'No shipping address saved.'}</p>
+                                    ${order.delivery_notes ? `<p class="text-xs text-slate-400 mt-1">${order.delivery_notes}</p>` : ''}
+                                    ${order.latitude && order.longitude ? `
+                                        <a href="https://www.openstreetmap.org/?mlat=${order.latitude}&mlon=${order.longitude}#map=18/${order.latitude}/${order.longitude}"
+                                            target="_blank" rel="noopener"
+                                            class="text-xs font-bold text-indigo-600 hover:underline mt-2 inline-block">
+                                            View delivery pin
+                                        </a>` : ''}
                                 </div>
                             </div>
 
@@ -252,6 +291,13 @@
         }
 
         window.payNow = async function(orderId, price) {
+            const order = cachedOrders.find(item => item.id === orderId);
+            const hasShipping = order && [order.shipping_name, order.shipping_phone, order.shipping_address, order.shipping_city, order.shipping_state, order.shipping_zip, order.shipping_country, order.latitude, order.longitude].every(Boolean);
+            if (!hasShipping) {
+                alert('Please complete shipping details before payment.');
+                return;
+            }
+
             currentPayNowOrderId = orderId;
             document.getElementById('payNowTotal').textContent = `₱${Number(price).toLocaleString()}`;
             document.getElementById('payNowModal').style.display = 'flex';
