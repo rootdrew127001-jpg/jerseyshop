@@ -5,62 +5,95 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/customerNav.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen">
-    <div class="max-w-md mx-auto px-4 pb-20 pt-6">
-        <div class="bg-white rounded-[2.5rem] shadow-xl overflow-hidden">
-            <div class="px-6 py-5 border-b border-slate-200">
-                <nav class="flex items-center justify-between text-sm font-semibold text-slate-500">
-                    <a href="profile.html" class="text-slate-900">Profile</a>
-                    <a href="favorites.html" class="hover:text-slate-900">Favourites</a>
-                    <a href="settings.html" class="hover:text-slate-900">Settings</a>
-                </nav>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <main class="max-w-6xl mx-auto px-6 py-8 lg:py-10">
+        <header class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Customer Account</p>
+                <h1 class="text-3xl font-black tracking-tight text-slate-900">Profile</h1>
+                <p class="text-sm text-slate-500 mt-2">Manage your account identity and default checkout details.</p>
             </div>
-            <div class="p-6 flex gap-4">
-                <div id="avatarContainer" class="h-24 w-24 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden">
+            <div class="flex flex-wrap gap-3">
+                <button onclick="location.href='settings.html'" class="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-100">Edit Settings</button>
+                <button onclick="location.href='dashboard.html'" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Dashboard</button>
+            </div>
+        </header>
+        <div id="saveNotice" class="hidden mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-bold text-green-700">
+            Profile changes saved successfully.
+        </div>
+
+        <section class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
+            <div class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                <div id="avatarContainer" class="h-28 w-28 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
                 </div>
-                <div class="flex-1">
-                    <h1 id="welcomeName" class="text-3xl font-bold text-slate-900">Designer</h1>
-                    <p id="userEmail" class="text-xs text-slate-400 mt-1">user@example.com</p>
-                    <p id="memberDate" class="text-sm text-slate-500 mt-2">Modelyx Member Since April 2021</p>
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <button onclick="location.href='settings.html'" class="rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-50">Edit Profile</button>
-                        <button onclick="location.href='dashboard.html'" class="rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">Back to Dashboard</button>
+                <div class="mt-6">
+                    <h2 id="welcomeName" class="text-3xl font-black text-slate-900">Designer</h2>
+                    <p id="userEmail" class="text-sm text-slate-500 mt-1">user@example.com</p>
+                    <p id="memberDate" class="text-sm text-slate-500 mt-3">Modelyx Member Since April 2021</p>
+                    <div class="mt-5 rounded-2xl bg-indigo-50 px-4 py-3">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500">Role</p>
+                        <p class="text-sm font-bold text-slate-900 mt-1">Customer Studio</p>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="mt-5 bg-white rounded-[2.5rem] p-6 shadow-xl">
-            <p class="text-sm font-semibold text-slate-900">Account Overview</p>
-            <p class="text-xs text-slate-500 mt-1">Profile basics are shown here. Shipping and map pin setup live in Settings and Checkout.</p>
-            <div class="mt-5 grid grid-cols-1 gap-3 text-sm">
-                <div class="rounded-3xl bg-slate-50 p-4">
-                    <p class="text-xs text-slate-400">Name</p>
-                    <p id="overviewName" class="font-bold text-slate-900 mt-1">Designer</p>
+
+            <div class="space-y-6">
+                <div class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Account Overview</p>
+                            <h2 class="mt-1 text-xl font-black text-slate-900">Basic Information</h2>
+                        </div>
+                        <button onclick="location.href='settings.html'" class="rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700">Update</button>
+                    </div>
+                    <div class="mt-5 grid gap-3 sm:grid-cols-2">
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <p class="text-xs text-slate-400">Name</p>
+                            <p id="overviewName" class="font-bold text-slate-900 mt-1 break-words">Designer</p>
+                        </div>
+                        <div class="rounded-2xl bg-slate-50 p-4">
+                            <p class="text-xs text-slate-400">Email</p>
+                            <p id="overviewEmail" class="font-bold text-slate-900 mt-1 break-words">user@example.com</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="rounded-3xl bg-slate-50 p-4">
-                    <p class="text-xs text-slate-400">Email</p>
-                    <p id="overviewEmail" class="font-bold text-slate-900 mt-1">user@example.com</p>
+
+                <div class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Default Checkout</p>
+                    <h2 class="mt-1 text-xl font-black text-slate-900">Shipping Setup</h2>
+                    <p class="mt-2 text-sm text-slate-500">Your saved shipping address and map pin are used to speed up checkout. Each order still saves its own shipping snapshot.</p>
+                    <div class="mt-5 rounded-2xl bg-slate-50 p-4">
+                        <p class="text-xs text-slate-400">Saved Address</p>
+                        <p id="shippingPreview" class="mt-1 text-sm font-bold text-slate-900">No default shipping address yet.</p>
+                        <a id="pinPreview" href="#" target="_blank" rel="noopener" class="hidden mt-2 text-xs font-bold text-indigo-600 hover:underline">View saved pin</a>
+                    </div>
+                    <button onclick="location.href='settings.html'" class="mt-5 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-100">
+                        Manage Shipping Defaults
+                    </button>
                 </div>
             </div>
-            <button onclick="location.href='settings.html'"
-                class="mt-5 w-full rounded-3xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700">
-                Manage Profile Settings
-            </button>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script>
         const $ = id => document.getElementById(id);
         const logout = () => { localStorage.clear(); location.href='index.html'; };
 
         window.onload = () => {
+            if (sessionStorage.getItem('modelyx_profile_saved') === '1') {
+                sessionStorage.removeItem('modelyx_profile_saved');
+                $('saveNotice').classList.remove('hidden');
+                setTimeout(() => $('saveNotice').classList.add('hidden'), 4000);
+            }
+
             const name = localStorage.getItem('modelyx_user_name') || localStorage.getItem('modelyx_user_email')?.split('@')[0] || 'Designer';
             const email = localStorage.getItem('modelyx_user_email') || 'user@example.com';
             const created = localStorage.getItem('modelyx_user_created') || 'April 2021';
@@ -73,6 +106,23 @@
             }
             $('overviewName').innerText = name;
             $('overviewEmail').innerText = email;
+
+            const shippingAddress = [
+                localStorage.getItem('modelyx_shipping_address'),
+                localStorage.getItem('modelyx_shipping_city'),
+                localStorage.getItem('modelyx_shipping_state'),
+                localStorage.getItem('modelyx_shipping_zip'),
+                localStorage.getItem('modelyx_shipping_country')
+            ].filter(Boolean).join(', ');
+            $('shippingPreview').innerText = shippingAddress || 'No default shipping address yet.';
+
+            const lat = localStorage.getItem('modelyx_shipping_latitude');
+            const lng = localStorage.getItem('modelyx_shipping_longitude');
+            if (lat && lng) {
+                const pin = $('pinPreview');
+                pin.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`;
+                pin.classList.remove('hidden');
+            }
         };
     </script>
 </body>

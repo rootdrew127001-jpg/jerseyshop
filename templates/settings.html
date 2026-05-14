@@ -5,23 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Settings</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/static/js/customerNav.js"></script>
     <script src="/static/js/addressAutocomplete.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="bg-slate-100 text-slate-900 min-h-screen">
-    <div class="max-w-md mx-auto px-4 py-8">
-        <div class="bg-white rounded-[2.5rem] p-6 shadow-xl">
-            <div class="flex items-center justify-between mb-6">
-                <div>
-                    <h1 class="text-2xl font-bold">Settings</h1>
-                    <p class="text-sm text-slate-500">Manage your account preferences.</p>
-                </div>
-                <button onclick="location.href='profile.html'" class="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-100">Back</button>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+    <main class="max-w-6xl mx-auto px-6 py-8 lg:py-10">
+        <header class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Customer Account</p>
+                <h1 class="text-3xl font-black tracking-tight text-slate-900">Settings</h1>
+                <p class="text-sm text-slate-500 mt-2">Update profile details and default shipping information.</p>
             </div>
-            <div class="mb-6 rounded-3xl border border-slate-200 bg-slate-50 p-5 shadow-sm">
+            <div class="flex flex-wrap gap-3">
+                <button onclick="location.href='profile.html'" class="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-100">Profile</button>
+                <button onclick="location.href='dashboard.html'" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Dashboard</button>
+            </div>
+        </header>
+
+        <section class="grid gap-6 lg:grid-cols-[0.9fr_1.4fr]">
+            <aside class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
                 <div class="flex items-start gap-4">
-                    <div id="summaryAvatar" class="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden border border-slate-200">
+                    <div id="summaryAvatar" class="h-20 w-20 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden border border-slate-200">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                             <circle cx="12" cy="7" r="4" />
@@ -44,54 +50,73 @@
                         <div id="completionBar" class="h-full rounded-full bg-indigo-600 w-0"></div>
                     </div>
                 </div>
-            </div>
-            <form id="settingsForm" class="space-y-5">
-                <div>
-                    <label for="profileImage" class="block text-sm font-semibold text-slate-700 mb-2">Profile Picture</label>
-                    <div class="flex items-center gap-4">
-                        <div id="imagePreview" class="h-20 w-20 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                <circle cx="12" cy="7" r="4" />
-                            </svg>
+                <div class="mt-6 rounded-2xl bg-indigo-50 px-4 py-3">
+                    <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500">Default Checkout</p>
+                    <p class="mt-1 text-sm font-bold text-slate-900">Saved address speeds up future orders.</p>
+                </div>
+            </aside>
+
+            <form id="settingsForm" class="space-y-6">
+                <section class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                    <div class="mb-5">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Profile Details</p>
+                        <h2 class="mt-1 text-xl font-black text-slate-900">Basic Information</h2>
+                    </div>
+                    <div class="grid gap-5 md:grid-cols-[auto_1fr] md:items-center">
+                        <div id="imagePreview" class="h-24 w-24 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                         </div>
-                        <div class="flex-1">
+                        <div>
+                            <label for="profileImage" class="block text-sm font-semibold text-slate-700 mb-2">Profile Picture</label>
                             <input type="file" id="profileImage" name="profileImage" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-3xl file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100">
                             <p class="text-xs text-slate-500 mt-1">JPG, PNG (Max 5MB)</p>
                         </div>
                     </div>
-                </div>
-                <div>
-                    <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
-                    <input type="text" id="name" name="name" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Your name">
-                </div>
-                <div>
-                    <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
-                    <input type="email" id="email" name="email" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="you@example.com">
-                </div>
-                <div>
-                    <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="09xx xxx xxxx">
-                </div>
-                <div>
-                    <label for="address" class="block text-sm font-semibold text-slate-700 mb-2">Shipping Address</label>
-                    <input type="text" id="address" name="address" class="w-full rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Street address">
-                    <input type="hidden" id="latitude" name="latitude">
-                    <input type="hidden" id="longitude" name="longitude">
-                    <p class="mt-2 text-xs text-slate-500">Type at least 3 letters, then choose a suggested address.</p>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="city" name="city" class="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="City">
-                    <input type="text" id="state" name="state" class="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="State">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <input type="text" id="zip" name="zip" class="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Zip Code">
-                    <input type="text" id="country" name="country" class="rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Country">
-                </div>
-                <button type="submit" class="w-full rounded-3xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700">Save Changes</button>
+                    <div class="mt-5 grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="name" class="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                            <input type="text" id="name" name="name" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Your name">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+                            <input type="email" id="email" name="email" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="you@example.com">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="09xx xxx xxxx">
+                        </div>
+                    </div>
+                </section>
+
+                <section class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                    <div class="mb-5">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shipping Defaults</p>
+                        <h2 class="mt-1 text-xl font-black text-slate-900">Address & Map Pin</h2>
+                        <p class="mt-2 text-sm text-slate-500">Use address search to save a default location. Checkout still lets you confirm or change the pin per order.</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="address" class="block text-sm font-semibold text-slate-700 mb-2">Shipping Address</label>
+                            <input type="text" id="address" name="address" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Street address">
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+                            <p class="mt-2 text-xs text-slate-500">Type at least 3 letters, then choose a suggested address.</p>
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <input type="text" id="city" name="city" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="City">
+                            <input type="text" id="state" name="state" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="State">
+                        </div>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <input type="text" id="zip" name="zip" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Zip Code">
+                            <input type="text" id="country" name="country" class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" placeholder="Country">
+                        </div>
+                    </div>
+                </section>
+
+                <button type="submit" class="w-full rounded-2xl bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700">Save Changes</button>
             </form>
-        </div>
-    </div>
+        </section>
+    </main>
 
     <script>
         const $ = id => document.getElementById(id);
@@ -202,7 +227,8 @@
             if (longitude) localStorage.setItem('modelyx_shipping_longitude', longitude);
 
             updateSummary();
-            alert('Profile information updated successfully!');
+            sessionStorage.setItem('modelyx_profile_saved', '1');
+            location.href = 'profile.html';
         });
     </script>
 </body>

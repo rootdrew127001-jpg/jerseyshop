@@ -3,7 +3,7 @@
  * Enables offline functionality and PWA capabilities
  */
 
-const CACHE_NAME = 'modelyx-v6';
+const CACHE_NAME = 'modelyx-v11';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -12,6 +12,7 @@ const ASSETS_TO_CACHE = [
     '/orders.html',
     '/admin.html',
     '/static/js/addressAutocomplete.js',
+    '/static/js/customerNav.js',
     '/utils.js',
     'https://cdn.tailwindcss.com',
     'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap'
