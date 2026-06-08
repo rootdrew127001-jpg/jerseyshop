@@ -55,32 +55,55 @@
             <!-- Design Summary -->
             <div class="bg-slate-700/50 rounded-2xl p-4 mb-6">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Design Summary</p>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 gap-3 text-xs">
                     <div>
-                        <p class="text-xs text-slate-400">Team</p>
-                        <p class="text-sm font-bold text-white" id="summaryTeam">-</p>
+                        <p class="text-slate-400">Team / Name</p>
+                        <p class="font-bold text-white" id="summaryTeam">-</p>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400">Number</p>
-                        <p class="text-sm font-bold text-white" id="summaryNumber">-</p>
+                        <p class="text-slate-400">Number</p>
+                        <p class="font-bold text-white" id="summaryNumber">-</p>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400">Base Color</p>
+                        <p class="text-slate-400">Base Color</p>
                         <div class="flex items-center gap-2">
-                            <div id="summaryBaseColor" class="w-5 h-5 rounded-md border border-slate-500"></div>
-                            <p class="text-xs font-mono text-white" id="summaryBaseColorText">-</p>
+                            <div id="summaryBaseColor" class="w-4 h-4 rounded-md border border-slate-500"></div>
+                            <p class="font-mono text-white text-[10px]" id="summaryBaseColorText">-</p>
                         </div>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400">Accent Color</p>
+                        <p class="text-slate-400">Accent Color</p>
                         <div class="flex items-center gap-2">
-                            <div id="summaryAccentColor" class="w-5 h-5 rounded-md border border-slate-500"></div>
-                            <p class="text-xs font-mono text-white" id="summaryAccentColorText">-</p>
+                            <div id="summaryAccentColor" class="w-4 h-4 rounded-md border border-slate-500"></div>
+                            <p class="font-mono text-white text-[10px]" id="summaryAccentColorText">-</p>
                         </div>
                     </div>
                     <div>
-                        <p class="text-xs text-slate-400">Pattern</p>
-                        <p class="text-sm font-bold text-white" id="summaryPattern">-</p>
+                        <p class="text-slate-400">Tertiary Color</p>
+                        <div class="flex items-center gap-2">
+                            <div id="summaryTertiaryColor" class="w-4 h-4 rounded-md border border-slate-500"></div>
+                            <p class="font-mono text-white text-[10px]" id="summaryTertiaryColorText">-</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Pattern</p>
+                        <p class="font-bold text-white capitalize" id="summaryPattern">-</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Finish</p>
+                        <p class="font-bold text-white capitalize" id="summaryFinish">-</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Badge Logo</p>
+                        <p class="font-bold text-white capitalize" id="summaryLogo">-</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Font</p>
+                        <p class="font-bold text-white capitalize" id="summaryFont">-</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Sponsor</p>
+                        <p class="font-bold text-white" id="summarySponsor">-</p>
                     </div>
                 </div>
             </div>
@@ -265,7 +288,7 @@
             <p class="text-xs text-slate-400 mt-1">3D Jersey Studio</p>
         </div>
 
-        <div class="p-6 space-y-4 flex-1">
+        <div class="p-6 space-y-5 flex-1 font-sans">
 
             <!-- Random Button -->
             <button id="randomBtn"
@@ -287,56 +310,137 @@
             </p>
 
             <!-- Divider -->
-            <div class="border-t border-slate-700 pt-2"></div>
+            <div class="border-t border-slate-700/60 pt-2"></div>
 
-            <!-- Colors -->
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Colors</p>
-                <div class="space-y-3">
-                    <div>
-                        <label class="text-xs text-slate-300 mb-1 block">Base Color</label>
-                        <input type="color" id="baseColor" value="#4F46E5"
-                            class="w-full h-10 rounded-xl border-0 cursor-pointer bg-slate-700">
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-300 mb-1 block">Accent Color</label>
-                        <input type="color" id="accentColor" value="#7C3AED"
-                            class="w-full h-10 rounded-xl border-0 cursor-pointer bg-slate-700">
-                    </div>
+            <!-- Showrooms Selector -->
+            <div class="space-y-2 pb-2 border-b border-slate-700/40">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">3D Showroom Environment</p>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button id="envCyber" class="bg-indigo-600 text-white font-bold py-2 rounded-xl text-xs transition border border-indigo-400/30">Cyber</button>
+                    <button id="envLocker" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-xl text-xs transition">Locker</button>
+                    <button id="envStadium" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-xl text-xs transition">Stadium</button>
                 </div>
             </div>
 
-            <!-- Style -->
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Style</p>
-                <select id="pattern"
-                    class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none">
-                    <option value="none">No Pattern</option>
-                    <option value="stripes">Stripes</option>
-                    <option value="diagonal">Diagonal</option>
-                    <option value="panel">Side Panels</option>
-                    <option value="gradient">Gradient</option>
-                </select>
-            </div>
-
-            <!-- Team Info -->
-            <div>
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Team Info</p>
-                <div class="space-y-3">
+            <!-- Colors & Finishes Accordion -->
+            <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
+                <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
+                    <span>Colors & Finish</span>
+                    <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
+                </summary>
+                <div class="space-y-3 pt-3">
                     <div>
-                        <label class="text-xs text-slate-300 mb-1 block">Team Name</label>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Base Color</label>
+                        <input type="color" id="baseColor" value="#4F46E5"
+                            class="w-full h-9 rounded-xl border-0 cursor-pointer bg-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Accent Color</label>
+                        <input type="color" id="accentColor" value="#7C3AED"
+                            class="w-full h-9 rounded-xl border-0 cursor-pointer bg-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Tertiary Color (Outlines/Details)</label>
+                        <input type="color" id="tertiaryColor" value="#ffffff"
+                            class="w-full h-9 rounded-xl border-0 cursor-pointer bg-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1.5 block">Material Finish</label>
+                        <div class="grid grid-cols-4 gap-1">
+                            <button id="finishMatte" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-lg text-[10px] transition">Matte</button>
+                            <button id="finishSatin" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-lg text-[10px] transition">Satin</button>
+                            <button id="finishMetallic" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-lg text-[10px] transition">Metal</button>
+                            <button id="finishCarbon" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-lg text-[10px] transition">Carbon</button>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Pattern Selector Accordion -->
+            <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
+                <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
+                    <span>Jersey Pattern</span>
+                    <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
+                </summary>
+                <div class="pt-3">
+                    <select id="pattern"
+                        class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
+                        <option value="none">Solid (No Pattern)</option>
+                        <option value="stripes">Classic Stripes</option>
+                        <option value="diagonal">Diagonal Stripes</option>
+                        <option value="panel">Side Panels</option>
+                        <option value="gradient">Vertical Gradient</option>
+                        <option value="thunderstorm">⚡ Thunderstorm (Geometric)</option>
+                        <option value="paint_splatter">🎨 Paint Splatter (Grunge)</option>
+                        <option value="apex_gamer">🎮 Apex Gamer (E-Sports)</option>
+                        <option value="vortex_swoosh">🌀 Vortex Swoosh (Curved)</option>
+                        <option value="carbon_scratch">🏎️ Carbon Scratch (Motorsport)</option>
+                        <option value="digi_camo">🎖️ Digital Camo (Tactical)</option>
+                        <option value="retro_halftone">🏁 Retro Halftone (Comic)</option>
+                        <option value="cyber_grid">🌐 Cyber Grid (High-Tech)</option>
+                        <option value="tidal_wave">🌊 Tidal Wave (Fluid Waves)</option>
+                    </select>
+                </div>
+            </details>
+
+            <!-- Badges & Graphics Accordion -->
+            <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
+                <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
+                    <span>Badges & Sponsor</span>
+                    <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
+                </summary>
+                <div class="space-y-3 pt-3">
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Team Crest Badge</label>
+                        <select id="logo"
+                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
+                            <option value="none">No Badge</option>
+                            <option value="shield">🛡️ Shield Badge</option>
+                            <option value="star">⭐ Championship Star</option>
+                            <option value="flame">🔥 Flame Badge</option>
+                            <option value="eagle">🦅 E-Sports Eagle</option>
+                            <option value="vortex">🌀 Spiral Vortex</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Chest Sponsor Text</label>
+                        <input type="text" id="sponsorText" placeholder="e.g. VORTEX" maxlength="12"
+                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500">
+                    </div>
+                </div>
+            </details>
+
+            <!-- Team Info & Fonts Accordion -->
+            <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
+                <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
+                    <span>Player Info & Font</span>
+                    <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
+                </summary>
+                <div class="space-y-3 pt-3">
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Team / Player Name</label>
                         <input type="text" id="teamName" value="TEAM" maxlength="12"
-                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500"
+                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500"
                             placeholder="TEAM">
                     </div>
                     <div>
-                        <label class="text-xs text-slate-300 mb-1 block">Player Number (0-99)</label>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Player Number (0-99)</label>
                         <input type="number" id="number" value="23" min="0" max="99"
-                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none"
+                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none"
                             placeholder="23">
                     </div>
+                    <div>
+                        <label class="text-[11px] text-slate-300 mb-1 block">Lettering Font Style</label>
+                        <select id="font"
+                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
+                            <option value="athletic">Courier Athletic</option>
+                            <option value="stencil">Impact Stencil</option>
+                            <option value="tech">Arial Tech</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
+            </details>
+
         </div>
 
         <!-- Bottom buttons -->
@@ -638,6 +742,12 @@
         document.getElementById('summaryBaseColorText').textContent = design.baseColor;
         document.getElementById('summaryAccentColor').style.background = design.accentColor;
         document.getElementById('summaryAccentColorText').textContent = design.accentColor;
+        document.getElementById('summaryTertiaryColor').style.background = design.tertiaryColor || '#ffffff';
+        document.getElementById('summaryTertiaryColorText').textContent = design.tertiaryColor || '#ffffff';
+        document.getElementById('summaryFinish').textContent = design.finish || 'matte';
+        document.getElementById('summaryLogo').textContent = design.logo || 'none';
+        document.getElementById('summaryFont').textContent = design.font || 'athletic';
+        document.getElementById('summarySponsor').textContent = design.sponsorText || 'None';
         prefillShippingDetails();
         updatePrice();
         document.getElementById('orderModal').style.display = 'flex';
@@ -741,7 +851,7 @@
                     price: context.total,
                     shipping_fee: SHIPPING_FEE,
                     ...context.shipping,
-                    notes: `Size: ${context.size}${context.notes ? ' | ' + context.notes : ''}`
+                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'}${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 
