@@ -3,7 +3,7 @@
  * Enables offline functionality and PWA capabilities
  */
 
-const CACHE_NAME = 'modelyx-v11';
+const CACHE_NAME = 'modelyx-v12';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
@@ -53,6 +53,11 @@ self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
     const apiPrefixes = ['/auth/', '/orders/', '/payments/', '/notifications/', '/geo/', '/api'];
     if (url.origin === self.location.origin && apiPrefixes.some(prefix => url.pathname.startsWith(prefix))) {
+        return;
+    }
+
+    // Bypass caching for 3D model files (GLB/GLTF)
+    if (url.pathname.endsWith('.glb') || url.pathname.endsWith('.gltf')) {
         return;
     }
 

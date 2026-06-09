@@ -30,6 +30,10 @@ services:
       - .env
     environment:
       DB_HOST: db
+    volumes:
+      - ./app:/app/app
+      - ./static:/app/static
+      - ./templates:/app/templates
     depends_on:
       db:
         condition: service_healthy

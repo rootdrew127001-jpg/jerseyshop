@@ -71,7 +71,7 @@ export function initViewer(canvasId) {
     changeEnvironment('cyber');
 
     // 9. Load the GLB model
-    tryLoadGLB('/static/assets/models/jersey.glb');
+    tryLoadGLB('/static/assets/models/jersey.glb?v=' + Date.now());
 
     // Resize handler
     window.addEventListener('resize', () => {
