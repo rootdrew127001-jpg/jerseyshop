@@ -219,6 +219,7 @@ function tryLoadGLB(path) {
                     }
                 });
             }
+            window.dispatchEvent(new Event('viewer:ready'));
         },
         (progress) => {
             const percent = Math.round((progress.loaded / progress.total) * 100);

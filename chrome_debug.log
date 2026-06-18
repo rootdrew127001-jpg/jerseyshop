@@ -1,0 +1,42 @@
+[33964:11020:0619/055216.051:INFO:components\enterprise\browser\controller\chrome_browser_cloud_management_controller.cc:239] No machine level policy manager exists.
+[33964:1960:0619/055216.142:WARNING:chrome\browser\extensions\external_pref_loader.cc:294] You are using an old-style extension deployment method (external_extensions.json), which will soon be deprecated. (see http://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions)
+[28776:14376:0619/055216.165:ERROR:ui\gl\direct_composition_support.cc:616] AMD VideoProcessorGetOutputExtension failed: The parameter is incorrect. (0x80070057)
+[28776:14376:0619/055216.166:VERBOSE1:components\viz\service\main\viz_main_impl.cc:87] VizNullHypothesis is disabled (not a warning)
+[22628:1640:0619/055216.187:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[13460:38120:0619/055216.187:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[33964:11020:0619/055216.207:WARNING:chrome\browser\extensions\external_registry_loader_win.cc:236] Error observing HKLM: Access is denied. (0x5)
+[16188:14008:0619/055216.239:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[21888:37124:0619/055216.239:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[8292:30120:0619/055216.280:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[5184:20124:0619/055216.296:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[6004:38472:0619/055216.321:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[33964:11020:0619/055216.601:INFO:CONSOLE:33] "cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation", source: http://127.0.0.1:9100/editor.html (33)
+[33964:11020:0619/055217.442:INFO:CONSOLE:25] "renderJersey2D called for back: false width: 512 height: 512", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.445:INFO:CONSOLE:25] "drawRawDesign finished on designCanvas", source: http://127.0.0.1:9100/editor.html (25)
+[28776:13288:0619/055217.487:WARNING:ui\gl\angle_platform_impl.cc:52] HLSLCompiler.cpp:254 (rx::HLSLCompiler::compileToBinary): 
+C:\fakepath(156,3-70): warning X3557: loop only executes for 1 iteration(s), forcing loop to unroll
+
+[33964:11020:0619/055217.575:INFO:CONSOLE:25] "targetCanvas center pixel: front 87,78,230,255", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.575:INFO:CONSOLE:25] "renderJersey2D called for back: true width: 512 height: 512", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.578:INFO:CONSOLE:25] "drawRawDesign finished on designCanvas", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.585:INFO:CONSOLE:25] "targetCanvas center pixel: back 86,77,226,255", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.800:INFO:CONSOLE:25] "GLB loaded successfully", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.801:INFO:CONSOLE:25] "Mesh found: body_mannequin", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.801:INFO:CONSOLE:25] "Mesh found: jersey_body", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.801:INFO:CONSOLE:25] "Mesh found: shorts", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.801:INFO:CONSOLE:25] "Mesh found: jersey_front", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.801:INFO:CONSOLE:25] "Mesh found: jersey_back", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055217.801:INFO:CONSOLE:25] "Mapped parts: mannequin,jersey_body,shorts,jersey_front,jersey_back", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055219.279:ERROR:components\device_event_log\device_event_log_impl.cc:200] [05:52:19.279] USB: usb_service_win.cc:108 SetupDiGetDeviceProperty({{A45C254E-DF1C-4EFD-8020-67D146A850E0}, 6}) failed: Element not found. (0x490)
+[38432:18248:0619/055219.397:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[9668:18004:0619/055219.397:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[36556:15820:0619/055219.468:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[28924:39352:0619/055219.498:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[28388:29504:0619/055219.553:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[27668:25536:0619/055219.579:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[33964:11020:0619/055219.587:INFO:CONSOLE:25] "CANVAS_FRONT_INFO: width=512 height=512 clientWidth=379 clientHeight=379 rect={"x":329,"y":-165.5,"width":379,"height":379,"top":-165.5,"right":708,"bottom":213.5,"left":329} display=block visibility=visible opacity=1", source: http://127.0.0.1:9100/editor.html (25)
+[33964:11020:0619/055219.587:INFO:CONSOLE:25] "VIEWPORT_INFO: clientHeight=485 scrollHeight=720 scrollTop=0 docClientHeight=485 docScrollHeight=485", source: http://127.0.0.1:9100/editor.html (25)
+[14416:19056:0619/055219.626:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[33964:9044:0619/055219.631:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[9208:9052:0619/055219.659:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16
+[17252:37544:0619/055219.745:INFO:third_party\webrtc\rtc_base\cpu_info.cc:77] Available number of cores: 16

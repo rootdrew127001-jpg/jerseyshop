@@ -2,10 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Modelyx | 3D Studio</title>
+    <title>Modelyx | T-Shirt Customizer Studio</title>
+    <script>
+    (function() {
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        function sendLog(type, args) {
+            const message = Array.from(args).map(arg => {
+                if (typeof arg === 'object') {
+                    try { return JSON.stringify(arg); } catch(e) { return String(arg); }
+                }
+                return String(arg);
+            }).join(' ');
+            fetch('/api/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: type, message: message })
+            }).catch(err => {});
+        }
+        console.log = function() {
+            originalLog.apply(console, arguments);
+            sendLog('log', arguments);
+        };
+        console.error = function() {
+            originalError.apply(console, arguments);
+            sendLog('error', arguments);
+        };
+        console.warn = function() {
+            originalWarn.apply(console, arguments);
+            sendLog('warn', arguments);
+        };
+        window.addEventListener('error', function(event) {
+            sendLog('exception', [event.message, 'at', event.filename, ':', event.lineno]);
+        });
+        window.addEventListener('unhandledrejection', function(event) {
+            sendLog('promise_rejection', [event.reason]);
+        });
+    })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&display=swap" rel="stylesheet">
     <script type="importmap">
     {
         "imports": {
@@ -436,7 +475,33 @@
                             <option value="athletic">Courier Athletic</option>
                             <option value="stencil">Impact Stencil</option>
                             <option value="tech">Arial Tech</option>
+                            <option value="retro">Graduate Retro</option>
+                            <option value="impact">Bebas Impact</option>
+                            <option value="cyber">Orbitron Sci-Fi</option>
+                            <option value="esports">Teko E-Sports</option>
                         </select>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                            <span>Number Size</span>
+                            <span id="lblNumberSize" class="font-mono text-indigo-400">140px</span>
+                        </div>
+                        <input type="range" id="fontSizeNumber" min="80" max="220" value="140"
+                            class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                            <span>Outline Weight</span>
+                            <span id="lblOutlineWeight" class="font-mono text-indigo-400">8px</span>
+                        </div>
+                        <input type="range" id="outlineWeight" min="0" max="24" value="8"
+                            class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                    </div>
+                    <div class="relative">
+                        <label class="text-[11px] text-slate-300 mb-1 block">Search Premium Google Font</label>
+                        <input type="text" id="customFontSearch" placeholder="Search 1,500+ Google Fonts..."
+                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500">
+                        <div id="fontSearchResults" class="hidden absolute left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl z-30 shadow-2xl divide-y divide-slate-700/60"></div>
                     </div>
                 </div>
             </details>
@@ -456,17 +521,58 @@
         </div>
     </div>
 
-    <!-- 3D Viewport -->
-    <div class="flex-1 relative">
-        <canvas id="jerseyCanvas" class="w-full h-full"></canvas>
-        <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-500 text-xs">
-            Drag to rotate · Scroll to zoom
+    <div class="flex-1 relative flex flex-col justify-center items-center bg-slate-950">
+        <div class="absolute top-4 right-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg">
+            <button id="btnView2D" class="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">2D Design</button>
+            <button id="btnView3D" class="px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">3D Preview</button>
+        </div>
+
+        <div id="viewport2D" class="w-full h-full flex flex-col md:flex-row items-center justify-start md:justify-center gap-6 p-6 overflow-auto">
+            <div class="flex flex-col items-center flex-shrink-0">
+                <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Front View</p>
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
+                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[512px] h-[512px] max-w-full max-h-full">
+                        <canvas id="canvasFront2D" width="512" height="512" class="max-w-full h-auto block bg-transparent"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col items-center flex-shrink-0">
+                <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Back View</p>
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
+                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[512px] h-[512px] max-w-full max-h-full">
+                        <canvas id="canvasBack2D" width="512" height="512" class="max-w-full h-auto block bg-transparent"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="viewport3D" class="hidden w-full h-full relative">
+            <canvas id="jerseyCanvas" class="w-full h-full"></canvas>
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-500 text-xs pointer-events-none">
+                Drag to rotate · Scroll to zoom
+            </div>
         </div>
     </div>
 
     <script type="module">
     import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js';
     initEditor();
+     setTimeout(function() {
+         const c = document.getElementById('canvasFront2D');
+         const vp = document.getElementById('viewport2D');
+         if (c && vp) {
+             const rect = c.getBoundingClientRect();
+             const style = window.getComputedStyle(c);
+             console.log("CANVAS_FRONT_INFO: width=" + c.width + " height=" + c.height + 
+                         " clientWidth=" + c.clientWidth + " clientHeight=" + c.clientHeight +
+                         " rect=" + JSON.stringify(rect) + 
+                         " display=" + style.display + " visibility=" + style.visibility + " opacity=" + style.opacity);
+             console.log("VIEWPORT_INFO: clientHeight=" + vp.clientHeight + " scrollHeight=" + vp.scrollHeight + " scrollTop=" + vp.scrollTop +
+                         " docClientHeight=" + document.documentElement.clientHeight + " docScrollHeight=" + document.documentElement.scrollHeight);
+         } else {
+             console.error("CANVAS_FRONT_INFO: elements not found");
+         }
+     }, 2000);
 
     AddressAutocomplete.init({
         inputId: 'shippingAddress',
@@ -851,7 +957,7 @@
                     price: context.total,
                     shipping_fee: SHIPPING_FEE,
                     ...context.shipping,
-                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'}${context.notes ? ' | Notes: ' + context.notes : ''}`
+                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: ${context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'}${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 

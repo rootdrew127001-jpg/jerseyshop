@@ -1,139 +1,381 @@
 import * as THREE from 'three';
 
+let cachedFrontCanvas = null;
+let cachedFrontTexture = null;
+
 export function buildTexture(options = {}) {
-    const {
-        teamName = 'TEAM',
-        number = '23',
-        baseColor = '#4F46E5',
-        accentColor = '#7C3AED',
-        tertiaryColor = '#ffffff',
-        pattern = 'none',
-        logo = 'none',
-        font = 'athletic',
-        sponsorText = ''
-    } = options;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
-
-    // 1. Base Background
-    ctx.fillStyle = baseColor;
-    ctx.fillRect(0, 0, 512, 512);
-
-    // 2. Draw Pattern Preset
-    drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
-
-    // 3. Draw Badge/Logo
-    if (logo !== 'none') {
-        drawLogo(ctx, logo, 256, 150, 60, tertiaryColor, accentColor);
+    if (!cachedFrontCanvas) {
+        cachedFrontCanvas = document.createElement('canvas');
+        cachedFrontCanvas.width = 512;
+        cachedFrontCanvas.height = 512;
     }
-
-    // 4. Sponsor Text (Front)
-    if (sponsorText) {
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = tertiaryColor;
-        ctx.lineWidth = 4;
-        ctx.font = getFontString('sponsor', font);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.strokeText(sponsorText.toUpperCase(), 256, 220);
-        ctx.fillText(sponsorText.toUpperCase(), 256, 220);
+    const ctx = cachedFrontCanvas.getContext('2d');
+    drawRawDesign(ctx, options, false, false);
+    if (!cachedFrontTexture) {
+        cachedFrontTexture = new THREE.CanvasTexture(cachedFrontCanvas);
+    } else {
+        cachedFrontTexture.needsUpdate = true;
     }
-
-    // 5. Player Number (Front Center)
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = tertiaryColor;
-    ctx.lineWidth = 12;
-    ctx.font = getFontString('number', font);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 10;
-    ctx.strokeText(number, 256, 340);
-    ctx.shadowBlur = 0; // Disable shadow for fill to avoid double shadow
-    ctx.fillText(number, 256, 340);
-
-    // 6. Team Name (Front Header, if no sponsor text, or just small above number)
-    if (!sponsorText && teamName) {
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = tertiaryColor;
-        ctx.lineWidth = 6;
-        ctx.font = getFontString('team', font);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.strokeText(teamName.toUpperCase(), 256, 90);
-        ctx.fillText(teamName.toUpperCase(), 256, 90);
-    }
-
-    return new THREE.CanvasTexture(canvas);
+    return cachedFrontTexture;
 }
 
+let cachedBackCanvas = null;
+let cachedBackTexture = null;
+
 export function buildBackTexture(options = {}) {
-    const {
-        teamName = 'TEAM',
-        number = '23',
-        baseColor = '#4F46E5',
-        accentColor = '#7C3AED',
-        tertiaryColor = '#ffffff',
-        pattern = 'none',
-        font = 'athletic'
-    } = options;
+    if (!cachedBackCanvas) {
+        cachedBackCanvas = document.createElement('canvas');
+        cachedBackCanvas.width = 512;
+        cachedBackCanvas.height = 512;
+    }
+    const ctx = cachedBackCanvas.getContext('2d');
+    drawRawDesign(ctx, options, true, true);
+    if (!cachedBackTexture) {
+        cachedBackTexture = new THREE.CanvasTexture(cachedBackCanvas);
+    } else {
+        cachedBackTexture.needsUpdate = true;
+    }
+    return cachedBackTexture;
+}
 
-    const canvas = document.createElement('canvas');
-    canvas.width = 512;
-    canvas.height = 512;
-    const ctx = canvas.getContext('2d');
+export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) {
+    if (!isBack) {
+        const {
+            teamName = 'TEAM',
+            number = '23',
+            baseColor = '#4F46E5',
+            accentColor = '#7C3AED',
+            tertiaryColor = '#ffffff',
+            pattern = 'none',
+            logo = 'none',
+            font = 'athletic',
+            sponsorText = '',
+            numberSize = 140,
+            outlineWeight = 8,
+            customFont = '',
+            logoX = 256,
+            logoY = 150,
+            sponsorX = 256,
+            sponsorY = 220,
+            numberX = 256,
+            numberY = 340,
+            teamX = 256,
+            teamY = 90
+        } = options;
 
-    // 1. Base Background
-    ctx.fillStyle = baseColor;
-    ctx.fillRect(0, 0, 512, 512);
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 512, 512);
 
-    // 2. Draw Pattern Preset
-    drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
+        drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
 
-    // 3. Flipped coordinate system for Back mirroring
+        if (logo !== 'none') {
+            drawLogo(ctx, logo, logoX, logoY, 60, tertiaryColor, accentColor);
+        }
+
+        if (sponsorText) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
+            ctx.font = getFontString('sponsor', font, customFont);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(sponsorText.toUpperCase(), sponsorX, sponsorY);
+            ctx.fillText(sponsorText.toUpperCase(), sponsorX, sponsorY);
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = tertiaryColor;
+        ctx.lineWidth = outlineWeight;
+        ctx.font = getFontString('number', font, customFont, numberSize);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 10;
+        ctx.strokeText(number, numberX, numberY);
+        ctx.shadowBlur = 0;
+        ctx.fillText(number, numberX, numberY);
+
+        if (!sponsorText && teamName) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
+            ctx.font = getFontString('team', font, customFont);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(teamName.toUpperCase(), teamX, teamY);
+            ctx.fillText(teamName.toUpperCase(), teamX, teamY);
+        }
+    } else {
+        const {
+            teamName = 'TEAM',
+            number = '23',
+            baseColor = '#4F46E5',
+            accentColor = '#7C3AED',
+            tertiaryColor = '#ffffff',
+            pattern = 'none',
+            font = 'athletic',
+            numberSize = 140,
+            outlineWeight = 8,
+            customFont = '',
+            backNameX = 256,
+            backNameY = 380,
+            backNumberX = 256,
+            backNumberY = 290
+        } = options;
+
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 512, 512);
+
+        drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
+
+        if (mirrorBack) {
+            ctx.save();
+            ctx.translate(512, 0);
+            ctx.scale(-1, 1);
+        }
+
+        const nameFont = getFontString('name', font, customFont);
+        drawArchedText(ctx, teamName.toUpperCase(), backNameX, backNameY, 260, Math.PI * 1.5, nameFont, '#ffffff', tertiaryColor);
+
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = tertiaryColor;
+        ctx.lineWidth = outlineWeight + 2;
+        ctx.font = getFontString('number_back', font, customFont, numberSize);
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowBlur = 12;
+        ctx.strokeText(number, backNumberX, backNumberY);
+        ctx.shadowBlur = 0;
+        ctx.fillText(number, backNumberX, backNumberY);
+
+        if (mirrorBack) {
+            ctx.restore();
+        }
+    }
+}
+
+function pathJersey(ctx) {
+    ctx.beginPath();
+    ctx.moveTo(256, 82);
+    ctx.quadraticCurveTo(278, 82, 296, 68);
+    ctx.lineTo(365, 95);
+    ctx.lineTo(440, 155);
+    ctx.lineTo(405, 195);
+    ctx.lineTo(345, 175);
+    ctx.lineTo(340, 460);
+    ctx.quadraticCurveTo(256, 475, 172, 460);
+    ctx.lineTo(167, 175);
+    ctx.lineTo(107, 195);
+    ctx.lineTo(72, 155);
+    ctx.lineTo(147, 95);
+    ctx.lineTo(216, 68);
+    ctx.quadraticCurveTo(234, 82, 256, 82);
+    ctx.closePath();
+}
+
+export function renderJersey2D(targetCanvas, options, isBack = false) {
+    console.log("renderJersey2D called for back:", isBack, "width:", targetCanvas ? targetCanvas.width : "null", "height:", targetCanvas ? targetCanvas.height : "null");
+    if (!targetCanvas) {
+        console.error("targetCanvas is null in renderJersey2D");
+        return;
+    }
+    const ctx = targetCanvas.getContext('2d');
+    const width = targetCanvas.width;
+    const height = targetCanvas.height;
+
+    ctx.clearRect(0, 0, width, height);
+
+    const designCanvas = document.createElement('canvas');
+    designCanvas.width = 512;
+    designCanvas.height = 512;
+    const designCtx = designCanvas.getContext('2d');
+
+    drawRawDesign(designCtx, options, isBack);
+    console.log("drawRawDesign finished on designCanvas");
+
     ctx.save();
-    ctx.translate(512, 0);
-    ctx.scale(-1, 1);
+    pathJersey(ctx);
+    ctx.clip();
 
-    // Player Name (Arched at the top)
-    const nameFont = getFontString('name', font);
-    drawArchedText(ctx, teamName.toUpperCase(), 256, 380, 260, Math.PI * 1.5, nameFont, '#ffffff', tertiaryColor);
+    ctx.drawImage(designCanvas, 0, 0, width, height);
 
-    // Player Number (Large on Back Center)
-    ctx.fillStyle = '#ffffff';
-    ctx.strokeStyle = tertiaryColor;
-    ctx.lineWidth = 14;
-    ctx.font = getFontString('number_back', font);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.4)';
-    ctx.shadowBlur = 12;
-    ctx.strokeText(number, 256, 290);
-    ctx.shadowBlur = 0;
-    ctx.fillText(number, 256, 290);
+    ctx.globalCompositeOperation = 'multiply';
+
+    const sideGrad = ctx.createLinearGradient(0, 0, width, 0);
+    sideGrad.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
+    sideGrad.addColorStop(0.15, 'rgba(0, 0, 0, 0.08)');
+    sideGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0)');
+    sideGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0)');
+    sideGrad.addColorStop(0.85, 'rgba(0, 0, 0, 0.08)');
+    sideGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+    ctx.fillStyle = sideGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    const rightArmpitGrad = ctx.createRadialGradient(345, 175, 0, 345, 175, 65);
+    rightArmpitGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
+    rightArmpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = rightArmpitGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    const leftArmpitGrad = ctx.createRadialGradient(167, 175, 0, 167, 175, 65);
+    leftArmpitGrad.addColorStop(0, 'rgba(0,0,0,0.4)');
+    leftArmpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = leftArmpitGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    const neckShadowGrad = ctx.createRadialGradient(256, 75, 0, 256, 75, 120);
+    neckShadowGrad.addColorStop(0, 'rgba(0,0,0,0.3)');
+    neckShadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = neckShadowGrad;
+    ctx.fillRect(0, 0, width, height);
+
+    drawEmbossedFold(ctx, 170, 320, 225, 305, 260, 335, 0.22, 0.12);
+    drawEmbossedFold(ctx, 340, 350, 290, 340, 250, 365, 0.22, 0.12);
+    drawEmbossedFold(ctx, 170, 410, 235, 395, 280, 425, 0.18, 0.10);
+    drawEmbossedFold(ctx, 340, 430, 280, 420, 225, 445, 0.18, 0.10);
+    drawEmbossedFold(ctx, 175, 210, 215, 225, 245, 195, 0.20, 0.12);
+    drawEmbossedFold(ctx, 337, 210, 297, 225, 267, 195, 0.20, 0.12);
+    drawEmbossedFold(ctx, 147, 105, 125, 120, 95, 145, 0.18, 0.10);
+    drawEmbossedFold(ctx, 365, 105, 387, 120, 417, 145, 0.18, 0.10);
+
+    ctx.globalCompositeOperation = 'screen';
+    const highlightGrad = ctx.createLinearGradient(120, 0, 320, 0);
+    highlightGrad.addColorStop(0, 'rgba(255,255,255,0)');
+    highlightGrad.addColorStop(0.4, 'rgba(255,255,255,0.06)');
+    highlightGrad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+    highlightGrad.addColorStop(0.6, 'rgba(255,255,255,0.06)');
+    highlightGrad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = highlightGrad;
+    ctx.fillRect(0, 0, width, height);
 
     ctx.restore();
 
-    return new THREE.CanvasTexture(canvas);
-}
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.22)';
+    ctx.lineWidth = 1.8;
+    
+    ctx.beginPath();
+    ctx.moveTo(365, 95);
+    ctx.lineTo(345, 175);
+    ctx.stroke();
 
-// Helper to resolve font styles
-function getFontString(type, fontStyle) {
-    let base = 'sans-serif';
-    if (fontStyle === 'stencil') {
-        base = 'Impact, Arial Black, sans-serif';
-    } else if (fontStyle === 'athletic') {
-        base = '"Courier New", Courier, monospace';
-    } else if (fontStyle === 'tech') {
-        base = '"Arial Black", Gadget, sans-serif';
+    ctx.beginPath();
+    ctx.moveTo(147, 95);
+    ctx.lineTo(167, 175);
+    ctx.stroke();
+
+    function drawNeedleStitches(x1, y1, x2, y2) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.restore();
     }
 
-    if (type === 'number') return `bold ${fontStyle === 'stencil' ? 'italic' : ''} 140px ${base}`;
-    if (type === 'number_back') return `bold ${fontStyle === 'stencil' ? 'italic' : ''} 160px ${base}`;
-    if (type === 'name') return `bold ${fontStyle === 'stencil' ? 'italic' : ''} 38px ${base}`;
+    drawNeedleStitches(72, 155, 107, 195);
+    drawNeedleStitches(440, 155, 405, 195);
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(172, 452);
+    ctx.quadraticCurveTo(256, 467, 340, 452);
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+    ctx.beginPath();
+    ctx.moveTo(216, 68);
+    ctx.quadraticCurveTo(256, 48, 296, 68);
+    ctx.quadraticCurveTo(256, 82, 216, 68);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+    ctx.lineWidth = 1.5;
+    for (let x = 220; x <= 292; x += 6) {
+        let dx = (x - 256) / 36;
+        let yFront = 68 + 14 * (1 - dx * dx);
+        ctx.beginPath();
+        ctx.moveTo(x, yFront - 4);
+        ctx.lineTo(x, yFront + 2);
+        ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(216, 68);
+    ctx.quadraticCurveTo(256, 82, 296, 68);
+    ctx.stroke();
+    
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(216, 68);
+    ctx.quadraticCurveTo(256, 82, 296, 68);
+    ctx.stroke();
+
+    const testPixel = ctx.getImageData(256, 256, 1, 1).data;
+    console.log("targetCanvas center pixel:", isBack ? "back" : "front", Array.from(testPixel));
+}
+
+function drawEmbossedFold(ctx, x1, y1, cx, cy, x2, y2, shadowOpacity, highlightOpacity) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(0, 0, 0, ${shadowOpacity})`;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.quadraticCurveTo(cx, cy, x2, y2);
+    ctx.stroke();
+    
+    ctx.globalCompositeOperation = 'screen';
+    ctx.strokeStyle = `rgba(255, 255, 255, ${highlightOpacity})`;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(x1 - 2, y1 - 2);
+    ctx.quadraticCurveTo(cx - 2, cy - 2, x2 - 2, y2 - 2);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function getFontString(type, fontStyle, customFont = '', numSizeVal = 140) {
+    let base = 'sans-serif';
+    if (customFont) {
+        base = `"${customFont}", sans-serif`;
+    } else {
+        if (fontStyle === 'retro') {
+            base = '"Graduate", sans-serif';
+        } else if (fontStyle === 'impact') {
+            base = '"Bebas Neue", sans-serif';
+        } else if (fontStyle === 'cyber') {
+            base = '"Orbitron", sans-serif';
+        } else if (fontStyle === 'esports') {
+            base = '"Teko", sans-serif';
+        } else if (fontStyle === 'stencil') {
+            base = 'Impact, Arial Black, sans-serif';
+        } else if (fontStyle === 'athletic') {
+            base = '"Courier New", Courier, monospace';
+        } else if (fontStyle === 'tech') {
+            base = '"Arial Black", Gadget, sans-serif';
+        }
+    }
+
+    const isItalic = fontStyle === 'stencil' || type === 'sponsor';
+    const weight = 'bold';
+    const italicStr = isItalic ? 'italic ' : '';
+
+    if (type === 'number') return `${weight} ${italicStr}${numSizeVal}px ${base}`;
+    if (type === 'number_back') return `${weight} ${italicStr}${Math.round(numSizeVal * 1.15)}px ${base}`;
+    if (type === 'name') return `${weight} ${italicStr}38px ${base}`;
     if (type === 'team') return `bold 32px ${base}`;
     if (type === 'sponsor') return `bold italic 36px ${base}`;
     return `bold 24px ${base}`;
