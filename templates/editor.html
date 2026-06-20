@@ -425,7 +425,7 @@
             <!-- Badges & Graphics Accordion -->
             <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
                 <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
-                    <span>Badges & Sponsor</span>
+                    <span>Badges & Graphics</span>
                     <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
                 </summary>
                 <div class="space-y-3 pt-3">
@@ -441,67 +441,116 @@
                             <option value="vortex">🌀 Spiral Vortex</option>
                         </select>
                     </div>
-                    <div>
-                        <label class="text-[11px] text-slate-300 mb-1 block">Chest Sponsor Text</label>
-                        <input type="text" id="sponsorText" placeholder="e.g. VORTEX" maxlength="12"
-                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500">
-                    </div>
                 </div>
             </details>
 
             <!-- Team Info & Fonts Accordion -->
             <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
                 <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
-                    <span>Player Info & Font</span>
+                    <span>Lettering & Custom Text</span>
                     <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
                 </summary>
-                <div class="space-y-3 pt-3">
-                    <div>
-                        <label class="text-[11px] text-slate-300 mb-1 block">Team / Player Name</label>
-                        <input type="text" id="teamName" value="TEAM" maxlength="12"
-                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500"
-                            placeholder="TEAM">
-                    </div>
-                    <div>
-                        <label class="text-[11px] text-slate-300 mb-1 block">Player Number (0-99)</label>
-                        <input type="number" id="number" value="23" min="0" max="99"
-                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none"
-                            placeholder="23">
-                    </div>
-                    <div>
-                        <label class="text-[11px] text-slate-300 mb-1 block">Lettering Font Style</label>
-                        <select id="font"
-                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
-                            <option value="athletic">Courier Athletic</option>
-                            <option value="stencil">Impact Stencil</option>
-                            <option value="tech">Arial Tech</option>
-                            <option value="retro">Graduate Retro</option>
-                            <option value="impact">Bebas Impact</option>
-                            <option value="cyber">Orbitron Sci-Fi</option>
-                            <option value="esports">Teko E-Sports</option>
-                        </select>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[11px] text-slate-300 mb-1">
-                            <span>Number Size</span>
-                            <span id="lblNumberSize" class="font-mono text-indigo-400">140px</span>
+                <div class="space-y-4 pt-3 text-xs">
+                    <div class="space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                        <p class="text-[9px] font-black text-indigo-400 uppercase tracking-wider">Global Settings</p>
+                        <div>
+                            <label class="text-[11px] text-slate-300 mb-1 block">Player Number (0-99)</label>
+                            <input type="number" id="number" value="23" min="0" max="99"
+                                class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none"
+                                placeholder="23">
                         </div>
-                        <input type="range" id="fontSizeNumber" min="80" max="220" value="140"
-                            class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-[11px] text-slate-300 mb-1">
-                            <span>Outline Weight</span>
-                            <span id="lblOutlineWeight" class="font-mono text-indigo-400">8px</span>
+                        <div>
+                            <label class="text-[11px] text-slate-300 mb-1 block">Lettering Font Style</label>
+                            <select id="font"
+                                class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
+                                <option value="athletic">Courier Athletic</option>
+                                <option value="stencil">Impact Stencil</option>
+                                <option value="tech">Arial Tech</option>
+                                <option value="retro">Graduate Retro</option>
+                                <option value="impact">Bebas Impact</option>
+                                <option value="cyber">Orbitron Sci-Fi</option>
+                                <option value="esports">Teko E-Sports</option>
+                            </select>
                         </div>
-                        <input type="range" id="outlineWeight" min="0" max="24" value="8"
-                            class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        <div class="relative">
+                            <label class="text-[11px] text-slate-300 mb-1 block">Search Premium Google Font</label>
+                            <input type="text" id="customFontSearch" placeholder="Search 1,500+ Google Fonts..."
+                                class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500">
+                            <div id="fontSearchResults" class="hidden absolute left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl z-30 shadow-2xl divide-y divide-slate-700/60"></div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                                <span>Number Size</span>
+                                <span id="lblNumberSize" class="font-mono text-indigo-400">140px</span>
+                            </div>
+                            <input type="range" id="fontSizeNumber" min="80" max="220" value="140"
+                                class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                                <span>Outline Weight</span>
+                                <span id="lblOutlineWeight" class="font-mono text-indigo-400">8px</span>
+                            </div>
+                            <input type="range" id="outlineWeight" min="0" max="24" value="8"
+                                class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
                     </div>
-                    <div class="relative">
-                        <label class="text-[11px] text-slate-300 mb-1 block">Search Premium Google Font</label>
-                        <input type="text" id="customFontSearch" placeholder="Search 1,500+ Google Fonts..."
-                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 border-0 outline-none placeholder-slate-500">
-                        <div id="fontSearchResults" class="hidden absolute left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-slate-800 border border-slate-700 rounded-xl z-30 shadow-2xl divide-y divide-slate-700/60"></div>
+
+                    <div class="space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                        <p class="text-[9px] font-black text-indigo-400 uppercase tracking-wider">Front View Customization</p>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] text-slate-300">Front Text (Team Name)</label>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="showFrontText" class="sr-only peer" checked>
+                                    <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <input type="text" id="frontText" value="TEAM" maxlength="12"
+                                class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2 border-0 outline-none placeholder-slate-500"
+                                placeholder="TEAM">
+                        </div>
+                        <div class="flex justify-between items-center py-1">
+                            <label class="text-[11px] text-slate-300">Show Number on Front</label>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="showFrontNumber" class="sr-only peer" checked>
+                                <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
+                        <div class="space-y-1.5 pt-1 border-t border-slate-700/30">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] text-slate-300">Sponsor Text</label>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="showSponsor" class="sr-only peer">
+                                    <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <input type="text" id="sponsorText" placeholder="e.g. VORTEX" maxlength="12"
+                                class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2 border-0 outline-none placeholder-slate-500">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                        <p class="text-[9px] font-black text-indigo-400 uppercase tracking-wider">Back View Customization</p>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[11px] text-slate-300">Back Text (Player Name)</label>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="showBackText" class="sr-only peer" checked>
+                                    <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <input type="text" id="backName" value="PLAYER" maxlength="12"
+                                class="w-full bg-slate-700 text-white text-xs rounded-xl px-3.5 py-2 border-0 outline-none placeholder-slate-500"
+                                placeholder="PLAYER">
+                        </div>
+                        <div class="flex justify-between items-center py-1">
+                            <label class="text-[11px] text-slate-300">Show Number on Back</label>
+                            <label class="relative inline-flex items-center cursor-pointer select-none">
+                                <input type="checkbox" id="showBackNumber" class="sr-only peer" checked>
+                                <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                            </label>
+                        </div>
                     </div>
                 </div>
             </details>
@@ -726,7 +775,7 @@
         document.getElementById(containerId).innerHTML = `
             <div>
                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Order</p>
-                <p class="font-bold text-white">${context.design.teamName || 'Custom Jersey'} #${context.design.number || '00'}</p>
+                <p class="font-bold text-white">${(context.design.showFrontText ? context.design.frontText : '') || (context.design.showBackText ? context.design.backName : '') || 'Custom Jersey'} #${context.design.number || '00'}</p>
                 <p class="text-xs text-slate-400">Size ${context.size} · ${context.quantity} jersey${context.quantity > 1 ? 's' : ''}</p>
             </div>
             <div class="border-t border-slate-600 pt-3">
@@ -841,7 +890,7 @@
         if (!token) { location.href = '/index.html?redirect=editor'; return; }
 
         const design = getCurrentDesign();
-        document.getElementById('summaryTeam').textContent = design.teamName || '-';
+        document.getElementById('summaryTeam').textContent = `${design.frontText || '-'} / ${design.backName || '-'}`;
         document.getElementById('summaryNumber').textContent = design.number || '-';
         document.getElementById('summaryPattern').textContent = design.pattern || 'none';
         document.getElementById('summaryBaseColor').style.background = design.baseColor;
@@ -948,7 +997,7 @@
                     'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    team_name: context.design.teamName,
+                    team_name: context.design.frontText || context.design.backName || 'TEAM',
                     player_number: context.design.number,
                     base_color: context.design.baseColor,
                     accent_color: context.design.accentColor,
@@ -957,7 +1006,7 @@
                     price: context.total,
                     shipping_fee: SHIPPING_FEE,
                     ...context.shipping,
-                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: ${context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'}${context.notes ? ' | Notes: ' + context.notes : ''}`
+                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: ${context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 

@@ -41,7 +41,6 @@ export function buildBackTexture(options = {}) {
 export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) {
     if (!isBack) {
         const {
-            teamName = 'TEAM',
             number = '23',
             baseColor = '#4F46E5',
             accentColor = '#7C3AED',
@@ -60,7 +59,11 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             numberX = 256,
             numberY = 340,
             teamX = 256,
-            teamY = 90
+            teamY = 90,
+            frontText = options.frontText !== undefined ? options.frontText : (options.teamName || 'TEAM'),
+            showFrontText = options.showFrontText !== undefined ? options.showFrontText : true,
+            showFrontNumber = options.showFrontNumber !== undefined ? options.showFrontNumber : true,
+            showSponsor = options.showSponsor !== undefined ? options.showSponsor : !!options.sponsorText
         } = options;
 
         ctx.fillStyle = baseColor;
@@ -72,7 +75,7 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             drawLogo(ctx, logo, logoX, logoY, 60, tertiaryColor, accentColor);
         }
 
-        if (sponsorText) {
+        if (showSponsor && sponsorText) {
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = tertiaryColor;
             ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
@@ -83,31 +86,32 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             ctx.fillText(sponsorText.toUpperCase(), sponsorX, sponsorY);
         }
 
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = tertiaryColor;
-        ctx.lineWidth = outlineWeight;
-        ctx.font = getFontString('number', font, customFont, numberSize);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0,0,0,0.4)';
-        ctx.shadowBlur = 10;
-        ctx.strokeText(number, numberX, numberY);
-        ctx.shadowBlur = 0;
-        ctx.fillText(number, numberX, numberY);
+        if (showFrontNumber && number) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = outlineWeight;
+            ctx.font = getFontString('number', font, customFont, numberSize);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 10;
+            ctx.strokeText(number, numberX, numberY);
+            ctx.shadowBlur = 0;
+            ctx.fillText(number, numberX, numberY);
+        }
 
-        if (!sponsorText && teamName) {
+        if (showFrontText && frontText) {
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = tertiaryColor;
             ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
             ctx.font = getFontString('team', font, customFont);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.strokeText(teamName.toUpperCase(), teamX, teamY);
-            ctx.fillText(teamName.toUpperCase(), teamX, teamY);
+            ctx.strokeText(frontText.toUpperCase(), teamX, teamY);
+            ctx.fillText(frontText.toUpperCase(), teamX, teamY);
         }
     } else {
         const {
-            teamName = 'TEAM',
             number = '23',
             baseColor = '#4F46E5',
             accentColor = '#7C3AED',
@@ -120,7 +124,10 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             backNameX = 256,
             backNameY = 380,
             backNumberX = 256,
-            backNumberY = 290
+            backNumberY = 290,
+            backName = options.backName !== undefined ? options.backName : (options.teamName || 'PLAYER'),
+            showBackText = options.showBackText !== undefined ? options.showBackText : true,
+            showBackNumber = options.showBackNumber !== undefined ? options.showBackNumber : true
         } = options;
 
         ctx.fillStyle = baseColor;
@@ -134,20 +141,24 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             ctx.scale(-1, 1);
         }
 
-        const nameFont = getFontString('name', font, customFont);
-        drawArchedText(ctx, teamName.toUpperCase(), backNameX, backNameY, 260, Math.PI * 1.5, nameFont, '#ffffff', tertiaryColor);
+        if (showBackText && backName) {
+            const nameFont = getFontString('name', font, customFont);
+            drawArchedText(ctx, backName.toUpperCase(), backNameX, backNameY, 260, Math.PI * 1.5, nameFont, '#ffffff', tertiaryColor);
+        }
 
-        ctx.fillStyle = '#ffffff';
-        ctx.strokeStyle = tertiaryColor;
-        ctx.lineWidth = outlineWeight + 2;
-        ctx.font = getFontString('number_back', font, customFont, numberSize);
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0,0,0,0.4)';
-        ctx.shadowBlur = 12;
-        ctx.strokeText(number, backNumberX, backNumberY);
-        ctx.shadowBlur = 0;
-        ctx.fillText(number, backNumberX, backNumberY);
+        if (showBackNumber && number) {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = outlineWeight + 2;
+            ctx.font = getFontString('number_back', font, customFont, numberSize);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0,0,0,0.4)';
+            ctx.shadowBlur = 12;
+            ctx.strokeText(number, backNumberX, backNumberY);
+            ctx.shadowBlur = 0;
+            ctx.fillText(number, backNumberX, backNumberY);
+        }
 
         if (mirrorBack) {
             ctx.restore();
@@ -809,6 +820,187 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
                 else ctx.lineTo(x, waveY);
             }
             ctx.stroke();
+        }
+    }
+    else if (pattern.startsWith('param_')) {
+        const parts = pattern.split('_');
+        const style = parts[1];
+        if (style === 'stripes') {
+            const width = parseInt(parts[2]) || 16;
+            const angle = parseInt(parts[3]) || 0;
+            ctx.save();
+            ctx.translate(256, 256);
+            ctx.rotate(angle * Math.PI / 180);
+            ctx.fillStyle = accentColor;
+            for (let y = -800; y < 800; y += width * 2) {
+                ctx.fillRect(-800, y, 1600, width);
+            }
+            ctx.fillStyle = tertiaryColor;
+            for (let y = -800 + width; y < 800; y += width * 2) {
+                ctx.fillRect(-800, y, 1600, Math.max(1, Math.round(width * 0.2)));
+            }
+            ctx.restore();
+        }
+        else if (style === 'grid') {
+            const size = parseInt(parts[2]) || 32;
+            const weight = parseInt(parts[3]) || 2;
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = weight;
+            for (let x = size; x < 512; x += size) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+            }
+            for (let y = size; y < 512; y += size) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+            }
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = Math.max(1, Math.round(weight * 0.5));
+            for (let x = size/2; x < 512; x += size) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
+            }
+            for (let y = size/2; y < 512; y += size) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
+            }
+        }
+        else if (style === 'dots') {
+            const radius = parseInt(parts[2]) || 4;
+            const spacing = parseInt(parts[3]) || 32;
+            ctx.fillStyle = accentColor;
+            for (let y = spacing/2; y < 512; y += spacing) {
+                for (let x = spacing/2; x < 512; x += spacing) {
+                    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            ctx.fillStyle = tertiaryColor;
+            for (let y = spacing/2 + spacing/2; y < 512; y += spacing) {
+                for (let x = spacing/2 + spacing/2; x < 512; x += spacing) {
+                    ctx.beginPath(); ctx.arc(x, y, Math.max(1, radius * 0.5), 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        }
+        else if (style === 'chevrons') {
+            const spacing = parseInt(parts[2]) || 40;
+            const weight = parseInt(parts[3]) || 4;
+            const dir = parts[4] || 'up';
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = weight;
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            const isUp = (dir === 'up');
+            const isDown = (dir === 'down');
+            for (let y = -200; y < 700; y += spacing) {
+                ctx.beginPath();
+                if (isUp || isDown) {
+                    const peak = isUp ? y : y + spacing / 2;
+                    ctx.moveTo(0, y + spacing);
+                    ctx.lineTo(256, peak);
+                    ctx.lineTo(512, y + spacing);
+                } else {
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(256, y + spacing / 2);
+                    ctx.lineTo(0, y + spacing);
+                }
+                ctx.stroke();
+            }
+        }
+        else if (style === 'waves') {
+            const freq = parseInt(parts[2]) || 20;
+            const amp = parseInt(parts[3]) || 20;
+            const dir = parts[4] || 'h';
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 4;
+            const isVert = (dir === 'v');
+            for (let i = -50; i < 600; i += 40) {
+                ctx.beginPath();
+                for (let t = 0; t <= 512; t += 10) {
+                    let waveVal = i + Math.sin(t * (freq / 1000)) * amp;
+                    if (t === 0) {
+                        if (isVert) ctx.moveTo(waveVal, t);
+                        else ctx.moveTo(t, waveVal);
+                    } else {
+                        if (isVert) ctx.lineTo(waveVal, t);
+                        else ctx.lineTo(t, waveVal);
+                    }
+                }
+                ctx.stroke();
+            }
+        }
+        else if (style === 'diamonds') {
+            const size = parseInt(parts[2]) || 32;
+            const weight = parseInt(parts[3]) || 2;
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = weight;
+            ctx.save();
+            ctx.translate(256, 256);
+            ctx.rotate(Math.PI / 4);
+            for (let x = -800; x < 800; x += size) {
+                ctx.beginPath(); ctx.moveTo(x, -800); ctx.lineTo(x, 800); ctx.stroke();
+            }
+            for (let y = -800; y < 800; y += size) {
+                ctx.beginPath(); ctx.moveTo(-800, y); ctx.lineTo(800, y); ctx.stroke();
+            }
+            ctx.restore();
+        }
+        else if (style === 'hex') {
+            const size = parseInt(parts[2]) || 32;
+            const weight = parseInt(parts[3]) || 2;
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = weight;
+            const h = size * Math.sqrt(3);
+            for (let row = -2; row * size * 1.5 < 600; row++) {
+                let y = row * size * 1.5;
+                let offset = (row % 2 === 0) ? 0 : h / 2;
+                for (let col = -2; col * h < 600; col++) {
+                    let x = col * h + offset;
+                    ctx.beginPath();
+                    for (let a = 0; a < 6; a++) {
+                        let angle = a * Math.PI / 3;
+                        let hx = x + Math.cos(angle) * size;
+                        let hy = y + Math.sin(angle) * size;
+                        if (a === 0) ctx.moveTo(hx, hy);
+                        else ctx.lineTo(hx, hy);
+                    }
+                    ctx.closePath();
+                    ctx.stroke();
+                }
+            }
+        }
+        else if (style === 'stars') {
+            const count = parseInt(parts[2]) || 25;
+            const size = parseInt(parts[3]) || 24;
+            ctx.fillStyle = accentColor;
+            seed = 99;
+            for (let i = 0; i < count; i++) {
+                let sx = random() * 512;
+                let sy = random() * 512;
+                ctx.beginPath();
+                for (let j = 0; j < 5; j++) {
+                    let angle = (j * 4 * Math.PI) / 5 - Math.PI / 2;
+                    let px = sx + Math.cos(angle) * (size / 2);
+                    let py = sy + Math.sin(angle) * (size / 2);
+                    if (j === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                    let angle2 = angle + Math.PI / 5;
+                    let px2 = sx + Math.cos(angle2) * (size / 4);
+                    let py2 = sy + Math.sin(angle2) * (size / 4);
+                    ctx.lineTo(px2, py2);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        else if (style === 'rings') {
+            const count = parseInt(parts[2]) || 25;
+            const size = parseInt(parts[3]) || 24;
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 3;
+            seed = 150;
+            for (let i = 0; i < count; i++) {
+                let rx = random() * 512;
+                let ry = random() * 512;
+                ctx.beginPath();
+                ctx.arc(rx, ry, size / 2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
         }
     }
 }

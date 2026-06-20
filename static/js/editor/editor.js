@@ -2,6 +2,7 @@ import { initViewer, setPartColor, applyTextureToPanel, applyTextureToBack, appl
 import { buildTexture, buildBackTexture, renderJersey2D } from './textureBuilder.js';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
+import { generateParameterizedPatterns } from './patternsGenerator.js';
 
 const DEFAULT_COORDS = {
     numberSize: 140,
@@ -30,13 +31,20 @@ let currentDesign = {
     font: 'athletic',
     finish: 'matte',
     showroom: 'cyber',
-    teamName: 'TEAM',
+    frontText: 'TEAM',
+    backName: 'PLAYER',
     number: '23',
     sponsorText: '',
+    showFrontText: true,
+    showFrontNumber: true,
+    showBackText: true,
+    showBackNumber: true,
+    showSponsor: false,
     ...DEFAULT_COORDS
 };
 
 export function initEditor() {
+    generateParameterizedPatterns();
     initViewer('jerseyCanvas');
     applyDesign(currentDesign);
     changeEnvironment(currentDesign.showroom);
@@ -84,9 +92,13 @@ function bindControls() {
         applyDesign(currentDesign);
     });
 
-    // Text inputs
-    document.getElementById('teamName').addEventListener('input', e => {
-        currentDesign.teamName = e.target.value;
+    document.getElementById('frontText').addEventListener('input', e => {
+        currentDesign.frontText = e.target.value;
+        applyDesign(currentDesign);
+    });
+
+    document.getElementById('backName').addEventListener('input', e => {
+        currentDesign.backName = e.target.value;
         applyDesign(currentDesign);
     });
 
@@ -98,6 +110,17 @@ function bindControls() {
     document.getElementById('sponsorText').addEventListener('input', e => {
         currentDesign.sponsorText = e.target.value;
         applyDesign(currentDesign);
+    });
+
+    const visibilityToggles = ['showFrontText', 'showFrontNumber', 'showBackText', 'showBackNumber', 'showSponsor'];
+    visibilityToggles.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', e => {
+                currentDesign[id] = e.target.checked;
+                applyDesign(currentDesign);
+            });
+        }
     });
 
     // Material finish buttons
@@ -133,7 +156,14 @@ function bindControls() {
         const rand = generateRandomDesign();
         currentDesign = {
             ...currentDesign,
-            ...rand
+            ...rand,
+            frontText: rand.teamName || 'TEAM',
+            backName: 'PLAYER',
+            showFrontText: true,
+            showFrontNumber: true,
+            showBackText: true,
+            showBackNumber: true,
+            showSponsor: !!rand.sponsorText
         };
         Object.assign(currentDesign, DEFAULT_COORDS);
         syncUI(currentDesign);
@@ -144,7 +174,7 @@ function bindControls() {
 
     // AI suggestion handler
     document.getElementById('aiBtn').addEventListener('click', async () => {
-        const teamName = document.getElementById('teamName').value.trim() || 'TEAM';
+        const teamName = (document.getElementById('frontText') ? document.getElementById('frontText').value.trim() : '') || 'TEAM';
         const btn = document.getElementById('aiBtn');
 
         btn.disabled = true;
@@ -171,9 +201,15 @@ function bindControls() {
                     font: suggestion.font || 'athletic',
                     finish: suggestion.finish || 'matte',
                     showroom: suggestion.showroom || 'cyber',
-                    teamName: suggestion.teamName || teamName,
+                    frontText: suggestion.teamName || teamName,
+                    backName: 'PLAYER',
                     number: suggestion.number || '23',
                     sponsorText: suggestion.sponsorText || '',
+                    showFrontText: true,
+                    showFrontNumber: true,
+                    showBackText: true,
+                    showBackNumber: true,
+                    showSponsor: !!suggestion.sponsorText,
                     customFont: ''
                 };
                 Object.assign(currentDesign, DEFAULT_COORDS);
@@ -334,12 +370,27 @@ function syncUI(design) {
     document.getElementById('baseColor').value = design.baseColor;
     document.getElementById('accentColor').value = design.accentColor;
     document.getElementById('tertiaryColor').value = design.tertiaryColor || '#ffffff';
-    document.getElementById('pattern').value = design.pattern;
-    document.getElementById('logo').value = design.logo || 'none';
-    document.getElementById('font').value = design.font || 'athletic';
-    document.getElementById('teamName').value = design.teamName;
-    document.getElementById('number').value = design.number;
-    document.getElementById('sponsorText').value = design.sponsorText || '';
+    const setChecked = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.checked = !!val;
+    };
+    const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || '';
+    };
+
+    setVal('frontText', design.frontText);
+    setVal('backName', design.backName);
+    setVal('number', design.number);
+    setVal('sponsorText', design.sponsorText);
+    setVal('pattern', design.pattern);
+    setVal('logo', design.logo || 'none');
+    setVal('font', design.font || 'athletic');
+    setChecked('showFrontText', design.showFrontText);
+    setChecked('showFrontNumber', design.showFrontNumber);
+    setChecked('showBackText', design.showBackText);
+    setChecked('showBackNumber', design.showBackNumber);
+    setChecked('showSponsor', design.showSponsor);
 
     const customFontInput = document.getElementById('customFontSearch');
     if (customFontInput) {
@@ -437,16 +488,16 @@ function loadGoogleFont(fontName) {
 
 function getDraggableElementsFront(design) {
     const list = [];
-    if (!design.sponsorText && design.teamName) {
+    if (design.showFrontText && design.frontText) {
         list.push({
             name: 'teamName',
             x: design.teamX !== undefined ? design.teamX : 256,
             y: design.teamY !== undefined ? design.teamY : 90,
-            width: Math.max(100, (design.teamName || '').length * 20),
+            width: Math.max(100, (design.frontText || '').length * 20),
             height: 40
         });
     }
-    if (design.sponsorText) {
+    if (design.showSponsor && design.sponsorText) {
         list.push({
             name: 'sponsorText',
             x: design.sponsorX !== undefined ? design.sponsorX : 256,
@@ -464,32 +515,38 @@ function getDraggableElementsFront(design) {
             height: 60
         });
     }
-    list.push({
-        name: 'number',
-        x: design.numberX !== undefined ? design.numberX : 256,
-        y: design.numberY !== undefined ? design.numberY : 340,
-        width: Math.max(80, (design.number || '').length * (design.numberSize || 140) * 0.5),
-        height: (design.numberSize || 140) * 0.8
-    });
+    if (design.showFrontNumber) {
+        list.push({
+            name: 'number',
+            x: design.numberX !== undefined ? design.numberX : 256,
+            y: design.numberY !== undefined ? design.numberY : 340,
+            width: Math.max(80, (design.number || '').length * (design.numberSize || 140) * 0.5),
+            height: (design.numberSize || 140) * 0.8
+        });
+    }
     return list;
 }
 
 function getDraggableElementsBack(design) {
     const list = [];
-    list.push({
-        name: 'backName',
-        x: design.backNameX !== undefined ? design.backNameX : 256,
-        y: design.backNameY !== undefined ? design.backNameY : 380,
-        width: Math.max(120, (design.teamName || '').length * 22),
-        height: 44
-    });
-    list.push({
-        name: 'backNumber',
-        x: design.backNumberX !== undefined ? design.backNumberX : 256,
-        y: design.backNumberY !== undefined ? design.backNumberY : 290,
-        width: Math.max(80, (design.number || '').length * (design.numberSize || 140) * 0.5),
-        height: (design.numberSize || 140) * 0.8
-    });
+    if (design.showBackText && design.backName) {
+        list.push({
+            name: 'backName',
+            x: design.backNameX !== undefined ? design.backNameX : 256,
+            y: (design.backNameY !== undefined ? design.backNameY : 380) - 260,
+            width: Math.max(120, (design.backName || '').length * 22),
+            height: 44
+        });
+    }
+    if (design.showBackNumber) {
+        list.push({
+            name: 'backNumber',
+            x: design.backNumberX !== undefined ? design.backNumberX : 256,
+            y: design.backNumberY !== undefined ? design.backNumberY : 290,
+            width: Math.max(80, (design.number || '').length * (design.numberSize || 140) * 0.5),
+            height: (design.numberSize || 140) * 0.8
+        });
+    }
     return list;
 }
 
@@ -557,7 +614,7 @@ function bindDragEvents(canvas, isBack) {
             currentDesign.numberY = newY;
         } else if (activeDrag.name === 'backName') {
             currentDesign.backNameX = newX;
-            currentDesign.backNameY = newY;
+            currentDesign.backNameY = newY + 260;
         } else if (activeDrag.name === 'backNumber') {
             currentDesign.backNumberX = newX;
             currentDesign.backNumberY = newY;
