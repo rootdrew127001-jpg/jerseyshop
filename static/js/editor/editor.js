@@ -8,6 +8,7 @@ const DEFAULT_COORDS = {
     numberSize: 140,
     outlineWeight: 8,
     customFont: '',
+    logoSize: 60,
     logoX: 256,
     logoY: 150,
     sponsorX: 256,
@@ -83,6 +84,66 @@ function bindControls() {
         currentDesign.logo = e.target.value;
         applyDesign(currentDesign);
     });
+    
+    const logoUpload = document.getElementById('logoUpload');
+    const logoUploadError = document.getElementById('logoUploadError');
+    if (logoUpload) {
+        logoUpload.addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Restrict to PNG only
+            const isPNG = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png');
+            if (!isPNG) {
+                if (logoUploadError) {
+                    logoUploadError.textContent = 'Error: Only PNG images are allowed!';
+                    logoUploadError.classList.remove('hidden');
+                }
+                logoUpload.value = '';
+                return;
+            }
+
+            if (logoUploadError) {
+                logoUploadError.classList.add('hidden');
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    currentDesign.customLogoImage = img;
+                    currentDesign.logo = 'custom';
+                    currentDesign.logoSize = 20; // Must be tiny on initial load
+
+                    const optCustom = document.getElementById('optCustomLogo');
+                    if (optCustom) optCustom.style.display = 'block';
+
+                    const logoSelect = document.getElementById('logo');
+                    if (logoSelect) logoSelect.value = 'custom';
+
+                    const logoSizeSlider = document.getElementById('logoSize');
+                    if (logoSizeSlider) logoSizeSlider.value = 20;
+
+                    const lblLogoSize = document.getElementById('lblLogoSize');
+                    if (lblLogoSize) lblLogoSize.textContent = '20px';
+
+                    applyDesign(currentDesign);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    const logoSizeSlider = document.getElementById('logoSize');
+    if (logoSizeSlider) {
+        logoSizeSlider.addEventListener('input', e => {
+            currentDesign.logoSize = parseInt(e.target.value);
+            const lbl = document.getElementById('lblLogoSize');
+            if (lbl) lbl.textContent = e.target.value + 'px';
+            applyDesign(currentDesign);
+        });
+    }
 
     document.getElementById('font').addEventListener('change', e => {
         currentDesign.font = e.target.value;
@@ -385,6 +446,22 @@ function syncUI(design) {
     setVal('sponsorText', design.sponsorText);
     setVal('pattern', design.pattern);
     setVal('logo', design.logo || 'none');
+
+    const optCustom = document.getElementById('optCustomLogo');
+    if (optCustom) {
+        optCustom.style.display = design.customLogoImage ? 'block' : 'none';
+    }
+
+    const logoSizeVal = design.logoSize !== undefined ? design.logoSize : 60;
+    const logoSizeSlider = document.getElementById('logoSize');
+    if (logoSizeSlider) {
+        logoSizeSlider.value = logoSizeVal;
+    }
+    const lblLogoSize = document.getElementById('lblLogoSize');
+    if (lblLogoSize) {
+        lblLogoSize.textContent = logoSizeVal + 'px';
+    }
+
     setVal('font', design.font || 'athletic');
     setChecked('showFrontText', design.showFrontText);
     setChecked('showFrontNumber', design.showFrontNumber);
@@ -507,12 +584,13 @@ function getDraggableElementsFront(design) {
         });
     }
     if (design.logo && design.logo !== 'none') {
+        const size = design.logoSize !== undefined ? design.logoSize : 60;
         list.push({
             name: 'logo',
             x: design.logoX !== undefined ? design.logoX : 256,
             y: design.logoY !== undefined ? design.logoY : 150,
-            width: 60,
-            height: 60
+            width: size,
+            height: size
         });
     }
     if (design.showFrontNumber) {

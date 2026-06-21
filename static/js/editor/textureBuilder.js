@@ -60,6 +60,8 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             numberY = 340,
             teamX = 256,
             teamY = 90,
+            logoSize = 60,
+            customLogoImage = null,
             frontText = options.frontText !== undefined ? options.frontText : (options.teamName || 'TEAM'),
             showFrontText = options.showFrontText !== undefined ? options.showFrontText : true,
             showFrontNumber = options.showFrontNumber !== undefined ? options.showFrontNumber : true,
@@ -72,7 +74,7 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
         drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
 
         if (logo !== 'none') {
-            drawLogo(ctx, logo, logoX, logoY, 60, tertiaryColor, accentColor);
+            drawLogo(ctx, logo, logoX, logoY, logoSize, tertiaryColor, accentColor, customLogoImage);
         }
 
         if (showSponsor && sponsorText) {
@@ -427,11 +429,20 @@ function drawArchedText(ctx, text, x, y, radius, startAngle, font, fillStyle, st
 }
 
 // Vector Badge/Logo Drawer
-function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor) {
+function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor, customLogoImage) {
     ctx.save();
     ctx.translate(x, y);
 
-    if (logoType === 'shield') {
+    if (logoType === 'custom') {
+        if (customLogoImage) {
+            ctx.drawImage(customLogoImage, -size/2, -size/2, size, size);
+        } else {
+            ctx.strokeStyle = primaryColor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(-size/2, -size/2, size, size);
+        }
+    }
+    else if (logoType === 'shield') {
         ctx.fillStyle = primaryColor;
         ctx.strokeStyle = secondaryColor;
         ctx.lineWidth = 4;

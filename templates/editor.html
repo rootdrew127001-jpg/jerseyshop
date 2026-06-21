@@ -439,7 +439,22 @@
                             <option value="flame">🔥 Flame Badge</option>
                             <option value="eagle">🦅 E-Sports Eagle</option>
                             <option value="vortex">🌀 Spiral Vortex</option>
+                            <option value="custom" id="optCustomLogo" style="display:none;">🖼️ Custom Badge</option>
                         </select>
+                    </div>
+                    <div id="logoUploadContainer" class="mt-2.5">
+                        <label class="text-[11px] text-slate-300 mb-1 block">Upload Custom Badge (PNG only)</label>
+                        <input type="file" id="logoUpload" accept="image/png"
+                            class="w-full bg-slate-700/50 text-white text-xs rounded-xl border border-slate-700 focus:border-indigo-500 focus:outline-none file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer file:cursor-pointer transition-all">
+                        <p id="logoUploadError" class="text-[10px] text-red-400 mt-1.5 hidden bg-red-950/20 border border-red-500/20 px-3 py-1.5 rounded-xl"></p>
+                    </div>
+                    <div id="logoSizeContainer" class="mt-2.5">
+                        <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                            <span>Badge Size</span>
+                            <span id="lblLogoSize" class="font-mono text-indigo-400">60px</span>
+                        </div>
+                        <input type="range" id="logoSize" min="15" max="150" value="60"
+                            class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
                     </div>
                 </div>
             </details>
