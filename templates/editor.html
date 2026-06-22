@@ -495,10 +495,18 @@
                         </div>
                         <div>
                             <div class="flex justify-between text-[11px] text-slate-300 mb-1">
-                                <span>Number Size</span>
-                                <span id="lblNumberSize" class="font-mono text-indigo-400">140px</span>
+                                <span>Front Number Size</span>
+                                <span id="lblFrontNumberSize" class="font-mono text-indigo-400">140px</span>
                             </div>
-                            <input type="range" id="fontSizeNumber" min="80" max="220" value="140"
+                            <input type="range" id="fontSizeFrontNumber" min="80" max="220" value="140"
+                                class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[11px] text-slate-300 mb-1">
+                                <span>Back Number Size</span>
+                                <span id="lblBackNumberSize" class="font-mono text-indigo-400">140px</span>
+                            </div>
+                            <input type="range" id="fontSizeBackNumber" min="80" max="220" value="140"
                                 class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
                         </div>
                         <div>
@@ -1021,7 +1029,7 @@
                     price: context.total,
                     shipping_fee: SHIPPING_FEE,
                     ...context.shipping,
-                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: ${context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
+                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 

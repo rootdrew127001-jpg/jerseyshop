@@ -6,6 +6,8 @@ import { generateParameterizedPatterns } from './patternsGenerator.js';
 
 const DEFAULT_COORDS = {
     numberSize: 140,
+    frontNumberSize: 140,
+    backNumberSize: 140,
     outlineWeight: 8,
     customFont: '',
     logoSize: 60,
@@ -290,11 +292,21 @@ function bindControls() {
         btn.textContent = '🤖 AI Suggest Design';
     });
 
-    const fontSizeNumber = document.getElementById('fontSizeNumber');
-    if (fontSizeNumber) {
-        fontSizeNumber.addEventListener('input', e => {
-            currentDesign.numberSize = parseInt(e.target.value);
-            const lbl = document.getElementById('lblNumberSize');
+    const fontSizeFrontNumber = document.getElementById('fontSizeFrontNumber');
+    if (fontSizeFrontNumber) {
+        fontSizeFrontNumber.addEventListener('input', e => {
+            currentDesign.frontNumberSize = parseInt(e.target.value);
+            const lbl = document.getElementById('lblFrontNumberSize');
+            if (lbl) lbl.textContent = e.target.value + 'px';
+            applyDesign(currentDesign);
+        });
+    }
+
+    const fontSizeBackNumber = document.getElementById('fontSizeBackNumber');
+    if (fontSizeBackNumber) {
+        fontSizeBackNumber.addEventListener('input', e => {
+            currentDesign.backNumberSize = parseInt(e.target.value);
+            const lbl = document.getElementById('lblBackNumberSize');
             if (lbl) lbl.textContent = e.target.value + 'px';
             applyDesign(currentDesign);
         });
@@ -474,14 +486,24 @@ function syncUI(design) {
         customFontInput.value = design.customFont || '';
     }
 
-    const sizeVal = design.numberSize !== undefined ? design.numberSize : 140;
-    const fontSizeNumber = document.getElementById('fontSizeNumber');
-    if (fontSizeNumber) {
-        fontSizeNumber.value = sizeVal;
+    const frontSizeVal = design.frontNumberSize !== undefined ? design.frontNumberSize : (design.numberSize || 140);
+    const fontSizeFrontNumber = document.getElementById('fontSizeFrontNumber');
+    if (fontSizeFrontNumber) {
+        fontSizeFrontNumber.value = frontSizeVal;
     }
-    const lblNumberSize = document.getElementById('lblNumberSize');
-    if (lblNumberSize) {
-        lblNumberSize.textContent = sizeVal + 'px';
+    const lblFrontNumberSize = document.getElementById('lblFrontNumberSize');
+    if (lblFrontNumberSize) {
+        lblFrontNumberSize.textContent = frontSizeVal + 'px';
+    }
+
+    const backSizeVal = design.backNumberSize !== undefined ? design.backNumberSize : (design.numberSize || 140);
+    const fontSizeBackNumber = document.getElementById('fontSizeBackNumber');
+    if (fontSizeBackNumber) {
+        fontSizeBackNumber.value = backSizeVal;
+    }
+    const lblBackNumberSize = document.getElementById('lblBackNumberSize');
+    if (lblBackNumberSize) {
+        lblBackNumberSize.textContent = backSizeVal + 'px';
     }
 
     const outlineVal = design.outlineWeight !== undefined ? design.outlineWeight : 8;
@@ -594,12 +616,13 @@ function getDraggableElementsFront(design) {
         });
     }
     if (design.showFrontNumber) {
+        const frontSizeVal = design.frontNumberSize !== undefined ? design.frontNumberSize : (design.numberSize || 140);
         list.push({
             name: 'number',
             x: design.numberX !== undefined ? design.numberX : 256,
             y: design.numberY !== undefined ? design.numberY : 340,
-            width: Math.max(80, (design.number || '').length * (design.numberSize || 140) * 0.5),
-            height: (design.numberSize || 140) * 0.8
+            width: Math.max(80, (design.number || '').length * frontSizeVal * 0.5),
+            height: frontSizeVal * 0.8
         });
     }
     return list;
@@ -617,12 +640,13 @@ function getDraggableElementsBack(design) {
         });
     }
     if (design.showBackNumber) {
+        const backSizeVal = design.backNumberSize !== undefined ? design.backNumberSize : (design.numberSize || 140);
         list.push({
             name: 'backNumber',
             x: design.backNumberX !== undefined ? design.backNumberX : 256,
             y: design.backNumberY !== undefined ? design.backNumberY : 290,
-            width: Math.max(80, (design.number || '').length * (design.numberSize || 140) * 0.5),
-            height: (design.numberSize || 140) * 0.8
+            width: Math.max(80, (design.number || '').length * backSizeVal * 0.5),
+            height: backSizeVal * 0.8
         });
     }
     return list;

@@ -49,7 +49,7 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             logo = 'none',
             font = 'athletic',
             sponsorText = '',
-            numberSize = 140,
+            frontNumberSize = options.frontNumberSize !== undefined ? options.frontNumberSize : (options.numberSize || 140),
             outlineWeight = 8,
             customFont = '',
             logoX = 256,
@@ -92,7 +92,7 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = tertiaryColor;
             ctx.lineWidth = outlineWeight;
-            ctx.font = getFontString('number', font, customFont, numberSize);
+            ctx.font = getFontString('number', font, customFont, frontNumberSize);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.4)';
@@ -120,7 +120,7 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             tertiaryColor = '#ffffff',
             pattern = 'none',
             font = 'athletic',
-            numberSize = 140,
+            backNumberSize = options.backNumberSize !== undefined ? options.backNumberSize : (options.numberSize || 140),
             outlineWeight = 8,
             customFont = '',
             backNameX = 256,
@@ -152,7 +152,7 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = tertiaryColor;
             ctx.lineWidth = outlineWeight + 2;
-            ctx.font = getFontString('number_back', font, customFont, numberSize);
+            ctx.font = getFontString('number_back', font, customFont, backNumberSize);
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.shadowColor = 'rgba(0,0,0,0.4)';
