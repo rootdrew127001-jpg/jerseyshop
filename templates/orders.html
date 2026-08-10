@@ -6,8 +6,9 @@
     <title>Modelyx | My Orders</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="/static/js/customerNav.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/js/orderPreview.js"></script>
 </head>
 <body class="bg-slate-50 min-h-screen text-slate-900">
 
@@ -255,15 +256,15 @@
                                 </div>
                             </div>
 
-                            ${order.notes ? `
-                            <div class="pt-3 border-t border-slate-100 mb-2">
-                                <p class="text-xs text-slate-400">Notes</p>
-                                <p class="text-sm text-slate-600 mt-1">${order.notes}</p>
-                            </div>` : ''}
+                            ${window.OrderPreview ? OrderPreview.renderCardHTML(order, 'cust-ord') : ''}
 
                             ${paymentBadge(order)}
                         </div>`;
                     }).join('');
+
+                if (window.OrderPreview) {
+                    setTimeout(() => OrderPreview.initAllCanvases(orders, 'cust-ord'), 50);
+                }
 
             } catch (err) {
                 document.getElementById('loadingState').innerHTML =

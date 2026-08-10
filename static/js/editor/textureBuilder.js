@@ -170,20 +170,20 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
 
 function pathJersey(ctx) {
     ctx.beginPath();
-    ctx.moveTo(256, 82);
-    ctx.quadraticCurveTo(278, 82, 296, 68);
-    ctx.lineTo(365, 95);
-    ctx.lineTo(440, 155);
-    ctx.lineTo(405, 195);
-    ctx.lineTo(345, 175);
-    ctx.lineTo(340, 460);
-    ctx.quadraticCurveTo(256, 475, 172, 460);
-    ctx.lineTo(167, 175);
-    ctx.lineTo(107, 195);
-    ctx.lineTo(72, 155);
-    ctx.lineTo(147, 95);
-    ctx.lineTo(216, 68);
-    ctx.quadraticCurveTo(234, 82, 256, 82);
+    ctx.moveTo(256, 68);
+    ctx.quadraticCurveTo(278, 68, 296, 56);
+    ctx.lineTo(365, 80);
+    ctx.lineTo(448, 142);
+    ctx.lineTo(412, 184);
+    ctx.lineTo(348, 168);
+    ctx.lineTo(342, 465);
+    ctx.quadraticCurveTo(256, 478, 170, 465);
+    ctx.lineTo(164, 168);
+    ctx.lineTo(100, 184);
+    ctx.lineTo(64, 142);
+    ctx.lineTo(147, 80);
+    ctx.lineTo(216, 56);
+    ctx.quadraticCurveTo(234, 68, 256, 68);
     ctx.closePath();
 }
 
@@ -208,14 +208,20 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     console.log("drawRawDesign finished on designCanvas");
 
     ctx.save();
+    const scaleFactor = (width / 512) * 1.25;
+    const offsetX = (width - 512 * scaleFactor) / 2;
+    const offsetY = (height - 512 * scaleFactor) / 2 - 10;
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scaleFactor, scaleFactor);
+
     pathJersey(ctx);
     ctx.clip();
 
-    ctx.drawImage(designCanvas, 0, 0, width, height);
+    ctx.drawImage(designCanvas, 0, 0, 512, 512);
 
     ctx.globalCompositeOperation = 'multiply';
 
-    const sideGrad = ctx.createLinearGradient(0, 0, width, 0);
+    const sideGrad = ctx.createLinearGradient(0, 0, 512, 0);
     sideGrad.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
     sideGrad.addColorStop(0.15, 'rgba(0, 0, 0, 0.08)');
     sideGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0)');
@@ -260,13 +266,13 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     highlightGrad.addColorStop(0.6, 'rgba(255,255,255,0.06)');
     highlightGrad.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = highlightGrad;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, 512, 512);
 
     ctx.restore();
 
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.22)';
     ctx.lineWidth = 1.8;
-    
+
     ctx.beginPath();
     ctx.moveTo(365, 95);
     ctx.lineTo(345, 175);
@@ -329,7 +335,7 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     ctx.moveTo(216, 68);
     ctx.quadraticCurveTo(256, 82, 296, 68);
     ctx.stroke();
-    
+
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.lineWidth = 1.2;
     ctx.beginPath();
@@ -349,7 +355,7 @@ function drawEmbossedFold(ctx, x1, y1, cx, cy, x2, y2, shadowOpacity, highlightO
     ctx.moveTo(x1, y1);
     ctx.quadraticCurveTo(cx, cy, x2, y2);
     ctx.stroke();
-    
+
     ctx.globalCompositeOperation = 'screen';
     ctx.strokeStyle = `rgba(255, 255, 255, ${highlightOpacity})`;
     ctx.lineWidth = 3.5;
@@ -394,7 +400,7 @@ function getFontString(type, fontStyle, customFont = '', numSizeVal = 140) {
     return `bold 24px ${base}`;
 }
 
-// Curved text drawer helper
+
 function drawArchedText(ctx, text, x, y, radius, startAngle, font, fillStyle, strokeStyle) {
     ctx.font = font;
     ctx.fillStyle = fillStyle;
@@ -408,7 +414,6 @@ function drawArchedText(ctx, text, x, y, radius, startAngle, font, fillStyle, st
 
     const chars = text.split('');
     const numChars = chars.length;
-    // Radial spacing based on character count
     const angleRange = Math.min(Math.PI * 0.45, numChars * 0.08);
     const startRad = startAngle - angleRange / 2;
     const stepRad = angleRange / (numChars - 1 || 1);
@@ -416,9 +421,7 @@ function drawArchedText(ctx, text, x, y, radius, startAngle, font, fillStyle, st
     for (let i = 0; i < numChars; i++) {
         const charAngle = startRad + i * stepRad;
         ctx.save();
-        // Position along the circular arc
         ctx.translate(x + Math.cos(charAngle) * radius, y + Math.sin(charAngle) * radius);
-        // Rotate text to face outward from circle
         ctx.rotate(charAngle + Math.PI / 2);
         if (strokeStyle) {
             ctx.strokeText(chars[i], 0, 0);
@@ -428,18 +431,17 @@ function drawArchedText(ctx, text, x, y, radius, startAngle, font, fillStyle, st
     }
 }
 
-// Vector Badge/Logo Drawer
 function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor, customLogoImage) {
     ctx.save();
     ctx.translate(x, y);
 
     if (logoType === 'custom') {
         if (customLogoImage) {
-            ctx.drawImage(customLogoImage, -size/2, -size/2, size, size);
+            ctx.drawImage(customLogoImage, -size / 2, -size / 2, size, size);
         } else {
             ctx.strokeStyle = primaryColor;
             ctx.lineWidth = 2;
-            ctx.strokeRect(-size/2, -size/2, size, size);
+            ctx.strokeRect(-size / 2, -size / 2, size, size);
         }
     }
     else if (logoType === 'shield') {
@@ -447,27 +449,26 @@ function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor, custo
         ctx.strokeStyle = secondaryColor;
         ctx.lineWidth = 4;
         ctx.beginPath();
-        ctx.moveTo(-size/2, -size/2);
-        ctx.lineTo(size/2, -size/2);
-        ctx.lineTo(size/2, 0);
-        ctx.quadraticCurveTo(size/2, size/2, 0, size * 0.65);
-        ctx.quadraticCurveTo(-size/2, size/2, -size/2, 0);
+        ctx.moveTo(-size / 2, -size / 2);
+        ctx.lineTo(size / 2, -size / 2);
+        ctx.lineTo(size / 2, 0);
+        ctx.quadraticCurveTo(size / 2, size / 2, 0, size * 0.65);
+        ctx.quadraticCurveTo(-size / 2, size / 2, -size / 2, 0);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Inner shield line
         ctx.strokeStyle = primaryColor;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(-size/2.5, -size/2.5);
-        ctx.lineTo(size/2.5, -size/2.5);
-        ctx.lineTo(size/2.5, 0);
-        ctx.quadraticCurveTo(size/2.5, size/2.5, 0, size * 0.55);
-        ctx.quadraticCurveTo(-size/2.5, size/2.5, -size/2.5, 0);
+        ctx.moveTo(-size / 2.5, -size / 2.5);
+        ctx.lineTo(size / 2.5, -size / 2.5);
+        ctx.lineTo(size / 2.5, 0);
+        ctx.quadraticCurveTo(size / 2.5, size / 2.5, 0, size * 0.55);
+        ctx.quadraticCurveTo(-size / 2.5, size / 2.5, -size / 2.5, 0);
         ctx.closePath();
         ctx.stroke();
-    } 
+    }
     else if (logoType === 'star') {
         ctx.fillStyle = primaryColor;
         ctx.strokeStyle = secondaryColor;
@@ -492,7 +493,7 @@ function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor, custo
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-    } 
+    }
     else if (logoType === 'flame') {
         ctx.fillStyle = primaryColor;
         ctx.strokeStyle = secondaryColor;
@@ -506,32 +507,30 @@ function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor, custo
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-    } 
+    }
     else if (logoType === 'eagle') {
         ctx.fillStyle = primaryColor;
         ctx.strokeStyle = secondaryColor;
         ctx.lineWidth = 3;
         ctx.beginPath();
-        // Stylized Eagle Head path
         ctx.moveTo(-size * 0.4, -size * 0.15);
         ctx.lineTo(-size * 0.15, -size * 0.35);
         ctx.lineTo(size * 0.15, -size * 0.35);
-        ctx.quadraticCurveTo(size * 0.45, -size * 0.15, size * 0.35, size * 0.1); // Beak curve top
-        ctx.lineTo(size * 0.05, 0.0); // Beak tip
-        ctx.lineTo(size * 0.15, -size * 0.1); // Inner beak mouth
-        ctx.quadraticCurveTo(-size * 0.05, -size * 0.05, -size * 0.1, size * 0.3); // Neck
+        ctx.quadraticCurveTo(size * 0.45, -size * 0.15, size * 0.35, size * 0.1);
+        ctx.lineTo(size * 0.05, 0.0);
+        ctx.lineTo(size * 0.15, -size * 0.1);
+        ctx.quadraticCurveTo(-size * 0.05, -size * 0.05, -size * 0.1, size * 0.3);
         ctx.lineTo(-size * 0.35, size * 0.3);
         ctx.lineTo(-size * 0.25, size * 0.1);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
 
-        // Eye dot
         ctx.fillStyle = secondaryColor;
         ctx.beginPath();
         ctx.arc(size * 0.08, -size * 0.2, size * 0.05, 0, Math.PI * 2);
         ctx.fill();
-    } 
+    }
     else if (logoType === 'vortex') {
         ctx.strokeStyle = primaryColor;
         ctx.lineWidth = 6;
@@ -563,9 +562,7 @@ function drawLogo(ctx, logoType, x, y, size, primaryColor, secondaryColor, custo
     ctx.restore();
 }
 
-// 10 Customizable Patterns Engine
 function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
-    // Deterministic random generator for repeating patterns (splatter, scratches, camo)
     let seed = 42;
     function random() {
         let x = Math.sin(seed++) * 10000;
@@ -581,7 +578,7 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         for (let i = 24; i < 512; i += 64) {
             ctx.fillRect(i, 0, 6, 512);
         }
-    } 
+    }
     else if (pattern === 'diagonal') {
         ctx.strokeStyle = accentColor;
         ctx.lineWidth = 20;
@@ -599,7 +596,7 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
             ctx.lineTo(i + 25 + 512, 512);
             ctx.stroke();
         }
-    } 
+    }
     else if (pattern === 'panel') {
         ctx.fillStyle = accentColor;
         ctx.fillRect(0, 0, 110, 512);
@@ -607,7 +604,7 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         ctx.fillStyle = tertiaryColor;
         ctx.fillRect(110, 0, 12, 512);
         ctx.fillRect(390, 0, 12, 512);
-    } 
+    }
     else if (pattern === 'gradient') {
         const grad = ctx.createLinearGradient(0, 0, 0, 512);
         grad.addColorStop(0, baseColor);
@@ -617,7 +614,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         ctx.fillRect(0, 0, 512, 512);
     }
     else if (pattern === 'thunderstorm') {
-        // Jagged, angular shapes
         ctx.fillStyle = accentColor;
         ctx.beginPath();
         ctx.moveTo(0, 120);
@@ -649,7 +645,7 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         ctx.fill();
     }
     else if (pattern === 'paint_splatter') {
-        seed = 15; // Set seed for splatters
+        seed = 15;
         ctx.fillStyle = accentColor;
         for (let i = 0; i < 9; i++) {
             let cx = random() * 512;
@@ -659,7 +655,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
             ctx.arc(cx, cy, r, 0, Math.PI * 2);
             ctx.fill();
 
-            // Smaller splatter drops around
             ctx.fillStyle = tertiaryColor;
             for (let j = 0; j < 5; j++) {
                 let dcx = cx + (random() - 0.5) * r * 2.8;
@@ -673,7 +668,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         }
     }
     else if (pattern === 'apex_gamer') {
-        // Esports angular side-chevrons & fading center grid
         ctx.fillStyle = accentColor;
         ctx.beginPath();
         ctx.moveTo(0, 0); ctx.lineTo(130, 0); ctx.lineTo(50, 512); ctx.lineTo(0, 512);
@@ -692,7 +686,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         ctx.moveTo(382, 0); ctx.lineTo(362, 0); ctx.lineTo(447, 512); ctx.lineTo(462, 512);
         ctx.closePath(); ctx.fill();
 
-        // Center ladder bars fading out
         ctx.fillStyle = accentColor;
         for (let i = 120; i < 420; i += 32) {
             let dist = Math.abs(i - 270) / 150;
@@ -703,7 +696,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         ctx.globalAlpha = 1.0;
     }
     else if (pattern === 'vortex_swoosh') {
-        // Curved swooping sections
         ctx.fillStyle = accentColor;
         ctx.beginPath();
         ctx.moveTo(0, 160);
@@ -762,7 +754,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
     else if (pattern === 'retro_halftone') {
         ctx.fillStyle = accentColor;
         for (let y = 15; y < 512; y += 28) {
-            // Larger at top, fades out downward
             let r = Math.max(0.5, (1.0 - y / 512) * 13);
             for (let x = 15; x < 512; x += 28) {
                 ctx.beginPath();
@@ -772,7 +763,6 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         }
         ctx.fillStyle = tertiaryColor;
         for (let y = 497; y > 0; y -= 28) {
-            // Larger at bottom, fades out upward
             let r = Math.max(0.5, (y / 512) * 11);
             for (let x = 29; x < 512; x += 28) {
                 ctx.beginPath();
@@ -784,20 +774,17 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
     else if (pattern === 'cyber_grid') {
         ctx.strokeStyle = accentColor;
         ctx.lineWidth = 1.5;
-        // Grid columns
         for (let x = 32; x < 512; x += 64) {
             ctx.beginPath();
             ctx.moveTo(x, 0); ctx.lineTo(x, 512);
             ctx.stroke();
         }
-        // Grid rows
         for (let y = 32; y < 512; y += 64) {
             ctx.beginPath();
             ctx.moveTo(0, y); ctx.lineTo(512, y);
             ctx.stroke();
         }
 
-        // Tech blocks overlay
         seed = 120;
         ctx.fillStyle = tertiaryColor;
         for (let i = 0; i < 18; i++) {
@@ -865,10 +852,10 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
             }
             ctx.strokeStyle = tertiaryColor;
             ctx.lineWidth = Math.max(1, Math.round(weight * 0.5));
-            for (let x = size/2; x < 512; x += size) {
+            for (let x = size / 2; x < 512; x += size) {
                 ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 512); ctx.stroke();
             }
-            for (let y = size/2; y < 512; y += size) {
+            for (let y = size / 2; y < 512; y += size) {
                 ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(512, y); ctx.stroke();
             }
         }
@@ -876,14 +863,14 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
             const radius = parseInt(parts[2]) || 4;
             const spacing = parseInt(parts[3]) || 32;
             ctx.fillStyle = accentColor;
-            for (let y = spacing/2; y < 512; y += spacing) {
-                for (let x = spacing/2; x < 512; x += spacing) {
+            for (let y = spacing / 2; y < 512; y += spacing) {
+                for (let x = spacing / 2; x < 512; x += spacing) {
                     ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill();
                 }
             }
             ctx.fillStyle = tertiaryColor;
-            for (let y = spacing/2 + spacing/2; y < 512; y += spacing) {
-                for (let x = spacing/2 + spacing/2; x < 512; x += spacing) {
+            for (let y = spacing / 2 + spacing / 2; y < 512; y += spacing) {
+                for (let x = spacing / 2 + spacing / 2; x < 512; x += spacing) {
                     ctx.beginPath(); ctx.arc(x, y, Math.max(1, radius * 0.5), 0, Math.PI * 2); ctx.fill();
                 }
             }

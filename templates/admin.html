@@ -1,28 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx Admin | Outfitter</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/js/orderPreview.js"></script>
 </head>
+
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
     <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shadow-2xl">
-        <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span class="text-indigo-500">PORTAL</span></h1>
+        <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span
+                class="text-indigo-500">PORTAL</span></h1>
         <nav class="flex-1 space-y-2">
-            <a href="/admin.html" class="flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/></svg>
+            <a href="/admin.html"
+                class="flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        stroke-width="2" />
+                </svg>
                 <span>Orders</span>
             </a>
-            <a href="/cancelled.html" class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round"/></svg>
+            <a href="/cancelled.html"
+                class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2"
+                        stroke-linecap="round" />
+                </svg>
                 <span>Cancelled Orders</span>
             </a>
         </nav>
-        <button onclick="logout()" class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
+        <button onclick="logout()"
+            class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
     </aside>
 
     <main class="flex-1 overflow-y-auto p-8">
@@ -34,14 +50,16 @@
                     <p class="text-slate-500 text-sm">Showing paid orders ready for production.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="exportCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
+                    <button onclick="exportCSV()"
+                        class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export
+                        CSV</button>
                     <!-- Notification Bell -->
                     <div class="relative">
                         <button onclick="toggleAdminNotifications()"
                             class="relative p-2 rounded-xl bg-white border hover:bg-slate-50 transition">
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 17h5l-1.405-2.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                    d="M15 17h5l-1.405-2.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                             <span id="adminBellCount"
                                 class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black rounded-full w-4 h-4 flex items-center justify-center hidden">
@@ -53,7 +71,8 @@
                             class="hidden absolute right-0 top-12 w-80 bg-white rounded-3xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
                             <div class="flex items-center justify-between px-5 py-4 border-b">
                                 <p class="font-black text-slate-900 text-sm">Notifications</p>
-                                <button onclick="adminMarkAllRead()" class="text-xs text-indigo-600 font-bold hover:underline">
+                                <button onclick="adminMarkAllRead()"
+                                    class="text-xs text-indigo-600 font-bold hover:underline">
                                     Mark all read
                                 </button>
                             </div>
@@ -63,7 +82,8 @@
                         </div>
                     </div>
 
-                    <button onclick="render()" class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition">Refresh</button>
+                    <button onclick="render()"
+                        class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition">Refresh</button>
                 </div>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -153,7 +173,8 @@
                 <input id="galleryImageFile" type="file" accept="image/*"
                     class="flex-1 p-2 border rounded-xl bg-white text-sm outline-none focus:border-indigo-500" />
                 <button onclick="addGallery()"
-                    class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition">Add Design</button>
+                    class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition">Add
+                    Design</button>
             </div>
             <div id="gallery" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
         </section>
@@ -171,7 +192,6 @@
 
         const renderCharts = (data) => {
             const activeData = data.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid');
-            // Status breakdown pie
             const pending = activeData.filter(o => o.status === 'Pending Review').length;
             const production = activeData.filter(o => o.status === 'In Production').length;
             const completed = activeData.filter(o => o.status === 'Completed').length;
@@ -193,7 +213,6 @@
                 }
             });
 
-            // Orders over time bar chart
             const ordersByDate = {};
             activeData.forEach(o => {
                 const date = new Date(o.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
@@ -223,7 +242,6 @@
                 }
             });
 
-            // Pattern breakdown
             const patternCount = {};
             activeData.forEach(o => {
                 const p = o.pattern || 'none';
@@ -246,7 +264,6 @@
                 }
             });
 
-            // Recent activity
             const recent = [...activeData].reverse().slice(0, 5);
             $('recentActivity').innerHTML = recent.length ? recent.map(o => `
                 <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
@@ -292,7 +309,6 @@
 
                 renderCharts(allData);
 
-                // Render table
                 $('table').innerHTML = data.length ? data.map(o => {
                     const total = Number(o.price || 0);
                     const shippingFee = Number(o.shipping_fee || 0);
@@ -358,9 +374,9 @@
                         <td class="p-6">
                             <select onchange="updateOrder(${o.id}, this.value)"
                                 class="text-xs font-bold border rounded p-1 bg-white">
-                                <option ${o.status==='Pending Review'?'selected':''}>Pending Review</option>
-                                <option ${o.status==='In Production'?'selected':''}>In Production</option>
-                                <option ${o.status==='Completed'?'selected':''}>Completed</option>
+                                <option ${o.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
+                                <option ${o.status === 'In Production' ? 'selected' : ''}>In Production</option>
+                                <option ${o.status === 'Completed' ? 'selected' : ''}>Completed</option>
                             </select>
                         </td>
                     <td class="p-6 text-right space-y-2">
@@ -374,9 +390,17 @@
                         </div>
                     </td>
                     </tr>
+                    <tr class="bg-slate-900/5 border-b border-slate-200">
+                        <td colspan="6" class="px-6 py-2">
+                            ${window.OrderPreview ? OrderPreview.renderCardHTML(o, 'admin-ord') : ''}
+                        </td>
+                    </tr>
                 `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No active orders found.</td></tr>';
 
-                // Stats
+                if (window.OrderPreview) {
+                    setTimeout(() => OrderPreview.initAllCanvases(data, 'admin-ord'), 50);
+                }
+
                 const stats = allData.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
                     a.new += o.status === 'Pending Review' ? 1 : 0;
                     a.prod += o.status === 'In Production' ? 1 : 0;
@@ -496,73 +520,73 @@
         };
 
         $('orderSearch').addEventListener('input', render);
-async function loadAdminNotifications() {
-    try {
-        const res = await fetch('/notifications/', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const notifs = await res.json();
+        async function loadAdminNotifications() {
+            try {
+                const res = await fetch('/notifications/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const notifs = await res.json();
 
-        const countRes = await fetch('/notifications/unread-count', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const countData = await countRes.json();
+                const countRes = await fetch('/notifications/unread-count', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const countData = await countRes.json();
 
-        const bell = $('adminBellCount');
-        if (countData.count > 0) {
-            bell.textContent = countData.count > 9 ? '9+' : countData.count;
-            bell.classList.remove('hidden');
-        } else {
-            bell.classList.add('hidden');
-        }
+                const bell = $('adminBellCount');
+                if (countData.count > 0) {
+                    bell.textContent = countData.count > 9 ? '9+' : countData.count;
+                    bell.classList.remove('hidden');
+                } else {
+                    bell.classList.add('hidden');
+                }
 
-        const list = $('adminNotifList');
-        list.innerHTML = notifs.length ? notifs.map(n => `
+                const list = $('adminNotifList');
+                list.innerHTML = notifs.length ? notifs.map(n => `
             <div class="px-5 py-3 ${n.is_read ? 'bg-white' : 'bg-indigo-50'}">
                 <p class="text-sm font-bold text-slate-900">${n.title}</p>
                 <p class="text-xs text-slate-500 mt-0.5">${n.message}</p>
                 <p class="text-[10px] text-slate-400 mt-1">
                     ${new Date(n.created_at).toLocaleDateString('en-PH', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    })}
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}
                 </p>
             </div>
         `).join('') : '<p class="text-xs text-slate-400 text-center py-8">No notifications</p>';
 
-    } catch (err) {
-        console.error('Failed to load notifications:', err);
-    }
-}
+            } catch (err) {
+                console.error('Failed to load notifications:', err);
+            }
+        }
 
-function toggleAdminNotifications() {
-    const dropdown = $('adminNotifDropdown');
-    dropdown.classList.toggle('hidden');
+        function toggleAdminNotifications() {
+            const dropdown = $('adminNotifDropdown');
+            dropdown.classList.toggle('hidden');
 
-    if (!dropdown.classList.contains('hidden')) {
-        loadAdminNotifications();
-    }
-}
+            if (!dropdown.classList.contains('hidden')) {
+                loadAdminNotifications();
+            }
+        }
 
-async function adminMarkAllRead() {
-    await fetch('/notifications/mark-read', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
+        async function adminMarkAllRead() {
+            await fetch('/notifications/mark-read', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-    loadAdminNotifications();
-}
+            loadAdminNotifications();
+        }
 
-document.addEventListener('click', (e) => {
-    const dropdown = $('adminNotifDropdown');
-    const bell = e.target.closest('[onclick="toggleAdminNotifications()"]');
+        document.addEventListener('click', (e) => {
+            const dropdown = $('adminNotifDropdown');
+            const bell = e.target.closest('[onclick="toggleAdminNotifications()"]');
 
-    if (!bell && dropdown && !dropdown.contains(e.target)) {
-        dropdown.classList.add('hidden');
-    }
-});
+            if (!bell && dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
 
         const adminCancelOrder = async (id) => {
             const reason = prompt('Reason for cancellation:');
@@ -589,4 +613,5 @@ document.addEventListener('click', (e) => {
         };
     </script>
 </body>
+
 </html>

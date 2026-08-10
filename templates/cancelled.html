@@ -6,8 +6,9 @@
     <title>Modelyx Admin | Cancelled Orders</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/js/orderPreview.js"></script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
     <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shadow-2xl">
@@ -238,7 +239,16 @@
                         </td>
                         <td class="p-6 text-right text-xs font-bold text-slate-500">${formatDate(order.created_at)}</td>
                     </tr>
+                    <tr class="bg-slate-900/5 border-b border-slate-200">
+                        <td colspan="7" class="px-6 py-2">
+                            ${window.OrderPreview ? OrderPreview.renderCardHTML(order, 'cancel-ord') : ''}
+                        </td>
+                    </tr>
                 `).join('') : '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-bold">No cancelled orders found.</td></tr>';
+
+                if (window.OrderPreview) {
+                    setTimeout(() => OrderPreview.initAllCanvases(filtered, 'cancel-ord'), 50);
+                }
             } catch (err) {
                 console.error('Failed to load cancelled orders:', err);
             }
