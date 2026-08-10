@@ -96,3 +96,23 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
     response.set_cookie(key="modelyx_role", value=user.role, httponly=False)
     response.set_cookie(key="modelyx_name", value=user.name, httponly=False)
     return response
+
+@router.post("/logout")
+def logout(request: Request):
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    elif "modelyx_token" in request.cookies:
+        token = request.cookies.get("modelyx_token")
+
+    if token:
+        from app.core import redis as redis_service
+        redis_service.delete_session(token)
+
+    from fastapi.responses import JSONResponse
+    response = JSONResponse(content={"message": "Logged out successfully"})
+    response.delete_cookie("modelyx_token")
+    response.delete_cookie("modelyx_role")
+    response.delete_cookie("modelyx_name")
+    return response

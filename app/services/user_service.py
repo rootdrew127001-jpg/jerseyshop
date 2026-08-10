@@ -6,6 +6,7 @@ from app.models.models import User
 from app.schemas.schemas import RegisterRequest, LoginRequest
 from app.core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from app.services.email_service import generate_otp, send_otp_email
+from app.core import redis as redis_service
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -21,7 +22,15 @@ def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    
+    session_data = {
+        "id": int(data.get("sub")) if data.get("sub") and data.get("sub").isdigit() else data.get("sub"),
+        "email": data.get("email"),
+        "role": data.get("role")
+    }
+    redis_service.store_session(token, session_data, expire_seconds=ACCESS_TOKEN_EXPIRE_MINUTES * 60)
+    return token
 
 def register_user(db: Session, payload: RegisterRequest):
     existing = db.query(User).filter(User.email == payload.email).first()
@@ -84,6 +93,8 @@ async def send_verification_otp(db: Session, user):
     user.otp_code = otp
     user.otp_expires = expires
     db.commit()
+
+    redis_service.store_otp(user.email, otp, expire_seconds=600)
     await send_otp_email(user.email, otp, user.name)
     return otp
 
@@ -93,10 +104,18 @@ def verify_otp(db: Session, email: str, otp: str):
         return None, "User not found"
     if user.is_verified:
         return user, None
-    if not user.otp_code or user.otp_code != otp:
-        return None, "Invalid OTP code"
-    if user.otp_expires < datetime.utcnow():
-        return None, "OTP has expired"
+
+    redis_otp = redis_service.get_otp(email)
+    if redis_otp is not None:
+        if redis_otp != otp:
+            return None, "Invalid OTP code"
+        redis_service.delete_otp(email)
+    else:
+        if not user.otp_code or user.otp_code != otp:
+            return None, "Invalid OTP code"
+        if user.otp_expires and user.otp_expires < datetime.utcnow():
+            return None, "OTP has expired"
+
     user.is_verified = 1
     user.otp_code = None
     user.otp_expires = None
