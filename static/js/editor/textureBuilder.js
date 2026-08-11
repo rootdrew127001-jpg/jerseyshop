@@ -29,7 +29,7 @@ export function buildBackTexture(options = {}) {
         cachedBackCanvas.height = 512;
     }
     const ctx = cachedBackCanvas.getContext('2d');
-    drawRawDesign(ctx, options, true, true);
+    drawRawDesign(ctx, options, true, false);
     if (!cachedBackTexture) {
         cachedBackTexture = new THREE.CanvasTexture(cachedBackCanvas);
     } else {
@@ -171,19 +171,15 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
 function pathJersey(ctx) {
     ctx.beginPath();
     ctx.moveTo(256, 68);
-    ctx.quadraticCurveTo(278, 68, 296, 56);
-    ctx.lineTo(365, 80);
-    ctx.lineTo(448, 142);
-    ctx.lineTo(412, 184);
-    ctx.lineTo(348, 168);
+    ctx.quadraticCurveTo(280, 68, 305, 58);
+    ctx.lineTo(342, 68);
+    ctx.quadraticCurveTo(318, 140, 348, 175);
     ctx.lineTo(342, 465);
     ctx.quadraticCurveTo(256, 478, 170, 465);
-    ctx.lineTo(164, 168);
-    ctx.lineTo(100, 184);
-    ctx.lineTo(64, 142);
-    ctx.lineTo(147, 80);
-    ctx.lineTo(216, 56);
-    ctx.quadraticCurveTo(234, 68, 256, 68);
+    ctx.lineTo(164, 175);
+    ctx.quadraticCurveTo(194, 140, 170, 68);
+    ctx.lineTo(207, 58);
+    ctx.quadraticCurveTo(232, 68, 256, 68);
     ctx.closePath();
 }
 
@@ -208,9 +204,9 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     console.log("drawRawDesign finished on designCanvas");
 
     ctx.save();
-    const scaleFactor = (width / 512) * 1.25;
+    const scaleFactor = width / 512;
     const offsetX = (width - 512 * scaleFactor) / 2;
-    const offsetY = (height - 512 * scaleFactor) / 2 - 10;
+    const offsetY = (height - 512 * scaleFactor) / 2;
     ctx.translate(offsetX, offsetY);
     ctx.scale(scaleFactor, scaleFactor);
 

@@ -1,5 +1,5 @@
-import { initViewer, setPartColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment } from './threeViewer.js';
-import { buildTexture, buildBackTexture, renderJersey2D } from './textureBuilder.js';
+import { initViewer, setPartColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment } from './threeViewer.js?v=20260811_2';
+import { buildTexture, buildBackTexture, renderJersey2D } from './textureBuilder.js?v=20260811_2';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';

@@ -155,6 +155,45 @@ const cleanMaterial = (color) => {
     return mat;
 };
 
+function applyPlanarUVs(mesh, isBack = false) {
+    if (!mesh || !mesh.geometry) return;
+    const geometry = mesh.geometry;
+    geometry.computeBoundingBox();
+    const bbox = geometry.boundingBox;
+
+    const posAttr = geometry.attributes.position;
+    const uvAttr = geometry.attributes.uv;
+
+    if (!posAttr || !uvAttr) return;
+
+    const minX = bbox.min.x, maxX = bbox.max.x;
+    const minY = bbox.min.y, maxY = bbox.max.y;
+    const rangeX = (maxX - minX) || 1;
+    const rangeY = (maxY - minY) || 1;
+
+    const paddingX = 0.12;
+    const scaleU = 1 - 2 * paddingX;
+    const paddingY = 0.08;
+    const scaleV = 1 - 2 * paddingY;
+
+    for (let i = 0; i < posAttr.count; i++) {
+        const x = posAttr.getX(i);
+        const y = posAttr.getY(i);
+
+        let normU = (x - minX) / rangeX;
+        if (isBack) {
+            normU = (maxX - x) / rangeX;
+        }
+        let normV = (y - minY) / rangeY;
+
+        let u = 0.320 + normU * 0.348;
+        let v = 0.091 + normV * 0.776;
+
+        uvAttr.setXY(i, u, v);
+    }
+    uvAttr.needsUpdate = true;
+}
+
 function tryLoadGLB(path) {
     const loader = new GLTFLoader();
     showLoadingUI(true);
@@ -189,12 +228,14 @@ function tryLoadGLB(path) {
 
                     if (name === 'jersey_front' || name.includes('jersey_front')) {
                         child.material = cleanMaterial('#4F46E5');
+                        applyPlanarUVs(child, false);
                         meshParts['jersey_front'] = child;
                     } else if (name === 'jersey_back' || name.includes('jersey_back')) {
                         child.material = cleanMaterial('#4F46E5');
+                        applyPlanarUVs(child, true);
                         meshParts['jersey_back'] = child;
                     } else if (name === 'jersey_body' || name.includes('jersey_body')) {
-                        child.material = cleanMaterial('#4F46E5');
+                        child.visible = false;
                         meshParts['jersey_body'] = child;
                     } else if (name === 'shorts' || name.includes('shorts')) {
                         child.material = cleanMaterial('#7C3AED');
@@ -374,7 +415,7 @@ export function applyMaterialFinish(finishName) {
                 mesh.material.clearcoatRoughness = clearcoatRoughness;
             }
             mesh.material.bumpMap = activeBumpMap;
-            mesh.material.bumpScale = bumpScale;
+            mesh.material.bumpScale = name === 'shorts' ? Math.min(bumpScale, 0.003) : bumpScale;
             mesh.material.needsUpdate = true;
         }
     });
