@@ -236,61 +236,84 @@ function bindControls() {
     });
 
     // AI suggestion handler
-    document.getElementById('aiBtn').addEventListener('click', async () => {
-        const teamName = (document.getElementById('frontText') ? document.getElementById('frontText').value.trim() : '') || 'TEAM';
-        const btn = document.getElementById('aiBtn');
+    const aiBtn = document.getElementById('aiBtn');
+    const aiTeamInput = document.getElementById('aiTeamInput');
+    const aiBtnText = document.getElementById('aiBtnText');
 
-        btn.disabled = true;
-        btn.textContent = '🤖 Thinking...';
-        hideReasoning();
-
-        try {
-            const res = await fetch('/ai/suggest', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ team_name: teamName })
-            });
-
-            const suggestion = await res.json();
-
-            if (res.ok && suggestion) {
-                currentDesign = {
-                    ...currentDesign,
-                    baseColor: suggestion.baseColor || currentDesign.baseColor,
-                    accentColor: suggestion.accentColor || currentDesign.accentColor,
-                    tertiaryColor: suggestion.tertiaryColor || currentDesign.tertiaryColor,
-                    pattern: suggestion.pattern || 'none',
-                    logo: suggestion.logo || 'none',
-                    font: suggestion.font || 'athletic',
-                    finish: suggestion.finish || 'matte',
-                    showroom: suggestion.showroom || 'cyber',
-                    frontText: suggestion.teamName || teamName,
-                    backName: 'PLAYER',
-                    number: suggestion.number || '23',
-                    sponsorText: suggestion.sponsorText || '',
-                    showFrontText: true,
-                    showFrontNumber: true,
-                    showBackText: true,
-                    showBackNumber: true,
-                    showSponsor: !!suggestion.sponsorText,
-                    customFont: ''
-                };
-                Object.assign(currentDesign, DEFAULT_COORDS);
-                syncUI(currentDesign);
-                applyDesign(currentDesign);
-                changeEnvironment(currentDesign.showroom);
-                showReasoning(suggestion.reasoning);
-            } else {
-                showReasoning('AI suggestion failed. Try again.');
+    if (aiTeamInput) {
+        aiTeamInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (aiBtn) aiBtn.click();
             }
-        } catch (err) {
-            console.error(err);
-            showReasoning('Server error. Is the API running?');
-        }
+        });
+    }
 
-        btn.disabled = false;
-        btn.textContent = '🤖 AI Suggest Design';
-    });
+    if (aiBtn) {
+        aiBtn.addEventListener('click', async () => {
+            const teamInputVal = aiTeamInput ? aiTeamInput.value.trim() : '';
+            const frontTextVal = document.getElementById('frontText') ? document.getElementById('frontText').value.trim() : '';
+            const teamName = teamInputVal || frontTextVal || 'TEAM';
+
+            aiBtn.disabled = true;
+            aiBtn.classList.add('animate-pulse', 'opacity-80');
+            if (aiBtnText) aiBtnText.textContent = '⚡ AI Designing...';
+            else aiBtn.textContent = '⚡ AI Designing...';
+            hideReasoning();
+
+            try {
+                const res = await fetch('/ai/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ team_name: teamName })
+                });
+
+                const suggestion = await res.json();
+
+                if (res.ok && suggestion) {
+                    const finalTeamName = suggestion.teamName || teamName;
+                    if (aiTeamInput) aiTeamInput.value = finalTeamName;
+
+                    currentDesign = {
+                        ...currentDesign,
+                        baseColor: suggestion.baseColor || currentDesign.baseColor,
+                        accentColor: suggestion.accentColor || currentDesign.accentColor,
+                        tertiaryColor: suggestion.tertiaryColor || currentDesign.tertiaryColor,
+                        pattern: suggestion.pattern || 'none',
+                        logo: suggestion.logo || 'none',
+                        font: suggestion.font || 'athletic',
+                        finish: suggestion.finish || 'matte',
+                        showroom: suggestion.showroom || 'cyber',
+                        frontText: finalTeamName,
+                        backName: 'PLAYER',
+                        number: suggestion.number || '23',
+                        sponsorText: suggestion.sponsorText || '',
+                        showFrontText: true,
+                        showFrontNumber: true,
+                        showBackText: true,
+                        showBackNumber: true,
+                        showSponsor: !!suggestion.sponsorText,
+                        customFont: ''
+                    };
+                    Object.assign(currentDesign, DEFAULT_COORDS);
+                    syncUI(currentDesign);
+                    applyDesign(currentDesign);
+                    changeEnvironment(currentDesign.showroom);
+                    showReasoning(suggestion.reasoning);
+                } else {
+                    showReasoning('AI suggestion failed. Please try again.');
+                }
+            } catch (err) {
+                console.error(err);
+                showReasoning('Server error connecting to AI service.');
+            }
+
+            aiBtn.disabled = false;
+            aiBtn.classList.remove('animate-pulse', 'opacity-80');
+            if (aiBtnText) aiBtnText.textContent = '🤖 Generate AI Design';
+            else aiBtn.textContent = '🤖 Generate AI Design';
+        });
+    }
 
     const fontSizeFrontNumber = document.getElementById('fontSizeFrontNumber');
     if (fontSizeFrontNumber) {
@@ -547,17 +570,25 @@ function syncUI(design) {
 
 function showReasoning(text) {
     const el = document.getElementById('aiReasoning');
+    const wrapper = document.getElementById('aiReasoningWrapper');
     if (el) {
         el.textContent = text;
         el.style.display = 'block';
+    }
+    if (wrapper) {
+        wrapper.style.display = 'block';
     }
 }
 
 function hideReasoning() {
     const el = document.getElementById('aiReasoning');
+    const wrapper = document.getElementById('aiReasoningWrapper');
     if (el) {
         el.style.display = 'none';
         el.textContent = '';
+    }
+    if (wrapper) {
+        wrapper.style.display = 'none';
     }
 }
 

@@ -329,24 +329,41 @@
 
         <div class="p-6 space-y-5 flex-1 font-sans">
 
+            <!-- AI Generator Card -->
+            <div class="bg-slate-800/90 border border-violet-500/40 rounded-2xl p-4 space-y-3 shadow-lg shadow-violet-950/20">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
+                        <span>✨ AI Jersey Designer</span>
+                    </span>
+                    <span class="text-[9px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full font-bold border border-violet-400/20">Free Gemini AI</span>
+                </div>
+                
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Team Name or Style Prompt</label>
+                    <input id="aiTeamInput" type="text" placeholder="e.g. Tokyo Vipers, Miami Heat..." 
+                           class="w-full bg-slate-900 border border-slate-700 focus:border-violet-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium">
+                </div>
+
+                <button id="aiBtn"
+                    class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl transition text-xs shadow-md shadow-violet-900/30 flex items-center justify-center gap-2 cursor-pointer">
+                    <span id="aiBtnText">🤖 Generate AI Design</span>
+                </button>
+
+                <!-- AI Reasoning Display -->
+                <div id="aiReasoningWrapper" style="display:none" class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-3 space-y-1">
+                    <div class="text-[9px] font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1">
+                        <span>💡 AI Design Concept:</span>
+                    </div>
+                    <p id="aiReasoning" class="text-xs text-slate-300 leading-relaxed italic">
+                    </p>
+                </div>
+            </div>
+
             <!-- Random Button -->
             <button id="randomBtn"
-                class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-2xl transition text-sm">
+                class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-4 rounded-xl transition text-xs border border-slate-600/50 flex items-center justify-center gap-2 cursor-pointer">
                 🎲 Generate Random Design
             </button>
-
-            <!-- AI Button -->
-            <button id="aiBtn"
-                class="w-full bg-violet-600 hover:bg-violet-500 text-white font-bold py-3 px-4 rounded-2xl transition text-sm">
-                🤖 AI Suggest Design
-            </button>
-            <span id="aiSpinner" class="spinner" style="display:none"></span>
-
-            <!-- AI Reasoning -->
-            <p id="aiReasoning"
-                style="display:none"
-                class="text-xs text-slate-300 bg-slate-700/60 rounded-xl p-3 leading-relaxed italic">
-            </p>
 
             <!-- Divider -->
             <div class="border-t border-slate-700/60 pt-2"></div>
