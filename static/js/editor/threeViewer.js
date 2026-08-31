@@ -23,7 +23,7 @@ export function initViewer(canvasId) {
 
     // 2. Scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0a071b'); // Default Cyber dark background
+    scene.background = new THREE.Color('#0a071b');
 
     // 3. Camera
     camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
@@ -115,7 +115,6 @@ function createFabricBumpTexture() {
     return texture;
 }
 
-// Procedural carbon fiber bump map
 function createCarbonBumpTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 16;
@@ -141,40 +140,38 @@ function createCarbonBumpTexture() {
 }
 
 const cleanMaterial = (color) => {
-    // Upgraded to MeshPhysicalMaterial to support metallic/glossy satin finishes
     const mat = new THREE.MeshPhysicalMaterial({
         color: color,
         roughness: 1.0,
         metalness: 0.0,
         clearcoat: 0.0,
         clearcoatRoughness: 0.0,
-        side: THREE.FrontSide,
+        side: THREE.DoubleSide,
         bumpMap: fabricBumpTexture,
         bumpScale: 0.015
     });
     return mat;
 };
 
-function applyPlanarUVs(mesh, isBack = false) {
-    if (!mesh || !mesh.geometry) return;
-    const geometry = mesh.geometry;
+function applyCleanPlanarUVs(geometry, isBack = false) {
+    if (!geometry) return;
     geometry.computeBoundingBox();
     const bbox = geometry.boundingBox;
 
     const posAttr = geometry.attributes.position;
-    const uvAttr = geometry.attributes.uv;
-
-    if (!posAttr || !uvAttr) return;
+    if (!posAttr) return;
 
     const minX = bbox.min.x, maxX = bbox.max.x;
     const minY = bbox.min.y, maxY = bbox.max.y;
     const rangeX = (maxX - minX) || 1;
     const rangeY = (maxY - minY) || 1;
 
-    const paddingX = 0.12;
+    const paddingX = 0.03;
     const scaleU = 1 - 2 * paddingX;
-    const paddingY = 0.08;
+    const paddingY = 0.03;
     const scaleV = 1 - 2 * paddingY;
+
+    const uvs = new Float32Array(posAttr.count * 2);
 
     for (let i = 0; i < posAttr.count; i++) {
         const x = posAttr.getX(i);
@@ -186,12 +183,84 @@ function applyPlanarUVs(mesh, isBack = false) {
         }
         let normV = (y - minY) / rangeY;
 
-        let u = 0.320 + normU * 0.348;
-        let v = 0.091 + normV * 0.776;
+        let u = paddingX + normU * scaleU;
+        let v = paddingY + normV * scaleV;
 
-        uvAttr.setXY(i, u, v);
+        uvs[i * 2] = u;
+        uvs[i * 2 + 1] = v;
     }
-    uvAttr.needsUpdate = true;
+
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    geometry.attributes.uv.needsUpdate = true;
+}
+
+function splitTorsoGeometry(originalMesh) {
+    const origGeom = originalMesh.geometry.clone();
+    origGeom.computeVertexNormals();
+    origGeom.computeBoundingBox();
+
+    const nonIndexed = origGeom.toNonIndexed();
+    const pos = nonIndexed.attributes.position;
+    const norm = nonIndexed.attributes.normal;
+    const vertCount = pos.count;
+
+    const frontPositions = [];
+    const frontNormals = [];
+    const backPositions = [];
+    const backNormals = [];
+
+    for (let i = 0; i < vertCount; i += 3) {
+        const nz0 = norm.getZ(i);
+        const nz1 = norm.getZ(i + 1);
+        const nz2 = norm.getZ(i + 2);
+        const avgNz = (nz0 + nz1 + nz2) / 3;
+
+        const isFront = avgNz >= 0;
+        const targetPos = isFront ? frontPositions : backPositions;
+        const targetNorm = isFront ? frontNormals : backNormals;
+
+        for (let j = 0; j < 3; j++) {
+            const idx = i + j;
+            targetPos.push(pos.getX(idx), pos.getY(idx), pos.getZ(idx));
+            targetNorm.push(norm.getX(idx), norm.getY(idx), norm.getZ(idx));
+        }
+    }
+
+    // Build Front Geometry
+    const frontGeom = new THREE.BufferGeometry();
+    frontGeom.setAttribute('position', new THREE.Float32BufferAttribute(frontPositions, 3));
+    frontGeom.setAttribute('normal', new THREE.Float32BufferAttribute(frontNormals, 3));
+    applyCleanPlanarUVs(frontGeom, false);
+
+    // Build Back Geometry
+    const backGeom = new THREE.BufferGeometry();
+    backGeom.setAttribute('position', new THREE.Float32BufferAttribute(backPositions, 3));
+    backGeom.setAttribute('normal', new THREE.Float32BufferAttribute(backNormals, 3));
+    applyCleanPlanarUVs(backGeom, true);
+
+    const frontMesh = new THREE.Mesh(frontGeom, cleanMaterial('#4F46E5'));
+    frontMesh.name = 'jersey_front';
+    frontMesh.position.copy(originalMesh.position);
+    frontMesh.rotation.copy(originalMesh.rotation);
+    frontMesh.scale.copy(originalMesh.scale);
+    frontMesh.castShadow = true;
+    frontMesh.receiveShadow = true;
+
+    const backMesh = new THREE.Mesh(backGeom, cleanMaterial('#4F46E5'));
+    backMesh.name = 'jersey_back';
+    backMesh.position.copy(originalMesh.position);
+    backMesh.rotation.copy(originalMesh.rotation);
+    backMesh.scale.copy(originalMesh.scale);
+    backMesh.castShadow = true;
+    backMesh.receiveShadow = true;
+
+    if (originalMesh.parent) {
+        originalMesh.parent.add(frontMesh);
+        originalMesh.parent.add(backMesh);
+        originalMesh.visible = false;
+    }
+
+    return { frontMesh, backMesh };
 }
 
 function tryLoadGLB(path) {
@@ -214,42 +283,80 @@ function tryLoadGLB(path) {
 
             jerseyGroup.scale.setScalar(scale);
             jerseyGroup.position.sub(center.multiplyScalar(scale));
-            // Move up slightly to frame it nicely
             jerseyGroup.position.y += 0.15;
 
             scene.add(jerseyGroup);
+
+            const mannequinMeshes = [];
+            const trimMeshes = [];
+            const shoeMeshes = [];
+            let shirtMeshFound = null;
 
             jerseyGroup.traverse((child) => {
                 if (child.isMesh) {
                     child.castShadow = true;
                     child.receiveShadow = true;
-                    const name = child.name.toLowerCase();
+                    const name = child.name.toLowerCase().trim();
                     console.log('Mesh found:', child.name);
 
-                    if (name === 'jersey_front' || name.includes('jersey_front')) {
+                    if (name === 'jersey_front') {
                         child.material = cleanMaterial('#4F46E5');
-                        applyPlanarUVs(child, false);
+                        applyCleanPlanarUVs(child.geometry, false);
                         meshParts['jersey_front'] = child;
-                    } else if (name === 'jersey_back' || name.includes('jersey_back')) {
+                    } else if (name === 'jersey_back') {
                         child.material = cleanMaterial('#4F46E5');
-                        applyPlanarUVs(child, true);
+                        applyCleanPlanarUVs(child.geometry, true);
                         meshParts['jersey_back'] = child;
-                    } else if (name === 'jersey_body' || name.includes('jersey_body')) {
-                        child.visible = false;
-                        meshParts['jersey_body'] = child;
-                    } else if (name === 'shorts' || name.includes('shorts')) {
+                    } else if (name === 'shirt' || name === 'jersey_body' || name === 'torso') {
+                        shirtMeshFound = child;
+                    } else if (name === 'short' || name === 'shorts') {
                         child.material = cleanMaterial('#7C3AED');
                         meshParts['shorts'] = child;
-                    } else if (name === 'body_mannequin' || name.includes('mannequin')) {
+                    } else if (name.includes('neckband') || name.includes('armband')) {
+                        child.material = cleanMaterial('#ffffff');
+                        trimMeshes.push(child);
+                        meshParts[child.name] = child;
+                    } else if (name === 'head' || name.includes('hand') || name.includes('leg') || name.includes('mannequin')) {
                         child.material = new THREE.MeshStandardMaterial({
                             color: '#1e293b',
                             roughness: 0.8,
                             metalness: 0.2
                         });
-                        meshParts['mannequin'] = child;
+                        mannequinMeshes.push(child);
+                    } else if (name.includes('sock')) {
+                        child.material = cleanMaterial('#ffffff');
+                        trimMeshes.push(child);
+                        meshParts[child.name] = child;
+                    } else if (name.includes('shoe')) {
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: '#0f172a',
+                            roughness: 0.6,
+                            metalness: 0.3
+                        });
+                        shoeMeshes.push(child);
+                    } else {
+                        child.material = new THREE.MeshStandardMaterial({
+                            color: '#1e293b',
+                            roughness: 0.7,
+                            metalness: 0.2
+                        });
                     }
                 }
             });
+
+            if (shirtMeshFound && (!meshParts['jersey_front'] || !meshParts['jersey_back'])) {
+                const { frontMesh, backMesh } = splitTorsoGeometry(shirtMeshFound);
+                meshParts['jersey_front'] = frontMesh;
+                meshParts['jersey_back'] = backMesh;
+                meshParts['jersey_body'] = shirtMeshFound;
+            }
+
+            meshParts['mannequin_list'] = mannequinMeshes;
+            meshParts['trim_list'] = trimMeshes;
+            meshParts['shoe_list'] = shoeMeshes;
+            if (mannequinMeshes.length > 0) {
+                meshParts['mannequin'] = mannequinMeshes[0];
+            }
 
             console.log('Mapped parts:', Object.keys(meshParts));
 
@@ -283,7 +390,7 @@ function buildPlaceholderJersey() {
     );
     jerseyGroup.add(body);
     meshParts['jersey_body'] = body;
-    meshParts['jersey_front'] = body; // Map front to body for placeholder
+    meshParts['jersey_front'] = body;
     meshParts['jersey_back'] = body;
 
     const sleeveMat = cleanMaterial('#7C3AED');
@@ -328,6 +435,14 @@ function updateLoadingProgress(percent) {
 }
 
 export function setPartColor(partName, color) {
+    if (partName === 'trim' && meshParts['trim_list']) {
+        meshParts['trim_list'].forEach(mesh => {
+            if (mesh && mesh.material) {
+                mesh.material.color.set(color);
+                mesh.material.needsUpdate = true;
+            }
+        });
+    }
     if (meshParts[partName]) {
         meshParts[partName].material.color.set(color);
         meshParts[partName].material.needsUpdate = true;
@@ -335,10 +450,62 @@ export function setPartColor(partName, color) {
 }
 
 export function setMannequinColor(color) {
-    if (meshParts['mannequin']) {
+    if (meshParts['mannequin_list']) {
+        meshParts['mannequin_list'].forEach(mesh => {
+            if (mesh && mesh.material) {
+                mesh.material.color.set(color);
+                mesh.material.needsUpdate = true;
+            }
+        });
+    } else if (meshParts['mannequin']) {
         meshParts['mannequin'].material.color.set(color);
         meshParts['mannequin'].material.needsUpdate = true;
     }
+}
+
+let cachedTrimCanvas = null;
+let cachedTrimTexture = null;
+
+export function setTrimColor(primaryColor, secondaryColor) {
+    if (!meshParts['trim_list'] || meshParts['trim_list'].length === 0) return;
+
+    const color1 = primaryColor || '#7C3AED';
+    const color2 = secondaryColor || '#ffffff';
+
+    if (!cachedTrimCanvas) {
+        cachedTrimCanvas = document.createElement('canvas');
+        cachedTrimCanvas.width = 64;
+        cachedTrimCanvas.height = 64;
+    }
+    const ctx = cachedTrimCanvas.getContext('2d');
+
+    ctx.fillStyle = color1;
+    ctx.fillRect(0, 0, 64, 64);
+
+    ctx.fillStyle = color2;
+    ctx.fillRect(0, 20, 64, 24);
+
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    for (let x = 0; x < 64; x += 4) {
+        ctx.fillRect(x, 0, 1, 64);
+    }
+
+    if (!cachedTrimTexture) {
+        cachedTrimTexture = new THREE.CanvasTexture(cachedTrimCanvas);
+        cachedTrimTexture.wrapS = THREE.RepeatWrapping;
+        cachedTrimTexture.wrapT = THREE.RepeatWrapping;
+        cachedTrimTexture.repeat.set(8, 1);
+    } else {
+        cachedTrimTexture.needsUpdate = true;
+    }
+
+    meshParts['trim_list'].forEach(mesh => {
+        if (mesh && mesh.material) {
+            mesh.material.color.set('#ffffff');
+            mesh.material.map = cachedTrimTexture;
+            mesh.material.needsUpdate = true;
+        }
+    });
 }
 
 export function applyTextureToFront(canvasTexture) {
@@ -371,7 +538,6 @@ export function getMeshParts() {
     return meshParts;
 }
 
-// Material finish logic using MeshPhysicalMaterial settings
 export function applyMaterialFinish(finishName) {
     let roughness = 1.0;
     let metalness = 0.0;
@@ -421,11 +587,9 @@ export function applyMaterialFinish(finishName) {
     });
 }
 
-// Interactive lighting showrooms
 export function changeEnvironment(envName) {
     if (!scene) return;
 
-    // 1. Clear previous showroom meshes / lights
     while (showroomGroup.children.length > 0) {
         showroomGroup.remove(showroomGroup.children[0]);
     }
@@ -446,22 +610,18 @@ export function changeEnvironment(envName) {
         backLight.intensity = 1.2;
         backLight.position.set(2, 3, -5);
 
-        // Add 2 glowing background vertical tubes
         const geom = new THREE.CylinderGeometry(0.03, 0.03, 3.2, 16);
 
-        // Pink neon
         const matPink = new THREE.MeshBasicMaterial({ color: 0xff007f });
         const tubePink = new THREE.Mesh(geom, matPink);
         tubePink.position.set(-1.8, 0.6, -1.8);
         showroomGroup.add(tubePink);
 
-        // Cyan neon
         const matCyan = new THREE.MeshBasicMaterial({ color: 0x00ffff });
         const tubeCyan = new THREE.Mesh(geom, matCyan);
         tubeCyan.position.set(1.8, 0.6, -1.8);
         showroomGroup.add(tubeCyan);
 
-        // Add colored point lights next to neon tubes for ambient reflection
         const pLightPink = new THREE.PointLight(0xff007f, 3.5, 6);
         pLightPink.position.set(-1.8, 0.6, -1.4);
         showroomGroup.add(pLightPink);
@@ -475,7 +635,7 @@ export function changeEnvironment(envName) {
         ambientLight.color.set(0xffffff);
         ambientLight.intensity = 0.8;
 
-        dirLight.color.set(0xffe9d0); // Warm gold spotlight
+        dirLight.color.set(0xffe9d0);
         dirLight.intensity = 2.4;
 
         fillLight.color.set(0xffd59e);
@@ -486,7 +646,6 @@ export function changeEnvironment(envName) {
         backLight.intensity = 0.5;
         backLight.position.set(0, 4, -4);
 
-        // Warm floor shadow panel helper
         const helperGeom = new THREE.RingGeometry(0.8, 0.9, 32);
         const helperMat = new THREE.MeshBasicMaterial({ color: 0x221a10, side: THREE.DoubleSide });
         const helper = new THREE.Mesh(helperGeom, helperMat);
@@ -495,7 +654,7 @@ export function changeEnvironment(envName) {
         showroomGroup.add(helper);
 
     } else if (envName === 'stadium') {
-        scene.background = new THREE.Color('#0c100d'); // Dark pitch green atmosphere
+        scene.background = new THREE.Color('#0c100d');
         ambientLight.color.set(0xffffff);
         ambientLight.intensity = 1.4;
 

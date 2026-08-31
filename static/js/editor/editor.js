@@ -1,5 +1,5 @@
-import { initViewer, setPartColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment } from './threeViewer.js?v=20260811_2';
-import { buildTexture, buildBackTexture, renderJersey2D } from './textureBuilder.js?v=20260811_2';
+import { initViewer, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment } from './threeViewer.js?v=20260811_5';
+import { buildTexture, buildBackTexture, renderJersey2D } from './textureBuilder.js?v=20260811_5';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -86,7 +86,7 @@ function bindControls() {
         currentDesign.logo = e.target.value;
         applyDesign(currentDesign);
     });
-    
+
     const logoUpload = document.getElementById('logoUpload');
     const logoUploadError = document.getElementById('logoUploadError');
     if (logoUpload) {
@@ -110,9 +110,9 @@ function bindControls() {
             }
 
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = function (event) {
                 const img = new Image();
-                img.onload = function() {
+                img.onload = function () {
                     currentDesign.customLogoImage = img;
                     currentDesign.logo = 'custom';
                     currentDesign.logoSize = 20; // Must be tiny on initial load
@@ -372,7 +372,7 @@ function bindControls() {
                     item.className = 'px-4 py-2.5 text-xs text-white hover:bg-indigo-600 hover:text-white cursor-pointer transition';
                     item.textContent = font;
                     item.style.fontFamily = `"${font}", sans-serif`;
-                    
+
                     loadGoogleFont(font);
 
                     item.addEventListener('click', () => {
@@ -451,6 +451,7 @@ function applyDesign(design) {
     setPartColor('jersey_front', design.baseColor);
     setPartColor('jersey_back', design.baseColor);
     setPartColor('shorts', design.accentColor);
+    setTrimColor(design.accentColor, design.tertiaryColor || '#ffffff');
 
     const frontTexture = buildTexture(design);
     applyTextureToPanel(frontTexture);
@@ -605,7 +606,7 @@ function loadGoogleFont(fontName) {
         link.rel = 'stylesheet';
         link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@400;700&display=swap`;
         document.head.appendChild(link);
-        
+
         if (document.fonts) {
             document.fonts.load(`1em "${fontName}"`).then(() => {
                 applyDesign(currentDesign);
@@ -701,9 +702,9 @@ function bindDragEvents(canvas, isBack) {
     function onStart(e) {
         const coords = getMouseCoords(e, canvas);
         const elements = isBack ? getDraggableElementsBack(currentDesign) : getDraggableElementsFront(currentDesign);
-        const clicked = elements.find(el => 
-            coords.x >= el.x - el.width/2 && coords.x <= el.x + el.width/2 &&
-            coords.y >= el.y - el.height/2 && coords.y <= el.y + el.height/2
+        const clicked = elements.find(el =>
+            coords.x >= el.x - el.width / 2 && coords.x <= el.x + el.width / 2 &&
+            coords.y >= el.y - el.height / 2 && coords.y <= el.y + el.height / 2
         );
 
         if (clicked) {
@@ -769,9 +770,9 @@ function bindDragEvents(canvas, isBack) {
         if (activeDrag) return;
         const coords = getMouseCoords(e, canvas);
         const elements = isBack ? getDraggableElementsBack(currentDesign) : getDraggableElementsFront(currentDesign);
-        const hovered = elements.some(el => 
-            coords.x >= el.x - el.width/2 && coords.x <= el.x + el.width/2 &&
-            coords.y >= el.y - el.height/2 && coords.y <= el.y + el.height/2
+        const hovered = elements.some(el =>
+            coords.x >= el.x - el.width / 2 && coords.x <= el.x + el.width / 2 &&
+            coords.y >= el.y - el.height / 2 && coords.y <= el.y + el.height / 2
         );
         canvas.style.cursor = hovered ? 'move' : 'default';
     });
