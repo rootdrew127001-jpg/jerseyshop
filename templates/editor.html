@@ -35,10 +35,22 @@
         };
         window.addEventListener('error', function(event) {
             sendLog('exception', [event.message, 'at', event.filename, ':', event.lineno]);
+            showErrorBanner('JS Error: ' + event.message + ' (' + (event.filename || '').split('/').pop() + ':' + event.lineno + ')');
         });
         window.addEventListener('unhandledrejection', function(event) {
             sendLog('promise_rejection', [event.reason]);
+            showErrorBanner('Promise Error: ' + (event.reason ? (event.reason.message || event.reason) : 'unknown'));
         });
+        function showErrorBanner(msg) {
+            let el = document.getElementById('debugErrorBanner');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'debugErrorBanner';
+                el.style.cssText = 'position:fixed;bottom:16px;left:16px;z-index:999999;background:#ef4444;color:#ffffff;padding:12px 18px;border-radius:10px;font-family:monospace;font-size:12px;font-weight:bold;max-width:90%;box-shadow:0 10px 25px rgba(0,0,0,0.5);border:1px solid #f87171;';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg;
+        }
     })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -139,6 +151,10 @@
                     <div>
                         <p class="text-slate-400">Font</p>
                         <p class="font-bold text-white capitalize" id="summaryFont">-</p>
+                    </div>
+                    <div>
+                        <p class="text-slate-400">Jersey Type</p>
+                        <p class="font-bold text-white capitalize" id="summaryJerseyType">Sleeveless Tank</p>
                     </div>
                     <div>
                         <p class="text-slate-400">Sponsor</p>
@@ -364,8 +380,28 @@
                 🎲 Generate Random Design
             </button>
 
-            <!-- Divider -->
-            <div class="border-t border-slate-700/60 pt-2"></div>
+
+
+
+            <!-- Jersey Silhouette Style Selector -->
+            <div class="space-y-2 pb-3 border-b border-slate-700/40">
+                <div class="flex justify-between items-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jersey Silhouette Style</p>
+                    <span id="lblJerseyType" class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Sleeveless</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="typeSleeveless" class="flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
+                        <span class="text-base mb-1">🏀</span>
+                        <span>Sleeveless Tank</span>
+                        <span class="text-[9px] text-indigo-200 font-normal mt-0.5">Basketball Jersey</span>
+                    </button>
+                    <button id="typeTshirt" class="flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer">
+                        <span class="text-base mb-1">👕</span>
+                        <span>T-Shirt Jersey</span>
+                        <span class="text-[9px] text-slate-400 font-normal mt-0.5">With Sleeves</span>
+                    </button>
+                </div>
+            </div>
 
             <!-- Showrooms Selector -->
             <div class="space-y-2 pb-2 border-b border-slate-700/40">
@@ -610,31 +646,58 @@
     </div>
 
     <div class="flex-1 relative flex flex-col justify-center items-center bg-slate-950">
+        <!-- View mode switcher: 2D vs 3D -->
         <div class="absolute top-4 right-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg">
             <button id="btnView2D" class="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">2D Design</button>
             <button id="btnView3D" class="px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">3D Preview</button>
         </div>
 
-        <div id="viewport2D" class="w-full h-full flex flex-col md:flex-row items-center justify-start md:justify-center gap-6 p-6 overflow-auto">
-            <div class="flex flex-col items-center flex-shrink-0">
+        <!-- 2D View Selector Toolbar (All / Front / Side / Back) -->
+        <div id="controls2DViews" class="absolute top-4 left-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
+            <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">2D View:</span>
+            <button id="btn2DAll" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">All Views</button>
+            <button id="btn2DFront" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Front</button>
+            <button id="btn2DSide" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Side</button>
+            <button id="btn2DBack" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Back</button>
+        </div>
+
+        <!-- 2D Viewport containing Front, Side, and Back preview cards -->
+        <div id="viewport2D" class="w-full h-full flex flex-col xl:flex-row items-center justify-start xl:justify-center gap-6 p-6 pt-20 xl:pt-6 overflow-auto">
+            <div id="card2DFront" class="flex flex-col items-center flex-shrink-0 view-card-2d">
                 <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Front View</p>
                 <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
-                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[512px] h-[512px] max-w-full max-h-full">
-                        <canvas id="canvasFront2D" width="512" height="512" class="max-w-full h-auto block bg-transparent"></canvas>
+                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[380px] h-[380px] 2xl:w-[460px] 2xl:h-[460px] max-w-full max-h-full">
+                        <canvas id="canvasFront2D" width="512" height="512" class="w-full h-full block bg-transparent"></canvas>
                     </div>
                 </div>
             </div>
-            <div class="flex flex-col items-center flex-shrink-0">
+            <div id="card2DSide" class="flex flex-col items-center flex-shrink-0 view-card-2d">
+                <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Side View (Panels & Seams)</p>
+                <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
+                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[380px] h-[380px] 2xl:w-[460px] 2xl:h-[460px] max-w-full max-h-full">
+                        <canvas id="canvasSide2D" width="512" height="512" class="w-full h-full block bg-transparent"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div id="card2DBack" class="flex flex-col items-center flex-shrink-0 view-card-2d">
                 <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Back View</p>
                 <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
-                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[512px] h-[512px] max-w-full max-h-full">
-                        <canvas id="canvasBack2D" width="512" height="512" class="max-w-full h-auto block bg-transparent"></canvas>
+                    <div class="rounded-xl overflow-hidden shadow-inner bg-slate-950 w-[380px] h-[380px] 2xl:w-[460px] 2xl:h-[460px] max-w-full max-h-full">
+                        <canvas id="canvasBack2D" width="512" height="512" class="w-full h-full block bg-transparent"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- 3D Viewport with quick angle snapping -->
         <div id="viewport3D" class="hidden w-full h-full relative">
+            <div class="absolute top-4 left-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
+                <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">3D Camera:</span>
+                <button id="btnCamFront" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">Front</button>
+                <button id="btnCamLeft" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Left Side</button>
+                <button id="btnCamRight" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Right Side</button>
+                <button id="btnCamBack" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Back</button>
+            </div>
             <canvas id="jerseyCanvas" class="w-full h-full"></canvas>
             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-500 text-xs pointer-events-none">
                 Drag to rotate · Scroll to zoom
@@ -643,7 +706,7 @@
     </div>
 
     <script type="module">
-    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260811_5';
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260912_03';
     initEditor();
      setTimeout(function() {
          const c = document.getElementById('canvasFront2D');
@@ -941,6 +1004,8 @@
         document.getElementById('summaryFinish').textContent = design.finish || 'matte';
         document.getElementById('summaryLogo').textContent = design.logo || 'none';
         document.getElementById('summaryFont').textContent = design.font || 'athletic';
+        const elJType = document.getElementById('summaryJerseyType');
+        if (elJType) elJType.textContent = design.jerseyType === 'tshirt' ? 'T-Shirt (With Sleeves)' : 'Sleeveless (Tank Top)';
         document.getElementById('summarySponsor').textContent = design.sponsorText || 'None';
         prefillShippingDetails();
         updatePrice();
@@ -1045,7 +1110,7 @@
                     price: context.total,
                     shipping_fee: SHIPPING_FEE,
                     ...context.shipping,
-                    notes: `Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
+                    notes: `JerseyType: ${context.design.jerseyType || 'sleeveless'} | Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 

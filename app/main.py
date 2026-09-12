@@ -42,6 +42,16 @@ def root():
         "version": "1.0.0"
     }
 
+from pydantic import BaseModel
+class LogPayload(BaseModel):
+    type: str = "log"
+    message: str = ""
+
+@app.post("/api/log")
+def log_client_message(payload: LogPayload):
+    print(f"[CLIENT {payload.type.upper()}] {payload.message}", flush=True)
+    return {"status": "ok"}
+
 # Paths
 base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 static_path = os.path.join(base_path, "static")

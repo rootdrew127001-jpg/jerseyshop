@@ -1,5 +1,5 @@
-import { initViewer, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment } from './threeViewer.js?v=20260811_5';
-import { buildTexture, buildBackTexture, renderJersey2D } from './textureBuilder.js?v=20260811_5';
+import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle } from './threeViewer.js?v=20260912_03';
+import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260912_03';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -26,6 +26,7 @@ const DEFAULT_COORDS = {
 };
 
 let currentDesign = {
+    jerseyType: 'sleeveless',
     baseColor: '#4F46E5',
     accentColor: '#7C3AED',
     tertiaryColor: '#ffffff',
@@ -60,6 +61,47 @@ export function initEditor() {
 }
 
 function bindControls() {
+    // Jersey Silhouette Style selector
+    const typeSleeveless = document.getElementById('typeSleeveless');
+    const typeTshirt = document.getElementById('typeTshirt');
+    const lblJerseyType = document.getElementById('lblJerseyType');
+
+    function updateJerseyTypeUI(type) {
+        currentDesign.jerseyType = type;
+        if (type === 'tshirt') {
+            if (typeTshirt) {
+                typeTshirt.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+            }
+            if (typeSleeveless) {
+                typeSleeveless.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+            }
+            if (lblJerseyType) lblJerseyType.textContent = 'T-Shirt (Sleeved)';
+        } else {
+            if (typeSleeveless) {
+                typeSleeveless.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+            }
+            if (typeTshirt) {
+                typeTshirt.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+            }
+            if (lblJerseyType) lblJerseyType.textContent = 'Sleeveless';
+        }
+    }
+
+    if (typeSleeveless) {
+        typeSleeveless.addEventListener('click', () => {
+            updateJerseyTypeUI('sleeveless');
+            loadJerseyModel('sleeveless');
+            applyDesign(currentDesign);
+        });
+    }
+    if (typeTshirt) {
+        typeTshirt.addEventListener('click', () => {
+            updateJerseyTypeUI('tshirt');
+            loadJerseyModel('tshirt');
+            applyDesign(currentDesign);
+        });
+    }
+
     // Basic color inputs
     document.getElementById('baseColor').addEventListener('input', e => {
         currentDesign.baseColor = e.target.value;
@@ -213,6 +255,9 @@ function bindControls() {
             });
         }
     });
+
+    // Animation UI removed — static T-pose only
+
 
     // Random design generator
     document.getElementById('randomBtn').addEventListener('click', () => {
@@ -432,7 +477,105 @@ function bindControls() {
             viewport2D.classList.add('hidden');
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
-            }, 50);
+                fitCameraToObject();
+            }, 60);
+        });
+    }
+
+    // 2D View Selector Toolbar (All / Front / Side / Back)
+    const btn2DAll = document.getElementById('btn2DAll');
+    const btn2DFront = document.getElementById('btn2DFront');
+    const btn2DSide = document.getElementById('btn2DSide');
+    const btn2DBack = document.getElementById('btn2DBack');
+    const card2DFront = document.getElementById('card2DFront');
+    const card2DSide = document.getElementById('card2DSide');
+    const card2DBack = document.getElementById('card2DBack');
+
+    function setActive2DTab(activeBtn) {
+        [btn2DAll, btn2DFront, btn2DSide, btn2DBack].forEach(btn => {
+            if (btn) {
+                if (btn === activeBtn) {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
+                } else {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+                }
+            }
+        });
+    }
+
+    if (btn2DAll) {
+        btn2DAll.addEventListener('click', () => {
+            setActive2DTab(btn2DAll);
+            if (card2DFront) card2DFront.classList.remove('hidden');
+            if (card2DSide) card2DSide.classList.remove('hidden');
+            if (card2DBack) card2DBack.classList.remove('hidden');
+        });
+    }
+    if (btn2DFront) {
+        btn2DFront.addEventListener('click', () => {
+            setActive2DTab(btn2DFront);
+            if (card2DFront) card2DFront.classList.remove('hidden');
+            if (card2DSide) card2DSide.classList.add('hidden');
+            if (card2DBack) card2DBack.classList.add('hidden');
+        });
+    }
+    if (btn2DSide) {
+        btn2DSide.addEventListener('click', () => {
+            setActive2DTab(btn2DSide);
+            if (card2DFront) card2DFront.classList.add('hidden');
+            if (card2DSide) card2DSide.classList.remove('hidden');
+            if (card2DBack) card2DBack.classList.add('hidden');
+        });
+    }
+    if (btn2DBack) {
+        btn2DBack.addEventListener('click', () => {
+            setActive2DTab(btn2DBack);
+            if (card2DFront) card2DFront.classList.add('hidden');
+            if (card2DSide) card2DSide.classList.add('hidden');
+            if (card2DBack) card2DBack.classList.remove('hidden');
+        });
+    }
+
+    // 3D Quick Camera Angle Controls
+    const btnCamFront = document.getElementById('btnCamFront');
+    const btnCamLeft = document.getElementById('btnCamLeft');
+    const btnCamRight = document.getElementById('btnCamRight');
+    const btnCamBack = document.getElementById('btnCamBack');
+
+    function setActiveCamBtn(activeBtn) {
+        [btnCamFront, btnCamLeft, btnCamRight, btnCamBack].forEach(btn => {
+            if (btn) {
+                if (btn === activeBtn) {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
+                } else {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition';
+                }
+            }
+        });
+    }
+
+    if (btnCamFront) {
+        btnCamFront.addEventListener('click', () => {
+            setActiveCamBtn(btnCamFront);
+            setCameraAngle('front');
+        });
+    }
+    if (btnCamLeft) {
+        btnCamLeft.addEventListener('click', () => {
+            setActiveCamBtn(btnCamLeft);
+            setCameraAngle('left');
+        });
+    }
+    if (btnCamRight) {
+        btnCamRight.addEventListener('click', () => {
+            setActiveCamBtn(btnCamRight);
+            setCameraAngle('right');
+        });
+    }
+    if (btnCamBack) {
+        btnCamBack.addEventListener('click', () => {
+            setActiveCamBtn(btnCamBack);
+            setCameraAngle('back');
         });
     }
 }
@@ -440,11 +583,15 @@ function bindControls() {
 function applyDesign(design) {
     const canvasFront = document.getElementById('canvasFront2D');
     const canvasBack = document.getElementById('canvasBack2D');
+    const canvasSide = document.getElementById('canvasSide2D');
     if (canvasFront) {
         renderJersey2D(canvasFront, design, false);
     }
     if (canvasBack) {
         renderJersey2D(canvasBack, design, true);
+    }
+    if (canvasSide) {
+        renderJersey2DSide(canvasSide, design, false);
     }
 
     setPartColor('jersey_body', design.baseColor);
@@ -464,6 +611,20 @@ function applyDesign(design) {
 }
 
 function syncUI(design) {
+    const jType = design.jerseyType || 'sleeveless';
+    const typeSleeveless = document.getElementById('typeSleeveless');
+    const typeTshirt = document.getElementById('typeTshirt');
+    const lblJerseyType = document.getElementById('lblJerseyType');
+    if (jType === 'tshirt') {
+        if (typeTshirt) typeTshirt.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+        if (typeSleeveless) typeSleeveless.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+        if (lblJerseyType) lblJerseyType.textContent = 'T-Shirt (Sleeved)';
+    } else {
+        if (typeSleeveless) typeSleeveless.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+        if (typeTshirt) typeTshirt.className = 'flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+        if (lblJerseyType) lblJerseyType.textContent = 'Sleeveless';
+    }
+
     document.getElementById('baseColor').value = design.baseColor;
     document.getElementById('accentColor').value = design.accentColor;
     document.getElementById('tertiaryColor').value = design.tertiaryColor || '#ffffff';

@@ -118,28 +118,65 @@ window.OrderPreview = (function () {
         const bNumMatch = cleanNotes.match(/BackNum:\s*(?:\(Show:\s*(true|false)\))/i);
         if (bNumMatch) result.showBackNumber = bNumMatch[1].toLowerCase() === 'true';
 
+        const jTypeMatch = cleanNotes.match(/JerseyType:\s*([^,\n|]+)/i);
+        if (jTypeMatch) result.jerseyType = jTypeMatch[1].trim().toLowerCase();
+        else result.jerseyType = 'sleeveless';
+
         const userNotesMatch = cleanNotes.match(/Notes:\s*(.*)$/i);
         if (userNotesMatch) result.userNotes = userNotesMatch[1].trim();
 
         return result;
     }
 
-    function pathJersey(ctx) {
+    function pathJersey(ctx, isBack = false) {
         ctx.beginPath();
-        ctx.moveTo(256, 60);
-        ctx.quadraticCurveTo(278, 60, 296, 48);
-        ctx.lineTo(365, 72);
-        ctx.lineTo(452, 136);
-        ctx.lineTo(416, 178);
-        ctx.lineTo(350, 160);
-        ctx.lineTo(344, 465);
-        ctx.quadraticCurveTo(256, 478, 168, 465);
-        ctx.lineTo(162, 160);
-        ctx.lineTo(96, 178);
-        ctx.lineTo(60, 136);
-        ctx.lineTo(147, 72);
-        ctx.lineTo(216, 48);
-        ctx.quadraticCurveTo(234, 60, 256, 60);
+        if (isBack) {
+            ctx.moveTo(256, 52);
+            ctx.quadraticCurveTo(205, 52, 172, 44);
+        } else {
+            ctx.moveTo(256, 82);
+            ctx.quadraticCurveTo(208, 80, 172, 44);
+        }
+        ctx.lineTo(122, 60);
+        ctx.bezierCurveTo(145, 115, 120, 160, 66, 185);
+        ctx.lineTo(76, 468);
+        ctx.quadraticCurveTo(256, 482, 436, 468);
+        ctx.lineTo(446, 185);
+        ctx.bezierCurveTo(392, 160, 367, 115, 390, 60);
+        ctx.lineTo(340, 44);
+        if (isBack) {
+            ctx.quadraticCurveTo(307, 52, 256, 52);
+        } else {
+            ctx.quadraticCurveTo(304, 80, 256, 82);
+        }
+        ctx.closePath();
+    }
+
+    function pathTshirt(ctx, isBack = false) {
+        ctx.beginPath();
+        if (isBack) {
+            ctx.moveTo(256, 38);
+            ctx.quadraticCurveTo(210, 38, 185, 34);
+        } else {
+            ctx.moveTo(256, 75);
+            ctx.quadraticCurveTo(210, 72, 185, 34);
+        }
+        ctx.lineTo(112, 30);
+        ctx.lineTo(15, 90);
+        ctx.lineTo(31, 185);
+        ctx.bezierCurveTo(70, 195, 100, 205, 123, 210);
+        ctx.bezierCurveTo(128, 280, 136, 380, 145, 486);
+        ctx.quadraticCurveTo(256, 494, 367, 486);
+        ctx.bezierCurveTo(376, 380, 384, 280, 389, 210);
+        ctx.bezierCurveTo(412, 205, 442, 195, 481, 185);
+        ctx.lineTo(497, 90);
+        ctx.lineTo(400, 30);
+        ctx.lineTo(327, 34);
+        if (isBack) {
+            ctx.quadraticCurveTo(302, 38, 256, 38);
+        } else {
+            ctx.quadraticCurveTo(302, 72, 256, 75);
+        }
         ctx.closePath();
     }
 
@@ -563,13 +600,15 @@ window.OrderPreview = (function () {
         drawRawDesign(designCtx, options, isBack);
 
         ctx.save();
-        const scaleFactor = (width / 512) * 1.25;
+        const scaleFactor = width / 512;
         const offsetX = (width - 512 * scaleFactor) / 2;
-        const offsetY = (height - 512 * scaleFactor) / 2 - 10;
+        const offsetY = (height - 512 * scaleFactor) / 2;
         ctx.translate(offsetX, offsetY);
-        ctx.scale(scaleFactor, scaleFactor);
-
-        pathJersey(ctx);
+        if (options && options.jerseyType === 'tshirt') {
+            pathTshirt(ctx, isBack);
+        } else {
+            pathJersey(ctx, isBack);
+        }
         ctx.clip();
 
         ctx.drawImage(designCanvas, 0, 0, 512, 512);

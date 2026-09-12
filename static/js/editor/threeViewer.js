@@ -9,6 +9,9 @@ let showroomGroup = null;
 let fabricBumpTexture = null;
 let carbonBumpTexture = null;
 
+// Animation system (disabled — T-pose only)
+const clock = new THREE.Clock();
+
 // Global light references to modify dynamically
 let ambientLight, dirLight, fillLight, backLight;
 
@@ -27,7 +30,7 @@ export function initViewer(canvasId) {
 
     // 3. Camera
     camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
-    camera.position.set(0, 0.8, 3.8);
+    camera.position.set(0, 0.2, 3.4);
 
     // 4. Renderer
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -35,6 +38,9 @@ export function initViewer(canvasId) {
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    if (THREE.SRGBColorSpace) {
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+    }
 
     // 5. Setup Showroom Group
     showroomGroup = new THREE.Group();
@@ -70,16 +76,21 @@ export function initViewer(canvasId) {
     // 8. Set Default Cyber Showroom
     changeEnvironment('cyber');
 
-    // 9. Load the GLB model
-    tryLoadGLB('/static/assets/models/jersey.glb?v=' + Date.now());
+    // 9. Load the 3D model
+    loadJerseyModel('sleeveless');
 
     // Resize handler
     window.addEventListener('resize', () => {
-        const w = canvas.clientWidth;
-        const h = canvas.clientHeight;
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, h);
+        const w = canvas.clientWidth || window.innerWidth;
+        const h = canvas.clientHeight || window.innerHeight;
+        if (w > 0 && h > 0) {
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+            if (jerseyGroup) {
+                fitCameraToObject(camera, controls, jerseyGroup, 1.9);
+            }
+        }
     });
 
     animate();
@@ -142,21 +153,23 @@ function createCarbonBumpTexture() {
 const cleanMaterial = (color) => {
     const mat = new THREE.MeshPhysicalMaterial({
         color: color,
-        roughness: 1.0,
+        roughness: 0.55,
         metalness: 0.0,
-        clearcoat: 0.0,
-        clearcoatRoughness: 0.0,
+        clearcoat: 0.05,
+        clearcoatRoughness: 0.1,
         side: THREE.DoubleSide,
         bumpMap: fabricBumpTexture,
-        bumpScale: 0.015
+        bumpScale: 0.005
     });
     return mat;
 };
 
-function applyCleanPlanarUVs(geometry, isBack = false) {
+function applyCleanPlanarUVs(geometry, isBack = false, customBBox = null) {
     if (!geometry) return;
-    geometry.computeBoundingBox();
-    const bbox = geometry.boundingBox;
+    if (!customBBox) {
+        geometry.computeBoundingBox();
+    }
+    const bbox = customBBox || geometry.boundingBox;
 
     const posAttr = geometry.attributes.position;
     if (!posAttr) return;
@@ -194,15 +207,34 @@ function applyCleanPlanarUVs(geometry, isBack = false) {
     geometry.attributes.uv.needsUpdate = true;
 }
 
+/**
+ * Splits a unified torso/jersey mesh into distinct front and back halves along the coronal Z-plane.
+ * Computes the triangle-center median Z value to produce an exact 50/50 split without seam tears,
+ * correctly separating sleeves and torso for planar texture projection.
+ *
+ * @param {THREE.Mesh} originalMesh - The source jersey mesh from GLTF loader
+ * @returns {{ frontMesh: THREE.Mesh, backMesh: THREE.Mesh }}
+ */
 function splitTorsoGeometry(originalMesh) {
     const origGeom = originalMesh.geometry.clone();
     origGeom.computeVertexNormals();
     origGeom.computeBoundingBox();
+    const bbox = origGeom.boundingBox;
 
     const nonIndexed = origGeom.toNonIndexed();
     const pos = nonIndexed.attributes.position;
     const norm = nonIndexed.attributes.normal;
     const vertCount = pos.count;
+
+    // Determine center Z by sorting triangle center Z's to get true median Z
+    // This ensures a balanced coronal split for both sleeveless tank tops and sleeved T-shirts
+    const zList = [];
+    for (let i = 0; i < vertCount; i += 3) {
+        zList.push((pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3);
+    }
+    zList.sort((a, b) => a - b);
+    const medianZ = zList[Math.floor(zList.length / 2)];
+    const centerZ = (medianZ !== undefined && !isNaN(medianZ)) ? medianZ : (bbox.min.z + bbox.max.z) / 2;
 
     const frontPositions = [];
     const frontNormals = [];
@@ -210,12 +242,13 @@ function splitTorsoGeometry(originalMesh) {
     const backNormals = [];
 
     for (let i = 0; i < vertCount; i += 3) {
-        const nz0 = norm.getZ(i);
-        const nz1 = norm.getZ(i + 1);
-        const nz2 = norm.getZ(i + 2);
-        const avgNz = (nz0 + nz1 + nz2) / 3;
+        const z0 = pos.getZ(i);
+        const z1 = pos.getZ(i + 1);
+        const z2 = pos.getZ(i + 2);
+        const avgZ = (z0 + z1 + z2) / 3;
 
-        const isFront = avgNz >= 0;
+        // Clean planar split along coronal Z plane eliminates noisy normal-based zigzag tearing
+        const isFront = avgZ >= centerZ;
         const targetPos = isFront ? frontPositions : backPositions;
         const targetNorm = isFront ? frontNormals : backNormals;
 
@@ -230,13 +263,13 @@ function splitTorsoGeometry(originalMesh) {
     const frontGeom = new THREE.BufferGeometry();
     frontGeom.setAttribute('position', new THREE.Float32BufferAttribute(frontPositions, 3));
     frontGeom.setAttribute('normal', new THREE.Float32BufferAttribute(frontNormals, 3));
-    applyCleanPlanarUVs(frontGeom, false);
+    applyCleanPlanarUVs(frontGeom, false, bbox);
 
     // Build Back Geometry
     const backGeom = new THREE.BufferGeometry();
     backGeom.setAttribute('position', new THREE.Float32BufferAttribute(backPositions, 3));
     backGeom.setAttribute('normal', new THREE.Float32BufferAttribute(backNormals, 3));
-    applyCleanPlanarUVs(backGeom, true);
+    applyCleanPlanarUVs(backGeom, true, bbox);
 
     const frontMesh = new THREE.Mesh(frontGeom, cleanMaterial('#4F46E5'));
     frontMesh.name = 'jersey_front';
@@ -263,92 +296,209 @@ function splitTorsoGeometry(originalMesh) {
     return { frontMesh, backMesh };
 }
 
+function sanitizeClipInPlace(clip) {
+    const newTracks = [];
+    clip.tracks.forEach(track => {
+        // Only zero out horizontal drift on the Root bone itself
+        // Track names are like "Root.position" — only lock X/Z on the root
+        const trackNameLower = track.name.toLowerCase();
+        const isRootPosition = trackNameLower.includes('.position') && 
+            (trackNameLower.startsWith('root') || trackNameLower.includes('root.'));
+        
+        if (isRootPosition) {
+            const values = track.values.slice();
+            const startX = values[0];
+            const startZ = values[2];
+            for (let i = 0; i < values.length; i += 3) {
+                values[i] = values[i] - startX;         // Lock X to origin
+                values[i + 2] = values[i + 2] - startZ; // Lock Z to origin
+            }
+            const clone = track.clone();
+            clone.values = values;
+            newTracks.push(clone);
+        } else {
+            newTracks.push(track);
+        }
+    });
+    return new THREE.AnimationClip(clip.name, clip.duration, newTracks);
+}
+
+export function fitCameraToObject(cam = camera, ctrl = controls, obj = jerseyGroup, paddingFactor = 1.9) {
+    if (!cam || !ctrl) return;
+
+    ctrl.target.set(0, 0.05, 0);
+    cam.position.set(0, 0.1, 3.8);
+    cam.lookAt(ctrl.target);
+
+    cam.near = 0.05;
+    cam.far = 100;
+    cam.updateProjectionMatrix();
+
+    ctrl.minDistance = 1.2;
+    ctrl.maxDistance = 8.0;
+    ctrl.update();
+}
+
+export function setCameraAngle(angleName) {
+    if (!camera || !controls) return;
+    const target = controls.target || new THREE.Vector3(0, 0.05, 0);
+    const dist = 3.8;
+    const y = 0.1;
+
+    if (angleName === 'left' || angleName === 'left_side') {
+        camera.position.set(-dist, y, 0);
+    } else if (angleName === 'right' || angleName === 'right_side') {
+        camera.position.set(dist, y, 0);
+    } else if (angleName === 'back') {
+        camera.position.set(0, y, -dist);
+    } else {
+        // default 'front'
+        camera.position.set(0, y, dist);
+    }
+
+    camera.lookAt(target);
+    controls.update();
+}
+
+let currentModelType = 'sleeveless';
+
+/**
+ * Loads the active 3D jersey model from static/assets/models/male/.
+ * Performs clean resource disposal on the previous model to prevent WebGL memory leaks,
+ * then maps mesh segmentation (mannequin body, jersey torso, shorts, shoes).
+ *
+ * Supported silhouette styles:
+ *  - 'sleeveless': Athletic basketball tank top (male/trey.glb)
+ *  - 'tshirt': Regular crewneck jersey with sleeves (male/Regular+T-Shirt+Jersey+With+Sleeves.glb)
+ *
+ * @param {'sleeveless'|'tshirt'} jerseyType - Target silhouette model to load
+ */
+export function loadJerseyModel(jerseyType = 'sleeveless') {
+    currentModelType = jerseyType;
+    const modelPath = (jerseyType === 'tshirt')
+        ? '/static/assets/models/male/Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
+        : '/static/assets/models/male/trey.glb?v=' + Date.now();
+    tryLoadGLB(modelPath);
+}
+
 function tryLoadGLB(path) {
     const loader = new GLTFLoader();
     showLoadingUI(true);
 
+    if (jerseyGroup) {
+        scene.remove(jerseyGroup);
+        jerseyGroup.traverse((child) => {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+                if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
+                else child.material.dispose();
+            }
+        });
+        jerseyGroup = null;
+        meshParts = {};
+    }
+
     loader.load(
         path,
         (gltf) => {
-            console.log('GLB loaded successfully');
+            console.log('GLB loaded successfully from:', path);
             showLoadingUI(false);
 
             jerseyGroup = gltf.scene;
 
+            jerseyGroup.updateMatrixWorld(true);
             const box = new THREE.Box3().setFromObject(jerseyGroup);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             const maxDim = Math.max(size.x, size.y, size.z);
-            const scale = 2.4 / maxDim;
+            const scale = 2.0 / (size.y || maxDim || 1);
 
             jerseyGroup.scale.setScalar(scale);
-            jerseyGroup.position.sub(center.multiplyScalar(scale));
-            jerseyGroup.position.y += 0.15;
+            jerseyGroup.position.set(-center.x * scale, -box.min.y * scale - 0.95, -center.z * scale);
 
             scene.add(jerseyGroup);
+
+            // Auto-fit camera dynamically to the loaded model
+            fitCameraToObject(camera, controls, jerseyGroup, 1.9);
+
+            // Animation loading disabled — model stays in T-pose
+            console.log('Displaying static T-pose');
 
             const mannequinMeshes = [];
             const trimMeshes = [];
             const shoeMeshes = [];
             let shirtMeshFound = null;
 
+            const allMeshes = [];
             jerseyGroup.traverse((child) => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                    const name = child.name.toLowerCase().trim();
-                    console.log('Mesh found:', child.name);
-
-                    if (name === 'jersey_front') {
-                        child.material = cleanMaterial('#4F46E5');
-                        applyCleanPlanarUVs(child.geometry, false);
-                        meshParts['jersey_front'] = child;
-                    } else if (name === 'jersey_back') {
-                        child.material = cleanMaterial('#4F46E5');
-                        applyCleanPlanarUVs(child.geometry, true);
-                        meshParts['jersey_back'] = child;
-                    } else if (name === 'shirt' || name === 'jersey_body' || name === 'torso') {
-                        shirtMeshFound = child;
-                    } else if (name === 'short' || name === 'shorts') {
-                        child.material = cleanMaterial('#7C3AED');
-                        meshParts['shorts'] = child;
-                    } else if (name.includes('neckband') || name.includes('armband')) {
-                        child.material = cleanMaterial('#ffffff');
-                        trimMeshes.push(child);
-                        meshParts[child.name] = child;
-                    } else if (name === 'head' || name.includes('hand') || name.includes('leg') || name.includes('mannequin')) {
-                        child.material = new THREE.MeshStandardMaterial({
-                            color: '#1e293b',
-                            roughness: 0.8,
-                            metalness: 0.2
-                        });
-                        mannequinMeshes.push(child);
-                    } else if (name.includes('sock')) {
-                        child.material = cleanMaterial('#ffffff');
-                        trimMeshes.push(child);
-                        meshParts[child.name] = child;
-                    } else if (name.includes('shoe')) {
-                        child.material = new THREE.MeshStandardMaterial({
-                            color: '#0f172a',
-                            roughness: 0.6,
-                            metalness: 0.3
-                        });
-                        shoeMeshes.push(child);
-                    } else {
-                        child.material = new THREE.MeshStandardMaterial({
-                            color: '#1e293b',
-                            roughness: 0.7,
-                            metalness: 0.2
-                        });
-                    }
+                if (child.isMesh || child.isSkinnedMesh) {
+                    allMeshes.push(child);
                 }
             });
 
-            if (shirtMeshFound && (!meshParts['jersey_front'] || !meshParts['jersey_back'])) {
+            allMeshes.forEach((child) => {
+                child.castShadow = true;
+                child.receiveShadow = true;
+                const name = child.name.toLowerCase().trim();
+                console.log('Mesh found:', child.name, child.isSkinnedMesh ? '(Skinned)' : '');
+
+                // Jersey / shirt / tshirt / jersey mesh
+                if (name === 'jersey_front') {
+                    child.material = cleanMaterial('#4F46E5');
+                    applyCleanPlanarUVs(child.geometry, false);
+                    meshParts['jersey_front'] = child;
+                } else if (name === 'jersey_back') {
+                    child.material = cleanMaterial('#4F46E5');
+                    applyCleanPlanarUVs(child.geometry, true);
+                    meshParts['jersey_back'] = child;
+                } else if (name === 'shirt' || name === 'tshirt' || name === 'jersey' || name === 'jersey_body' || name === 'torso') {
+                    shirtMeshFound = child;
+                // Shorts
+                } else if (name === 'short' || name === 'shorts') {
+                    child.material = cleanMaterial('#7C3AED');
+                    meshParts['shorts'] = child;
+                // Trim pieces (neckband, armband)
+                } else if (name.includes('neckband') || (name.includes('armband') && !name.includes('limb'))) {
+                    child.material = cleanMaterial('#ffffff');
+                    trimMeshes.push(child);
+                    meshParts[child.name] = child;
+                // Body / skin / head / limbs / mannequin
+                } else if (name === 'head' || name === 'body' || name.includes('hand') || name.includes('leg') || name.includes('limb') || name.includes('arm') || name.includes('mannequin') || name.includes('skin') || name.includes('human')) {
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: '#1e293b',
+                        roughness: 0.8,
+                        metalness: 0.2
+                    });
+                    mannequinMeshes.push(child);
+                // Socks (standalone)
+                } else if (name.includes('sock') && !name.includes('shoe')) {
+                    child.material = cleanMaterial('#ffffff');
+                    trimMeshes.push(child);
+                    meshParts[child.name] = child;
+                // Shoes (standalone) or combined "shoes and socks" or tripo_part shoe meshes
+                } else if (name.includes('shoe') || name.startsWith('tripo_part')) {
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: '#0f172a',
+                        roughness: 0.6,
+                        metalness: 0.3
+                    });
+                    shoeMeshes.push(child);
+                } else {
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: '#1e293b',
+                        roughness: 0.7,
+                        metalness: 0.2
+                    });
+                }
+            });
+
+            // If a jersey/shirt was found and needs splitting into front/back
+            if (shirtMeshFound && (!meshParts['jersey_front'] || !meshParts['jersey_back'] || meshParts['jersey_front'] === shirtMeshFound)) {
                 const { frontMesh, backMesh } = splitTorsoGeometry(shirtMeshFound);
                 meshParts['jersey_front'] = frontMesh;
                 meshParts['jersey_back'] = backMesh;
-                meshParts['jersey_body'] = shirtMeshFound;
+                meshParts['shirt'] = frontMesh;
+                meshParts['jersey_body'] = frontMesh;
             }
 
             meshParts['mannequin_list'] = mannequinMeshes;
@@ -362,7 +512,7 @@ function tryLoadGLB(path) {
 
             if (Object.keys(meshParts).length === 0) {
                 jerseyGroup.traverse((child) => {
-                    if (child.isMesh) {
+                    if (child.isMesh || child.isSkinnedMesh) {
                         meshParts['body'] = child;
                     }
                 });
@@ -374,9 +524,13 @@ function tryLoadGLB(path) {
             updateLoadingProgress(percent);
         },
         (error) => {
-            console.warn('GLB not found, using procedural placeholder:', error);
+            console.warn('GLB failed to load from ' + path + ', trying fallback:', error);
             showLoadingUI(false);
-            buildPlaceholderJersey();
+            if (currentModelType === 'tshirt') {
+                loadJerseyModel('sleeveless');
+            } else if (path.includes('trey.glb')) {
+                tryLoadGLB('/static/assets/models/male/trey.glb?v=' + Date.now());
+            }
         }
     );
 }
@@ -443,8 +597,10 @@ export function setPartColor(partName, color) {
             }
         });
     }
-    if (meshParts[partName]) {
-        meshParts[partName].material.color.set(color);
+    if (meshParts[partName] && meshParts[partName].material) {
+        // If the mesh already has a texture map, maintain white color so the texture colors don't get multiplied/darkened
+        const targetColor = meshParts[partName].material.map ? '#ffffff' : color;
+        meshParts[partName].material.color.set(targetColor);
         meshParts[partName].material.needsUpdate = true;
     }
 }
@@ -492,10 +648,16 @@ export function setTrimColor(primaryColor, secondaryColor) {
 
     if (!cachedTrimTexture) {
         cachedTrimTexture = new THREE.CanvasTexture(cachedTrimCanvas);
+        if (THREE.SRGBColorSpace) {
+            cachedTrimTexture.colorSpace = THREE.SRGBColorSpace;
+        }
         cachedTrimTexture.wrapS = THREE.RepeatWrapping;
         cachedTrimTexture.wrapT = THREE.RepeatWrapping;
         cachedTrimTexture.repeat.set(8, 1);
     } else {
+        if (THREE.SRGBColorSpace) {
+            cachedTrimTexture.colorSpace = THREE.SRGBColorSpace;
+        }
         cachedTrimTexture.needsUpdate = true;
     }
 
@@ -510,6 +672,7 @@ export function setTrimColor(primaryColor, secondaryColor) {
 
 export function applyTextureToFront(canvasTexture) {
     if (meshParts['jersey_front']) {
+        meshParts['jersey_front'].material.color.set('#ffffff');
         meshParts['jersey_front'].material.map = canvasTexture;
         meshParts['jersey_front'].material.needsUpdate = true;
     }
@@ -517,6 +680,7 @@ export function applyTextureToFront(canvasTexture) {
 
 export function applyTextureToBack(canvasTexture) {
     if (meshParts['jersey_back']) {
+        meshParts['jersey_back'].material.color.set('#ffffff');
         meshParts['jersey_back'].material.map = canvasTexture;
         meshParts['jersey_back'].material.needsUpdate = true;
     }
@@ -539,35 +703,37 @@ export function getMeshParts() {
 }
 
 export function applyMaterialFinish(finishName) {
-    let roughness = 1.0;
+    let roughness = 0.55;
     let metalness = 0.0;
-    let clearcoat = 0.0;
-    let clearcoatRoughness = 0.0;
+    let clearcoat = 0.05;
+    let clearcoatRoughness = 0.1;
     let activeBumpMap = fabricBumpTexture;
-    let bumpScale = 0.015;
+    let bumpScale = 0.005;
 
     if (finishName === 'matte') {
-        roughness = 1.0;
-        metalness = 0.05;
-        bumpScale = 0.018;
+        roughness = 0.7;
+        metalness = 0.0;
+        clearcoat = 0.0;
+        bumpScale = 0.006;
     } else if (finishName === 'satin') {
-        roughness = 0.28;
-        metalness = 0.15;
-        clearcoat = 0.55;
+        roughness = 0.3;
+        metalness = 0.05;
+        clearcoat = 0.5;
         clearcoatRoughness = 0.15;
-        bumpScale = 0.012;
+        bumpScale = 0.004;
     } else if (finishName === 'metallic') {
-        roughness = 0.12;
-        metalness = 0.85;
-        clearcoat = 0.85;
-        clearcoatRoughness = 0.05;
-        bumpScale = 0.005;
+        // High sheen athletic finish with clearcoat; maintains vibrant colors without turning dark
+        roughness = 0.22;
+        metalness = 0.18;
+        clearcoat = 0.8;
+        clearcoatRoughness = 0.08;
+        bumpScale = 0.003;
     } else if (finishName === 'carbon') {
-        roughness = 0.45;
-        metalness = 0.35;
-        clearcoat = 0.2;
+        roughness = 0.4;
+        metalness = 0.15;
+        clearcoat = 0.25;
         activeBumpMap = carbonBumpTexture;
-        bumpScale = 0.035;
+        bumpScale = 0.018;
     }
 
     const targetMeshes = ['jersey_front', 'jersey_back', 'jersey_body', 'shorts', 'sleeve_left', 'sleeve_right'];
@@ -597,17 +763,17 @@ export function changeEnvironment(envName) {
     if (envName === 'cyber') {
         scene.background = new THREE.Color('#080512');
         ambientLight.color.set(0xffffff);
-        ambientLight.intensity = 1.2;
+        ambientLight.intensity = 1.6;
 
         dirLight.color.set(0xffffff);
         dirLight.intensity = 1.8;
 
         fillLight.color.set(0x00ffff);
-        fillLight.intensity = 1.2;
+        fillLight.intensity = 0.6;
         fillLight.position.set(-5, 2, 4);
 
         backLight.color.set(0xff007f);
-        backLight.intensity = 1.2;
+        backLight.intensity = 0.6;
         backLight.position.set(2, 3, -5);
 
         const geom = new THREE.CylinderGeometry(0.03, 0.03, 3.2, 16);
@@ -671,8 +837,15 @@ export function changeEnvironment(envName) {
     }
 }
 
+// Animation functions disabled — T-pose only
+export function playAnimation(name, duration = 0.5) { /* no-op */ }
+export function getAvailableAnimations() { return []; }
+export function getCurrentAnimation() { return 't-pose'; }
+
 function animate() {
     requestAnimationFrame(animate);
+    const delta = clock.getDelta();
+    // mixer.update(delta); — disabled, T-pose only
     controls.update();
     renderer.render(scene, camera);
 }
