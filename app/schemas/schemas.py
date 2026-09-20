@@ -91,7 +91,7 @@ class OrderResponse(BaseModel):
 
 class AIRequest(BaseModel):
     team_name: str
-    
+    current_design: Optional[dict] = None
     
 class CancelOrderRequest(BaseModel):
     reason: Optional[str] = None

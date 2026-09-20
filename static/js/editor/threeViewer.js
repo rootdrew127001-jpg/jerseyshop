@@ -360,24 +360,75 @@ export function setCameraAngle(angleName) {
     controls.update();
 }
 
-let currentModelType = 'sleeveless';
+let showcaseTimeout = null;
 
 /**
- * Loads the active 3D jersey model from static/assets/models/male/.
+ * Smoothly spins the 3D model 360 degrees to showcase new AI designs.
+ * Stops automatically after durationMs or immediately if the user touches/drags the view.
+ *
+ * @param {number} durationMs - Duration of the showcase turntable spin in milliseconds
+ */
+export function triggerShowcaseSpin(durationMs = 2800) {
+    if (!controls || !camera) return;
+    if (showcaseTimeout) {
+        clearTimeout(showcaseTimeout);
+        showcaseTimeout = null;
+    }
+
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 4.8;
+
+    const stopSpinOnInteraction = () => {
+        if (controls) {
+            controls.autoRotate = false;
+            controls.removeEventListener('start', stopSpinOnInteraction);
+        }
+        if (showcaseTimeout) {
+            clearTimeout(showcaseTimeout);
+            showcaseTimeout = null;
+        }
+    };
+
+    controls.addEventListener('start', stopSpinOnInteraction);
+
+    showcaseTimeout = setTimeout(() => {
+        if (controls) {
+            controls.autoRotate = false;
+            controls.removeEventListener('start', stopSpinOnInteraction);
+        }
+        showcaseTimeout = null;
+    }, durationMs);
+}
+
+let currentModelType = 'sleeveless';
+let currentGender = 'male';
+
+/**
+ * Loads the active 3D jersey model from static/assets/models/{male|female}/.
  * Performs clean resource disposal on the previous model to prevent WebGL memory leaks,
- * then maps mesh segmentation (mannequin body, jersey torso, shorts, shoes).
+ * then maps mesh segmentation (mannequin body, jersey torso, shorts, shoes, hair).
  *
  * Supported silhouette styles:
- *  - 'sleeveless': Athletic basketball tank top (male/trey.glb)
- *  - 'tshirt': Regular crewneck jersey with sleeves (male/Regular+T-Shirt+Jersey+With+Sleeves.glb)
+ *  - 'sleeveless': Athletic basketball tank top (male/trey.glb or female/(Female)+Sleeveless+Basketball+Jersey.glb)
+ *  - 'tshirt': Regular crewneck jersey with sleeves
  *
  * @param {'sleeveless'|'tshirt'} jerseyType - Target silhouette model to load
+ * @param {'male'|'female'} gender - Target mannequin gender fit
  */
-export function loadJerseyModel(jerseyType = 'sleeveless') {
+export function loadJerseyModel(jerseyType = 'sleeveless', gender = currentGender) {
     currentModelType = jerseyType;
-    const modelPath = (jerseyType === 'tshirt')
-        ? '/static/assets/models/male/Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
-        : '/static/assets/models/male/trey.glb?v=' + Date.now();
+    currentGender = gender || 'male';
+
+    let modelPath = '';
+    if (currentGender === 'female') {
+        modelPath = (jerseyType === 'tshirt')
+            ? '/static/assets/models/female/(Female)+Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
+            : '/static/assets/models/female/(Female)+Sleeveless+Basketball+Jersey.glb?v=' + Date.now();
+    } else {
+        modelPath = (jerseyType === 'tshirt')
+            ? '/static/assets/models/male/Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
+            : '/static/assets/models/male/trey.glb?v=' + Date.now();
+    }
     tryLoadGLB(modelPath);
 }
 
@@ -462,6 +513,14 @@ function tryLoadGLB(path) {
                     child.material = cleanMaterial('#ffffff');
                     trimMeshes.push(child);
                     meshParts[child.name] = child;
+                // Hair
+                } else if (name === 'hair') {
+                    child.material = new THREE.MeshStandardMaterial({
+                        color: '#18181b',
+                        roughness: 0.65,
+                        metalness: 0.1
+                    });
+                    meshParts['hair'] = child;
                 // Body / skin / head / limbs / mannequin
                 } else if (name === 'head' || name === 'body' || name.includes('hand') || name.includes('leg') || name.includes('limb') || name.includes('arm') || name.includes('mannequin') || name.includes('skin') || name.includes('human')) {
                     child.material = new THREE.MeshStandardMaterial({
@@ -526,9 +585,11 @@ function tryLoadGLB(path) {
         (error) => {
             console.warn('GLB failed to load from ' + path + ', trying fallback:', error);
             showLoadingUI(false);
-            if (currentModelType === 'tshirt') {
-                loadJerseyModel('sleeveless');
-            } else if (path.includes('trey.glb')) {
+            if (currentGender === 'female' && currentModelType === 'tshirt') {
+                loadJerseyModel('sleeveless', 'female');
+            } else if (currentModelType === 'tshirt') {
+                loadJerseyModel('sleeveless', 'male');
+            } else if (!path.includes('trey.glb')) {
                 tryLoadGLB('/static/assets/models/male/trey.glb?v=' + Date.now());
             }
         }

@@ -1,5 +1,5 @@
-import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle } from './threeViewer.js?v=20260912_03';
-import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260912_03';
+import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, triggerShowcaseSpin } from './threeViewer.js?v=20260920_01';
+import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260913_01';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -26,6 +26,7 @@ const DEFAULT_COORDS = {
 };
 
 let currentDesign = {
+    gender: 'male',
     jerseyType: 'sleeveless',
     baseColor: '#4F46E5',
     accentColor: '#7C3AED',
@@ -61,6 +62,39 @@ export function initEditor() {
 }
 
 function bindControls() {
+    // Model Fit & Gender selector
+    const genderMale = document.getElementById('genderMale');
+    const genderFemale = document.getElementById('genderFemale');
+    const lblGender = document.getElementById('lblGender');
+
+    function updateGenderUI(gender) {
+        currentDesign.gender = gender;
+        if (gender === 'female') {
+            if (genderFemale) genderFemale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+            if (genderMale) genderMale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+            if (lblGender) lblGender.textContent = "Women's";
+        } else {
+            if (genderMale) genderMale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+            if (genderFemale) genderFemale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+            if (lblGender) lblGender.textContent = "Men's";
+        }
+    }
+
+    if (genderMale) {
+        genderMale.addEventListener('click', () => {
+            updateGenderUI('male');
+            loadJerseyModel(currentDesign.jerseyType, 'male');
+            applyDesign(currentDesign);
+        });
+    }
+    if (genderFemale) {
+        genderFemale.addEventListener('click', () => {
+            updateGenderUI('female');
+            loadJerseyModel(currentDesign.jerseyType, 'female');
+            applyDesign(currentDesign);
+        });
+    }
+
     // Jersey Silhouette Style selector
     const typeSleeveless = document.getElementById('typeSleeveless');
     const typeTshirt = document.getElementById('typeTshirt');
@@ -90,14 +124,14 @@ function bindControls() {
     if (typeSleeveless) {
         typeSleeveless.addEventListener('click', () => {
             updateJerseyTypeUI('sleeveless');
-            loadJerseyModel('sleeveless');
+            loadJerseyModel('sleeveless', currentDesign.gender);
             applyDesign(currentDesign);
         });
     }
     if (typeTshirt) {
         typeTshirt.addEventListener('click', () => {
             updateJerseyTypeUI('tshirt');
-            loadJerseyModel('tshirt');
+            loadJerseyModel('tshirt', currentDesign.gender);
             applyDesign(currentDesign);
         });
     }
@@ -280,16 +314,31 @@ function bindControls() {
         hideReasoning();
     });
 
-    // AI suggestion handler
+    // AI Co-Pilot suggestion handler
     const aiBtn = document.getElementById('aiBtn');
     const aiTeamInput = document.getElementById('aiTeamInput');
     const aiBtnText = document.getElementById('aiBtnText');
+    const aiLiveStatus = document.getElementById('aiLiveStatus');
+    const aiLiveStatusText = document.getElementById('aiLiveStatusText');
+
+    // Wire up 1-Tap Inspiration Chips
+    document.querySelectorAll('.ai-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const promptVal = chip.getAttribute('data-prompt') || chip.textContent.trim();
+            if (aiTeamInput) {
+                aiTeamInput.value = promptVal;
+            }
+            if (aiBtn && !aiBtn.disabled) {
+                aiBtn.click();
+            }
+        });
+    });
 
     if (aiTeamInput) {
         aiTeamInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                if (aiBtn) aiBtn.click();
+                if (aiBtn && !aiBtn.disabled) aiBtn.click();
             }
         });
     }
@@ -298,46 +347,90 @@ function bindControls() {
         aiBtn.addEventListener('click', async () => {
             const teamInputVal = aiTeamInput ? aiTeamInput.value.trim() : '';
             const frontTextVal = document.getElementById('frontText') ? document.getElementById('frontText').value.trim() : '';
-            const teamName = teamInputVal || frontTextVal || 'TEAM';
+            const promptText = teamInputVal || frontTextVal || 'CHAMPION';
 
             aiBtn.disabled = true;
             aiBtn.classList.add('animate-pulse', 'opacity-80');
-            if (aiBtnText) aiBtnText.textContent = '⚡ AI Designing...';
-            else aiBtn.textContent = '⚡ AI Designing...';
+            if (aiBtnText) aiBtnText.textContent = '⚡ Co-Pilot Designing...';
+            else aiBtn.textContent = '⚡ Co-Pilot Designing...';
             hideReasoning();
 
+            // Dynamic multi-stage progress indicator
+            const progressSteps = [
+                '🧠 Analyzing design concept...',
+                '🎨 Formulating dynamic color harmony...',
+                '📐 Structuring jersey graphics & badges...',
+                '✨ Rendering 3D textures & reflections...'
+            ];
+            let stepIndex = 0;
+            if (aiLiveStatus) {
+                aiLiveStatus.style.display = 'flex';
+                if (aiLiveStatusText) aiLiveStatusText.textContent = progressSteps[0];
+            }
+            const statusTimer = setInterval(() => {
+                stepIndex = (stepIndex + 1) % progressSteps.length;
+                if (aiLiveStatusText) {
+                    aiLiveStatusText.textContent = progressSteps[stepIndex];
+                }
+            }, 600);
+
             try {
+                // Send current jersey state for context-aware iterative tweaks
+                const currentDesignContext = {
+                    jerseyType: currentDesign.jerseyType,
+                    baseColor: currentDesign.baseColor,
+                    accentColor: currentDesign.accentColor,
+                    tertiaryColor: currentDesign.tertiaryColor,
+                    pattern: currentDesign.pattern,
+                    logo: currentDesign.logo,
+                    font: currentDesign.font,
+                    finish: currentDesign.finish,
+                    showroom: currentDesign.showroom,
+                    frontText: currentDesign.frontText,
+                    backName: currentDesign.backName,
+                    number: currentDesign.number,
+                    sponsorText: currentDesign.sponsorText
+                };
+
                 const res = await fetch('/ai/suggest', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ team_name: teamName })
+                    body: JSON.stringify({
+                        team_name: promptText,
+                        current_design: currentDesignContext
+                    })
                 });
 
                 const suggestion = await res.json();
 
                 if (res.ok && suggestion) {
-                    const finalTeamName = suggestion.teamName || teamName;
-                    if (aiTeamInput) aiTeamInput.value = finalTeamName;
+                    const finalTeamName = suggestion.teamName || currentDesign.frontText || promptText;
+                    
+                    // Don't overwrite the prompt box if the user was typing an iterative tweak command
+                    const isTweak = /^(?:make|change|set|add|switch|tweak|keep|more|less)\b/i.test(promptText);
+                    if (aiTeamInput && !isTweak) {
+                        aiTeamInput.value = finalTeamName;
+                    }
 
                     currentDesign = {
                         ...currentDesign,
                         baseColor: suggestion.baseColor || currentDesign.baseColor,
                         accentColor: suggestion.accentColor || currentDesign.accentColor,
                         tertiaryColor: suggestion.tertiaryColor || currentDesign.tertiaryColor,
-                        pattern: suggestion.pattern || 'none',
-                        logo: suggestion.logo || 'none',
-                        font: suggestion.font || 'athletic',
-                        finish: suggestion.finish || 'matte',
-                        showroom: suggestion.showroom || 'cyber',
+                        pattern: suggestion.pattern || currentDesign.pattern || 'none',
+                        logo: suggestion.logo || currentDesign.logo || 'none',
+                        font: suggestion.font || currentDesign.font || 'athletic',
+                        finish: suggestion.finish || currentDesign.finish || 'matte',
+                        showroom: suggestion.showroom || currentDesign.showroom || 'cyber',
                         frontText: finalTeamName,
-                        backName: 'PLAYER',
-                        number: suggestion.number || '23',
-                        sponsorText: suggestion.sponsorText || '',
+                        backName: currentDesign.backName || 'PLAYER',
+                        number: suggestion.number || currentDesign.number || '23',
+                        sponsorText: (suggestion.sponsorText !== undefined && suggestion.sponsorText !== null) ? suggestion.sponsorText : currentDesign.sponsorText,
                         showFrontText: true,
                         showFrontNumber: true,
                         showBackText: true,
                         showBackNumber: true,
-                        showSponsor: !!suggestion.sponsorText,
+                        showSponsor: !!(suggestion.sponsorText || currentDesign.sponsorText),
                         customFont: ''
                     };
                     Object.assign(currentDesign, DEFAULT_COORDS);
@@ -345,18 +438,27 @@ function bindControls() {
                     applyDesign(currentDesign);
                     changeEnvironment(currentDesign.showroom);
                     showReasoning(suggestion.reasoning);
+
+                    // Smooth 3D showcase turntable spin
+                    if (typeof triggerShowcaseSpin === 'function') {
+                        triggerShowcaseSpin(2800);
+                    }
                 } else {
-                    showReasoning('AI suggestion failed. Please try again.');
+                    showReasoning('AI suggestion was unable to generate. Please try a different prompt.');
                 }
             } catch (err) {
                 console.error(err);
                 showReasoning('Server error connecting to AI service.');
+            } finally {
+                clearInterval(statusTimer);
+                if (aiLiveStatus) {
+                    aiLiveStatus.style.display = 'none';
+                }
+                aiBtn.disabled = false;
+                aiBtn.classList.remove('animate-pulse', 'opacity-80');
+                if (aiBtnText) aiBtnText.textContent = '🤖 Generate AI Design';
+                else aiBtn.textContent = '🤖 Generate AI Design';
             }
-
-            aiBtn.disabled = false;
-            aiBtn.classList.remove('animate-pulse', 'opacity-80');
-            if (aiBtnText) aiBtnText.textContent = '🤖 Generate AI Design';
-            else aiBtn.textContent = '🤖 Generate AI Design';
         });
     }
 
@@ -611,6 +713,20 @@ function applyDesign(design) {
 }
 
 function syncUI(design) {
+    const gender = design.gender || 'male';
+    const genderMale = document.getElementById('genderMale');
+    const genderFemale = document.getElementById('genderFemale');
+    const lblGender = document.getElementById('lblGender');
+    if (gender === 'female') {
+        if (genderFemale) genderFemale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+        if (genderMale) genderMale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+        if (lblGender) lblGender.textContent = "Women's";
+    } else {
+        if (genderMale) genderMale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer';
+        if (genderFemale) genderFemale.className = 'flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer';
+        if (lblGender) lblGender.textContent = "Men's";
+    }
+
     const jType = design.jerseyType || 'sleeveless';
     const typeSleeveless = document.getElementById('typeSleeveless');
     const typeTshirt = document.getElementById('typeTshirt');

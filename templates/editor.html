@@ -346,28 +346,60 @@
         <div class="p-6 space-y-5 flex-1 font-sans">
 
             <!-- AI Generator Card -->
-            <div class="bg-slate-800/90 border border-violet-500/40 rounded-2xl p-4 space-y-3 shadow-lg shadow-violet-950/20">
+            <div class="bg-slate-800/90 border border-violet-500/40 rounded-2xl p-4 space-y-3.5 shadow-lg shadow-violet-950/20">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
-                        <span>✨ AI Jersey Designer</span>
+                        <span>✨ AI Jersey Co-Pilot</span>
+                    </span>
+                    <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Interactive
                     </span>
                 </div>
                 
                 <div class="space-y-1.5">
-                    <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Team Name or Style Prompt</label>
-                    <input id="aiTeamInput" type="text" placeholder="e.g. Tokyo Vipers, Miami Heat..." 
+                    <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Team Name or Tweak Command</label>
+                    <input id="aiTeamInput" type="text" placeholder="e.g. Tokyo Vipers, or 'make stripes gold'..." 
                            class="w-full bg-slate-900 border border-slate-700 focus:border-violet-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium">
                 </div>
 
+                <!-- Quick Inspiration Chips -->
+                <div class="space-y-1.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Quick Inspiration</span>
+                        <span class="text-[9px] text-violet-400 font-medium">1-Tap Presets</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" class="ai-chip px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 hover:bg-violet-950/60 border border-slate-700/80 hover:border-violet-500/50 text-slate-300 hover:text-white transition cursor-pointer shadow-sm" data-prompt="⚡ Cyber Volt">⚡ Cyber Volt</button>
+                        <button type="button" class="ai-chip px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 hover:bg-violet-950/60 border border-slate-700/80 hover:border-violet-500/50 text-slate-300 hover:text-white transition cursor-pointer shadow-sm" data-prompt="🖤 Stealth Black">🖤 Stealth Black</button>
+                        <button type="button" class="ai-chip px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 hover:bg-violet-950/60 border border-slate-700/80 hover:border-violet-500/50 text-slate-300 hover:text-white transition cursor-pointer shadow-sm" data-prompt="🔥 Miami Heat">🔥 Miami Heat</button>
+                        <button type="button" class="ai-chip px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 hover:bg-violet-950/60 border border-slate-700/80 hover:border-violet-500/50 text-slate-300 hover:text-white transition cursor-pointer shadow-sm" data-prompt="🏆 Royal Gold">🏆 Royal Gold</button>
+                        <button type="button" class="ai-chip px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 hover:bg-violet-950/60 border border-slate-700/80 hover:border-violet-500/50 text-slate-300 hover:text-white transition cursor-pointer shadow-sm" data-prompt="🌊 Ocean Wave">🌊 Ocean Wave</button>
+                        <button type="button" class="ai-chip px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-slate-900 hover:bg-violet-950/60 border border-slate-700/80 hover:border-violet-500/50 text-slate-300 hover:text-white transition cursor-pointer shadow-sm" data-prompt="🌲 Digi Camo">🌲 Digi Camo</button>
+                    </div>
+                </div>
+
+                <!-- Live Multi-Stage Status Indicator -->
+                <div id="aiLiveStatus" style="display:none" class="bg-violet-950/50 border border-violet-500/40 rounded-xl p-2.5 flex items-center gap-2.5 shadow-inner transition-all">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"></span>
+                    </span>
+                    <span id="aiLiveStatusText" class="text-[11px] font-semibold text-violet-200 tracking-wide">🧠 Analyzing design concept...</span>
+                </div>
+
                 <button id="aiBtn"
-                    class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl transition text-xs shadow-md shadow-violet-900/30 flex items-center justify-center gap-2 cursor-pointer">
+                    class="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600 bg-[length:200%_auto] hover:bg-right hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-300 text-xs shadow-md shadow-violet-900/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]">
                     <span id="aiBtnText">🤖 Generate AI Design</span>
                 </button>
 
                 <!-- AI Reasoning Display -->
-                <div id="aiReasoningWrapper" style="display:none" class="bg-slate-900/90 border border-slate-700/60 rounded-xl p-3 space-y-1">
-                    <div class="text-[9px] font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1">
-                        <span>💡 AI Design Concept:</span>
+                <div id="aiReasoningWrapper" style="display:none" class="bg-slate-900/90 border border-violet-500/30 rounded-xl p-3 space-y-1.5 shadow-inner">
+                    <div class="flex items-center justify-between">
+                        <div class="text-[9px] font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
+                            <span>💡 AI Concept Rationale</span>
+                        </div>
+                        <span class="text-[9px] text-slate-500 font-mono">3D Applied</span>
                     </div>
                     <p id="aiReasoning" class="text-xs text-slate-300 leading-relaxed italic">
                     </p>
@@ -380,8 +412,23 @@
                 🎲 Generate Random Design
             </button>
 
-
-
+            <!-- Model Fit & Gender Selector -->
+            <div class="space-y-2 pb-3 border-b border-slate-700/40">
+                <div class="flex justify-between items-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Model Fit / Gender</p>
+                    <span id="lblGender" class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Men's</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="genderMale" type="button" class="flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
+                        <span class="text-sm">👨</span>
+                        <span>Men's Fit</span>
+                    </button>
+                    <button id="genderFemale" type="button" class="flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer">
+                        <span class="text-sm">👩</span>
+                        <span>Women's Fit</span>
+                    </button>
+                </div>
+            </div>
 
             <!-- Jersey Silhouette Style Selector -->
             <div class="space-y-2 pb-3 border-b border-slate-700/40">
@@ -706,7 +753,7 @@
     </div>
 
     <script type="module">
-    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260912_03';
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260920_01';
     initEditor();
      setTimeout(function() {
          const c = document.getElementById('canvasFront2D');
