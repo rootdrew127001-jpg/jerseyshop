@@ -72,6 +72,13 @@ def serve_page(page: str):
         return FileResponse(file_path)
     return FileResponse(os.path.join(templates_path, "index.html"))
 
+@app.get("/{page}")
+def serve_page_no_ext(page: str):
+    file_path = os.path.join(templates_path, f"{page}.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return FileResponse(os.path.join(templates_path, "index.html"))
+
 
 
 

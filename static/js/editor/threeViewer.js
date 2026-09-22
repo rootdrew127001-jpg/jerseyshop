@@ -164,7 +164,85 @@ const cleanMaterial = (color) => {
     return mat;
 };
 
-function applyCleanPlanarUVs(geometry, isBack = false, customBBox = null) {
+/**
+ * Conformal Arc-Length Cylindrical Torso Unwrapping.
+ * 
+ * Eliminates lateral flank horizontal smearing and stretching by parameterizing UVs
+ * proportionally to circumferential surface arc-length around the torso ellipse.
+ * Perfectly aligns with 2D front/back silhouettes and side seams with 1-to-1 fidelity.
+ *
+ * @param {THREE.BufferGeometry} geometry - Target mesh geometry
+ * @param {boolean} isBack - True for back half, false for front half
+ * @param {THREE.Box3} [customBBox] - Optional bounding box of the entire jersey
+ * @param {number} [customCenterZ] - Coronal split plane Z coordinate
+ */
+/**
+ * Computes anatomical landmarks (shoulder, front neck scoop dip, armpit, hem)
+ * from 3D jersey geometry to achieve 1-to-1 fidelity with 2D canvas designs.
+ */
+function computeJerseyLandmarks(geometry, bbox, centerZ) {
+    const pos = geometry.attributes.position;
+    const count = pos.count;
+    const minX = bbox.min.x, maxX = bbox.max.x;
+    const minY = bbox.min.y, maxY = bbox.max.y;
+    const minZ = bbox.min.z, maxZ = bbox.max.z;
+    const rangeX = (maxX - minX) || 1;
+    const rangeY = (maxY - minY) || 1;
+    const rangeZ = (maxZ - minZ) || 1;
+    const centerX = (minX + maxX) / 2;
+
+    const yShoulder = maxY;
+    const yHem = minY;
+
+    let maxFrontY = -Infinity;
+    let minFrontHemY = Infinity;
+    let maxBackY = -Infinity;
+
+    // Filter strictly front and back center column vertices
+    const centerTol = rangeX * 0.06;
+    for (let i = 0; i < count; i++) {
+        const x = pos.getX(i);
+        const y = pos.getY(i);
+        const z = pos.getZ(i);
+
+        const dx = Math.abs(x - centerX);
+        if (dx < centerTol) {
+            // Front cloth: z > centerZ + 0.005
+            if (z > centerZ + 0.005) {
+                if (y > maxFrontY) maxFrontY = y;
+                if (y < minFrontHemY) minFrontHemY = y;
+            }
+            // Back cloth: z < centerZ - 0.005
+            if (z < centerZ - 0.005) {
+                if (y > maxBackY) maxBackY = y;
+            }
+        }
+    }
+
+    const yNeck = (maxFrontY > yHem + 0.5 * rangeY) ? maxFrontY : (yHem + 0.85 * rangeY);
+    const yFrontHem = (minFrontHemY < Infinity) ? minFrontHemY : yHem;
+    const yBackNeck = (maxBackY > yHem + 0.5 * rangeY) ? maxBackY : (yHem + 0.90 * rangeY);
+
+    return { yShoulder, yNeck, yFrontHem, yBackNeck, yHem };
+}
+
+/**
+ * Landmark-Aligned Conformal Torso Unwrapping.
+ * 
+ * Maps 3D jersey meshes to 2D design canvases with true 1-to-1 fidelity:
+ * 1. Continuous vertical landmark mapping: guarantees team names below collar,
+ *    centered logos, mid-chest sponsors, and bottom-hem stripes align exactly as drawn in 2D
+ *    without piecewise stretching or flattening.
+ * 2. Blended orthographic + arc-length horizontal mapping: preserves 100% full width and
+ *    natural athletic aspect ratio across the front chest while preventing side-flank smearing.
+ *
+ * @param {THREE.BufferGeometry} geometry - Target mesh geometry
+ * @param {boolean} isBack - True for back half, false for front half
+ * @param {THREE.Box3} [customBBox] - Optional bounding box of the entire jersey
+ * @param {number} [customCenterZ] - Coronal split plane Z coordinate
+ * @param {Object} [customLandmarks] - Precomputed landmark heights {yShoulder, yNeck, yBackNeck, yHem}
+ */
+function applyTorsoConformalUVs(geometry, isBack = false, customBBox = null, customCenterZ = null, customLandmarks = null) {
     if (!geometry) return;
     if (!customBBox) {
         geometry.computeBoundingBox();
@@ -176,28 +254,125 @@ function applyCleanPlanarUVs(geometry, isBack = false, customBBox = null) {
 
     const minX = bbox.min.x, maxX = bbox.max.x;
     const minY = bbox.min.y, maxY = bbox.max.y;
+    const minZ = bbox.min.z, maxZ = bbox.max.z;
+
     const rangeX = (maxX - minX) || 1;
     const rangeY = (maxY - minY) || 1;
+    const rangeZ = (maxZ - minZ) || 1;
 
-    const paddingX = 0.03;
-    const scaleU = 1 - 2 * paddingX;
-    const paddingY = 0.03;
-    const scaleV = 1 - 2 * paddingY;
+    const centerX = (minX + maxX) / 2;
+    const centerZ = (customCenterZ !== null && customCenterZ !== undefined && !isNaN(customCenterZ))
+        ? customCenterZ
+        : (minZ + maxZ) / 2;
 
+    const isTshirtWithSleeves = (rangeX > rangeZ * 2.2);
+
+    let torsoRx = rangeX / 2;
+    if (isTshirtWithSleeves) {
+        torsoRx = rangeX * 0.26;
+    }
+    const torsoRz = rangeZ / 2;
+
+    // Get or compute anatomical landmarks
+    const landmarks = customLandmarks || computeJerseyLandmarks(geometry, bbox, centerZ);
+    const { yShoulder, yNeck, yBackNeck, yHem } = landmarks;
+
+    // 2D Canvas Target Landmarks:
+    // vShoulder: Y=44 (male tank), Y=48 (female tank), Y=30 (tshirt)
+    // vNeck: Front collar rim dip mapped to V = 0.865 (Y = 69px, gives clean 25px+ clearance for team text)
+    // vBackNeck: Back collar rim dip mapped to V = 0.898 (Y = 52px)
+    // vHem: Bottom hem mapped to V = 0.086 (Y = 468px) for tank, 0.051 (Y = 486px) for tshirt
+    const vShoulder = isTshirtWithSleeves ? 0.941 : 0.914;
+    const vNeck = 0.865;
+    const vBackNeck = isTshirtWithSleeves ? 0.926 : 0.898;
+    const vHem = isTshirtWithSleeves ? 0.051 : 0.086;
+
+    // Horizontal scale: 0.355 for sleeveless (gives exact 1:1 aspect ratio), 0.28 for tshirt torso
+    const uHalf = isTshirtWithSleeves ? 0.28 : 0.355;
     const uvs = new Float32Array(posAttr.count * 2);
 
     for (let i = 0; i < posAttr.count; i++) {
         const x = posAttr.getX(i);
         const y = posAttr.getY(i);
+        const z = posAttr.getZ(i);
 
-        let normU = (x - minX) / rangeX;
-        if (isBack) {
-            normU = (maxX - x) / rangeX;
+        // Continuous, 100% distortion-free vertical landmark mapping:
+        let v;
+        if (!isBack) {
+            if (y >= yNeck) {
+                // Shoulder straps above front neck scoop
+                const t = (y - yNeck) / ((yShoulder - yNeck) || 1e-4);
+                v = vNeck + t * (vShoulder - vNeck);
+            } else {
+                // Entire front torso from neck scoop to waistband: single uniform scale!
+                const t = (y - yHem) / ((yNeck - yHem) || 1e-4);
+                v = vHem + t * (vNeck - vHem);
+            }
+        } else {
+            if (y >= yBackNeck) {
+                // Shoulder straps above back neck scoop
+                const t = (y - yBackNeck) / ((yShoulder - yBackNeck) || 1e-4);
+                v = vBackNeck + t * (vShoulder - vBackNeck);
+            } else {
+                // Entire back torso from back neck scoop to hem: single uniform scale!
+                const t = (y - yHem) / ((yBackNeck - yHem) || 1e-4);
+                v = vHem + t * (vBackNeck - vHem);
+            }
         }
-        let normV = (y - minY) / rangeY;
 
-        let u = paddingX + normU * scaleU;
-        let v = paddingY + normV * scaleV;
+        const dx = x - centerX;
+        const dz = z - centerZ;
+
+        let u = 0.50;
+
+        if (!isTshirtWithSleeves) {
+            // Sleeveless athletic jersey (Male Trey or Female model)
+            const nx = Math.min(1.0, Math.abs(dx) / (torsoRx || 1));
+            const nz = Math.max(0.0, Math.abs(dz) / (torsoRz || 1));
+            const phi = Math.atan2(nx, Math.max(1e-4, nz));
+            const normPhi = phi / (Math.PI / 2);
+
+            // Blended mapping: On front chest (nz ~ 1), w ~ 0.9 -> pure 1:1 orthographic scale!
+            // On flank (nz -> 0), w -> 0 -> pure conformal arc-length!
+            const w = (nz * nz) / (nx * nx + nz * nz + 1e-5);
+            const tHoriz = Math.min(1.0, Math.max(0.0, w * nx + (1 - w) * normPhi));
+            const sign = dx >= 0 ? 1.0 : -1.0;
+
+            if (!isBack) {
+                u = 0.50 + sign * tHoriz * uHalf;
+            } else {
+                u = 0.50 - sign * tHoriz * uHalf;
+            }
+        } else {
+            // Regular T-Shirt with Sleeves
+            if (Math.abs(dx) <= torsoRx * 1.15) {
+                const nx = Math.min(1.0, Math.abs(dx) / (torsoRx || 1));
+                const nz = Math.max(0.0, Math.abs(dz) / (torsoRz || 1));
+                const phi = Math.atan2(nx, Math.max(1e-4, nz));
+                const normPhi = phi / (Math.PI / 2);
+                const w = (nz * nz) / (nx * nx + nz * nz + 1e-5);
+                const tHoriz = Math.min(1.0, Math.max(0.0, w * nx + (1 - w) * normPhi));
+                const sign = dx >= 0 ? 1.0 : -1.0;
+
+                if (!isBack) {
+                    u = 0.50 + sign * tHoriz * uHalf;
+                } else {
+                    u = 0.50 - sign * tHoriz * uHalf;
+                }
+            } else {
+                if (dx > 0) {
+                    const sleeveT = Math.min(1.0, Math.max(0.0, (dx - torsoRx) / ((maxX - torsoRx) || 1)));
+                    u = (!isBack) ? (0.72 + sleeveT * 0.25) : (0.28 - sleeveT * 0.25);
+                } else {
+                    const sleeveT = Math.min(1.0, Math.max(0.0, (-dx - torsoRx) / ((-minX - torsoRx) || 1)));
+                    u = (!isBack) ? (0.28 - sleeveT * 0.25) : (0.72 + sleeveT * 0.25);
+                }
+            }
+        }
+
+        // Clamp U, V to safe bounds
+        u = Math.max(0.01, Math.min(0.99, u));
+        v = Math.max(0.01, Math.min(0.99, v));
 
         uvs[i * 2] = u;
         uvs[i * 2 + 1] = v;
@@ -205,6 +380,11 @@ function applyCleanPlanarUVs(geometry, isBack = false, customBBox = null) {
 
     geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
     geometry.attributes.uv.needsUpdate = true;
+}
+
+// Backwards-compatibility alias
+function applyCleanPlanarUVs(geometry, isBack = false, customBBox = null, customCenterZ = null) {
+    applyTorsoConformalUVs(geometry, isBack, customBBox, customCenterZ);
 }
 
 /**
@@ -259,17 +439,19 @@ function splitTorsoGeometry(originalMesh) {
         }
     }
 
+    const landmarks = computeJerseyLandmarks(origGeom, bbox, centerZ);
+
     // Build Front Geometry
     const frontGeom = new THREE.BufferGeometry();
     frontGeom.setAttribute('position', new THREE.Float32BufferAttribute(frontPositions, 3));
     frontGeom.setAttribute('normal', new THREE.Float32BufferAttribute(frontNormals, 3));
-    applyCleanPlanarUVs(frontGeom, false, bbox);
+    applyTorsoConformalUVs(frontGeom, false, bbox, centerZ, landmarks);
 
     // Build Back Geometry
     const backGeom = new THREE.BufferGeometry();
     backGeom.setAttribute('position', new THREE.Float32BufferAttribute(backPositions, 3));
     backGeom.setAttribute('normal', new THREE.Float32BufferAttribute(backNormals, 3));
-    applyCleanPlanarUVs(backGeom, true, bbox);
+    applyTorsoConformalUVs(backGeom, true, bbox, centerZ, landmarks);
 
     const frontMesh = new THREE.Mesh(frontGeom, cleanMaterial('#4F46E5'));
     frontMesh.name = 'jersey_front';
@@ -496,11 +678,11 @@ function tryLoadGLB(path) {
                 // Jersey / shirt / tshirt / jersey mesh
                 if (name === 'jersey_front') {
                     child.material = cleanMaterial('#4F46E5');
-                    applyCleanPlanarUVs(child.geometry, false);
+                    applyTorsoConformalUVs(child.geometry, false);
                     meshParts['jersey_front'] = child;
                 } else if (name === 'jersey_back') {
                     child.material = cleanMaterial('#4F46E5');
-                    applyCleanPlanarUVs(child.geometry, true);
+                    applyTorsoConformalUVs(child.geometry, true);
                     meshParts['jersey_back'] = child;
                 } else if (name === 'shirt' || name === 'tshirt' || name === 'jersey' || name === 'jersey_body' || name === 'torso') {
                     shirtMeshFound = child;

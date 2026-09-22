@@ -43,7 +43,14 @@ export function buildBackTexture(options = {}) {
 }
 
 export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) {
+    const isFemale = options && options.gender === 'female';
     if (!isBack) {
+        const defaultFrontNumSize = isFemale ? 124 : 140;
+        const defaultTeamY = isFemale ? 98 : 96;
+        const defaultNumberY = isFemale ? 336 : 340;
+        const defaultLogoY = isFemale ? 158 : 155;
+        const defaultSponsorY = isFemale ? 222 : 222;
+
         const {
             number = '23',
             baseColor = '#4F46E5',
@@ -53,18 +60,18 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             logo = 'none',
             font = 'athletic',
             sponsorText = '',
-            frontNumberSize = options.frontNumberSize !== undefined ? options.frontNumberSize : (options.numberSize || 140),
+            frontNumberSize = options.frontNumberSize !== undefined ? options.frontNumberSize : (options.numberSize !== undefined ? options.numberSize : defaultFrontNumSize),
             outlineWeight = 8,
             customFont = '',
             logoX = 256,
-            logoY = 150,
+            logoY = options.logoY !== undefined ? options.logoY : defaultLogoY,
             sponsorX = 256,
-            sponsorY = 220,
+            sponsorY = options.sponsorY !== undefined ? options.sponsorY : defaultSponsorY,
             numberX = 256,
-            numberY = 340,
+            numberY = options.numberY !== undefined ? options.numberY : defaultNumberY,
             teamX = 256,
-            teamY = 90,
-            logoSize = 60,
+            teamY = options.teamY !== undefined ? options.teamY : defaultTeamY,
+            logoSize = isFemale ? 54 : 60,
             customLogoImage = null,
             frontText = options.frontText !== undefined ? options.frontText : (options.teamName || 'TEAM'),
             showFrontText = options.showFrontText !== undefined ? options.showFrontText : true,
@@ -117,6 +124,10 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             ctx.fillText(frontText.toUpperCase(), teamX, teamY);
         }
     } else {
+        const defaultBackNumSize = isFemale ? 124 : 140;
+        const defaultBackNumberY = isFemale ? 285 : 290;
+        const defaultBackNameY = isFemale ? 375 : 380;
+
         const {
             number = '23',
             baseColor = '#4F46E5',
@@ -124,13 +135,13 @@ export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) 
             tertiaryColor = '#ffffff',
             pattern = 'none',
             font = 'athletic',
-            backNumberSize = options.backNumberSize !== undefined ? options.backNumberSize : (options.numberSize || 140),
+            backNumberSize = options.backNumberSize !== undefined ? options.backNumberSize : (options.numberSize !== undefined ? options.numberSize : defaultBackNumSize),
             outlineWeight = 8,
             customFont = '',
             backNameX = 256,
-            backNameY = 380,
+            backNameY = options.backNameY !== undefined ? options.backNameY : defaultBackNameY,
             backNumberX = 256,
-            backNumberY = 290,
+            backNumberY = options.backNumberY !== undefined ? options.backNumberY : defaultBackNumberY,
             backName = options.backName !== undefined ? options.backName : (options.teamName || 'PLAYER'),
             showBackText = options.showBackText !== undefined ? options.showBackText : true,
             showBackNumber = options.showBackNumber !== undefined ? options.showBackNumber : true
@@ -248,6 +259,86 @@ export function pathTshirt(ctx, isBack = false) {
     ctx.closePath();
 }
 
+export function pathFemaleJersey(ctx, isBack = false) {
+    ctx.beginPath();
+    if (isBack) {
+        // Back neckline is higher
+        ctx.moveTo(256, 54);
+        ctx.quadraticCurveTo(208, 54, 180, 48);
+    } else {
+        // Front neckline has feminine athletic scoop
+        ctx.moveTo(256, 86);
+        ctx.quadraticCurveTo(208, 84, 180, 48);
+    }
+    // Left shoulder strap (tailored athletic cut)
+    ctx.lineTo(134, 62);
+    // Left armhole athletic scoop to armpit
+    ctx.bezierCurveTo(150, 115, 130, 165, 84, 192);
+    // Left contoured waist running down to hem (inward curve at waist, flare at hips)
+    ctx.bezierCurveTo(90, 260, 106, 310, 106, 350);
+    ctx.bezierCurveTo(106, 390, 98, 435, 94, 468);
+    // Bottom hem gently curved athletic drop hem
+    ctx.quadraticCurveTo(256, 482, 418, 468);
+    // Right contoured waist running up to armpit
+    ctx.bezierCurveTo(414, 435, 406, 390, 406, 350);
+    ctx.bezierCurveTo(406, 310, 422, 260, 428, 192);
+    // Right armhole athletic scoop to shoulder
+    ctx.bezierCurveTo(382, 165, 362, 115, 378, 62);
+    // Right shoulder strap
+    ctx.lineTo(332, 48);
+    // Return to neck center
+    if (isBack) {
+        ctx.quadraticCurveTo(304, 54, 256, 54);
+    } else {
+        ctx.quadraticCurveTo(304, 84, 256, 86);
+    }
+    ctx.closePath();
+}
+
+export function pathFemaleTshirt(ctx, isBack = false) {
+    ctx.beginPath();
+    if (isBack) {
+        // Back neckline
+        ctx.moveTo(256, 40);
+        ctx.quadraticCurveTo(210, 40, 185, 36);
+    } else {
+        // Front scoop crewneck
+        ctx.moveTo(256, 80);
+        ctx.quadraticCurveTo(210, 76, 185, 36);
+    }
+    // Left shoulder slope
+    ctx.lineTo(120, 34);
+    // Left cap sleeve outer crown
+    ctx.lineTo(34, 96);
+    // Left sleeve cuff
+    ctx.lineTo(48, 180);
+    // Left underarm seam to armpit hollow
+    ctx.bezierCurveTo(80, 190, 106, 200, 128, 206);
+    // Left contoured torso down to hem
+    ctx.bezierCurveTo(134, 275, 146, 340, 146, 365);
+    ctx.bezierCurveTo(146, 395, 140, 445, 138, 486);
+    // Bottom hem curve
+    ctx.quadraticCurveTo(256, 494, 374, 486);
+    // Right contoured torso up to armpit
+    ctx.bezierCurveTo(372, 445, 366, 395, 366, 365);
+    ctx.bezierCurveTo(366, 340, 378, 275, 384, 206);
+    // Right underarm seam out to cuff
+    ctx.bezierCurveTo(406, 200, 432, 190, 464, 180);
+    // Right sleeve cuff
+    ctx.lineTo(478, 96);
+    // Outer sleeve top up to shoulder crown
+    ctx.lineTo(392, 34);
+    // Right shoulder slope to collar
+    ctx.lineTo(327, 36);
+    // Collar return to center
+    if (isBack) {
+        ctx.quadraticCurveTo(302, 40, 256, 40);
+    } else {
+        ctx.quadraticCurveTo(302, 76, 256, 80);
+    }
+    ctx.closePath();
+}
+
 export function renderJersey2D(targetCanvas, options, isBack = false) {
     if (!targetCanvas) {
         console.error("targetCanvas is null in renderJersey2D");
@@ -259,7 +350,8 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
 
     ctx.clearRect(0, 0, width, height);
 
-    const isTshirt = options.jerseyType === 'tshirt';
+    const isTshirt = options && options.jerseyType === 'tshirt';
+    const isFemale = options && options.gender === 'female';
 
     const designCanvas = document.createElement('canvas');
     designCanvas.width = 512;
@@ -276,9 +368,17 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     ctx.scale(scaleFactor, scaleFactor);
 
     if (isTshirt) {
-        pathTshirt(ctx, isBack);
+        if (isFemale) {
+            pathFemaleTshirt(ctx, isBack);
+        } else {
+            pathTshirt(ctx, isBack);
+        }
     } else {
-        pathJersey(ctx, isBack);
+        if (isFemale) {
+            pathFemaleJersey(ctx, isBack);
+        } else {
+            pathJersey(ctx, isBack);
+        }
     }
     ctx.clip();
 
@@ -298,21 +398,25 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     ctx.fillRect(0, 0, 512, 512);
 
     if (isTshirt) {
-        // Armpit hollow shadows for T-shirt (X: 123 and 389, Y: 210)
-        const rightArmpitGrad = ctx.createRadialGradient(389, 210, 0, 389, 210, 65);
+        // Armpit hollow shadows for T-shirt
+        const leftArmX = isFemale ? 128 : 123;
+        const rightArmX = isFemale ? 384 : 389;
+        const armY = isFemale ? 206 : 210;
+
+        const rightArmpitGrad = ctx.createRadialGradient(rightArmX, armY, 0, rightArmX, armY, 65);
         rightArmpitGrad.addColorStop(0, 'rgba(0,0,0,0.38)');
         rightArmpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = rightArmpitGrad;
         ctx.fillRect(0, 0, 512, 512);
 
-        const leftArmpitGrad = ctx.createRadialGradient(123, 210, 0, 123, 210, 65);
+        const leftArmpitGrad = ctx.createRadialGradient(leftArmX, armY, 0, leftArmX, armY, 65);
         leftArmpitGrad.addColorStop(0, 'rgba(0,0,0,0.38)');
         leftArmpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = leftArmpitGrad;
         ctx.fillRect(0, 0, 512, 512);
 
         // Collar / chest depth gradient
-        const neckY = isBack ? 38 : 75;
+        const neckY = isBack ? (isFemale ? 40 : 38) : (isFemale ? 80 : 75);
         const neckShadowGrad = ctx.createRadialGradient(256, neckY, 0, 256, neckY, 110);
         neckShadowGrad.addColorStop(0, 'rgba(0,0,0,0.25)');
         neckShadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
@@ -320,28 +424,41 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
         ctx.fillRect(0, 0, 512, 512);
 
         // Realistic fabric folds across sleeves and torso
-        drawEmbossedFold(ctx, 35, 140, 75, 120, 115, 145, 0.22, 0.10);
-        drawEmbossedFold(ctx, 477, 140, 437, 120, 397, 145, 0.22, 0.10);
-        drawEmbossedFold(ctx, 140, 320, 200, 305, 260, 335, 0.18, 0.08);
-        drawEmbossedFold(ctx, 372, 350, 310, 340, 250, 365, 0.18, 0.08);
-        drawEmbossedFold(ctx, 142, 410, 205, 395, 275, 425, 0.16, 0.07);
-        drawEmbossedFold(ctx, 370, 430, 305, 420, 235, 445, 0.16, 0.07);
+        if (isFemale) {
+            drawEmbossedFold(ctx, 45, 140, 85, 120, 120, 145, 0.20, 0.10);
+            drawEmbossedFold(ctx, 467, 140, 427, 120, 392, 145, 0.20, 0.10);
+            drawEmbossedFold(ctx, 146, 330, 202, 315, 260, 345, 0.18, 0.08);
+            drawEmbossedFold(ctx, 366, 360, 310, 350, 252, 375, 0.18, 0.08);
+            drawEmbossedFold(ctx, 140, 415, 205, 400, 275, 430, 0.16, 0.07);
+            drawEmbossedFold(ctx, 372, 435, 305, 425, 235, 450, 0.16, 0.07);
+        } else {
+            drawEmbossedFold(ctx, 35, 140, 75, 120, 115, 145, 0.22, 0.10);
+            drawEmbossedFold(ctx, 477, 140, 437, 120, 397, 145, 0.22, 0.10);
+            drawEmbossedFold(ctx, 140, 320, 200, 305, 260, 335, 0.18, 0.08);
+            drawEmbossedFold(ctx, 372, 350, 310, 340, 250, 365, 0.18, 0.08);
+            drawEmbossedFold(ctx, 142, 410, 205, 395, 275, 425, 0.16, 0.07);
+            drawEmbossedFold(ctx, 370, 430, 305, 420, 235, 445, 0.16, 0.07);
+        }
     } else {
-        // Armpit hollow shadows for sleeveless (66 and 446)
-        const rightArmpitGrad = ctx.createRadialGradient(446, 185, 0, 446, 185, 75);
+        // Armpit hollow shadows for sleeveless
+        const leftArmX = isFemale ? 84 : 66;
+        const rightArmX = isFemale ? 428 : 446;
+        const armY = isFemale ? 192 : 185;
+
+        const rightArmpitGrad = ctx.createRadialGradient(rightArmX, armY, 0, rightArmX, armY, 75);
         rightArmpitGrad.addColorStop(0, 'rgba(0,0,0,0.38)');
         rightArmpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = rightArmpitGrad;
         ctx.fillRect(0, 0, 512, 512);
 
-        const leftArmpitGrad = ctx.createRadialGradient(66, 185, 0, 66, 185, 75);
+        const leftArmpitGrad = ctx.createRadialGradient(leftArmX, armY, 0, leftArmX, armY, 75);
         leftArmpitGrad.addColorStop(0, 'rgba(0,0,0,0.38)');
         leftArmpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = leftArmpitGrad;
         ctx.fillRect(0, 0, 512, 512);
 
         // Collar / chest depth gradient
-        const neckY = isBack ? 52 : 82;
+        const neckY = isBack ? (isFemale ? 54 : 52) : (isFemale ? 86 : 82);
         const neckShadowGrad = ctx.createRadialGradient(256, neckY, 0, 256, neckY, 120);
         neckShadowGrad.addColorStop(0, 'rgba(0,0,0,0.25)');
         neckShadowGrad.addColorStop(1, 'rgba(0,0,0,0)');
@@ -349,12 +466,21 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
         ctx.fillRect(0, 0, 512, 512);
 
         // Folds for sleeveless
-        drawEmbossedFold(ctx, 80, 320, 180, 305, 260, 335, 0.20, 0.10);
-        drawEmbossedFold(ctx, 432, 350, 330, 340, 250, 365, 0.20, 0.10);
-        drawEmbossedFold(ctx, 80, 410, 190, 395, 280, 425, 0.18, 0.08);
-        drawEmbossedFold(ctx, 432, 430, 320, 420, 225, 445, 0.18, 0.08);
-        drawEmbossedFold(ctx, 90, 210, 180, 225, 245, 195, 0.18, 0.10);
-        drawEmbossedFold(ctx, 422, 210, 332, 225, 267, 195, 0.18, 0.10);
+        if (isFemale) {
+            drawEmbossedFold(ctx, 106, 335, 185, 320, 260, 345, 0.18, 0.08);
+            drawEmbossedFold(ctx, 406, 360, 325, 350, 252, 375, 0.18, 0.08);
+            drawEmbossedFold(ctx, 100, 415, 195, 400, 280, 430, 0.16, 0.07);
+            drawEmbossedFold(ctx, 412, 435, 315, 425, 230, 450, 0.16, 0.07);
+            drawEmbossedFold(ctx, 102, 215, 185, 225, 245, 200, 0.16, 0.09);
+            drawEmbossedFold(ctx, 410, 215, 327, 225, 267, 200, 0.16, 0.09);
+        } else {
+            drawEmbossedFold(ctx, 80, 320, 180, 305, 260, 335, 0.20, 0.10);
+            drawEmbossedFold(ctx, 432, 350, 330, 340, 250, 365, 0.20, 0.10);
+            drawEmbossedFold(ctx, 80, 410, 190, 395, 280, 425, 0.18, 0.08);
+            drawEmbossedFold(ctx, 432, 430, 320, 420, 225, 445, 0.18, 0.08);
+            drawEmbossedFold(ctx, 90, 210, 180, 225, 245, 195, 0.18, 0.10);
+            drawEmbossedFold(ctx, 422, 210, 332, 225, 267, 195, 0.18, 0.10);
+        }
     }
 
     ctx.globalCompositeOperation = 'screen';
@@ -390,185 +516,371 @@ export function renderJersey2D(targetCanvas, options, isBack = false) {
     ctx.lineWidth = 1.6;
 
     if (isTshirt) {
-        // Left torso side seam
-        ctx.beginPath();
-        ctx.moveTo(123, 210);
-        ctx.lineTo(145, 486);
-        ctx.stroke();
-
-        // Right torso side seam
-        ctx.beginPath();
-        ctx.moveTo(389, 210);
-        ctx.lineTo(367, 486);
-        ctx.stroke();
-
-        // Underarm seams
-        ctx.beginPath();
-        ctx.moveTo(31, 185);
-        ctx.quadraticCurveTo(80, 200, 123, 210);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(481, 185);
-        ctx.quadraticCurveTo(432, 200, 389, 210);
-        ctx.stroke();
-
-        // Sleeve cuff stitches
-        drawNeedleStitches(19, 95, 33, 180);
-        drawNeedleStitches(493, 95, 479, 180);
-
-        // Shoulder stitches
-        drawNeedleStitches(112, 30, 185, 34);
-        drawNeedleStitches(400, 30, 327, 34);
-
-        // Bottom hem stitches
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([2, 4]);
-        ctx.beginPath();
-        ctx.moveTo(147, 474);
-        ctx.quadraticCurveTo(256, 482, 365, 474);
-        ctx.stroke();
-        ctx.restore();
-
-        // Crewneck collar ribbing & interior
-        if (!isBack) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        if (isFemale) {
+            // Left contoured torso seam
             ctx.beginPath();
-            ctx.moveTo(185, 34);
-            ctx.quadraticCurveTo(256, 54, 327, 34);
-            ctx.quadraticCurveTo(256, 26, 185, 34);
-            ctx.closePath();
-            ctx.fill();
+            ctx.moveTo(128, 206);
+            ctx.bezierCurveTo(134, 275, 146, 340, 146, 365);
+            ctx.bezierCurveTo(146, 395, 140, 445, 138, 486);
+            ctx.stroke();
 
-            // Ribbing vertical hash lines
+            // Right contoured torso seam
+            ctx.beginPath();
+            ctx.moveTo(384, 206);
+            ctx.bezierCurveTo(378, 275, 366, 340, 366, 365);
+            ctx.bezierCurveTo(366, 395, 372, 445, 374, 486);
+            ctx.stroke();
+
+            // Underarm seams
+            ctx.beginPath();
+            ctx.moveTo(48, 180);
+            ctx.quadraticCurveTo(90, 195, 128, 206);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(464, 180);
+            ctx.quadraticCurveTo(422, 195, 384, 206);
+            ctx.stroke();
+
+            // Stitches
+            drawNeedleStitches(36, 100, 49, 175);
+            drawNeedleStitches(476, 100, 463, 175);
+            drawNeedleStitches(120, 34, 185, 36);
+            drawNeedleStitches(392, 34, 327, 36);
+
+            // Hem stitches
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.lineWidth = 1.5;
-            for (let x = 192; x <= 320; x += 6) {
-                let dx = (x - 256) / 70;
-                let yFront = 75 - 38 * (1 - dx * dx);
-                ctx.beginPath();
-                ctx.moveTo(x, yFront - 4);
-                ctx.lineTo(x, yFront + 2);
-                ctx.stroke();
-            }
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(140, 474);
+            ctx.quadraticCurveTo(256, 482, 372, 474);
+            ctx.stroke();
             ctx.restore();
 
-            // Crewneck rim
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 4.0;
-            ctx.beginPath();
-            ctx.moveTo(185, 34);
-            ctx.quadraticCurveTo(210, 72, 256, 75);
-            ctx.quadraticCurveTo(302, 72, 327, 34);
-            ctx.stroke();
+            // Crewneck collar
+            if (!isBack) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                ctx.beginPath();
+                ctx.moveTo(185, 36);
+                ctx.quadraticCurveTo(256, 56, 327, 36);
+                ctx.quadraticCurveTo(256, 28, 185, 36);
+                ctx.closePath();
+                ctx.fill();
 
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            ctx.moveTo(185, 34);
-            ctx.quadraticCurveTo(210, 72, 256, 75);
-            ctx.quadraticCurveTo(302, 72, 327, 34);
-            ctx.stroke();
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.lineWidth = 1.5;
+                for (let x = 192; x <= 320; x += 6) {
+                    let dx = (x - 256) / 70;
+                    let yFront = 80 - 38 * (1 - dx * dx);
+                    ctx.beginPath();
+                    ctx.moveTo(x, yFront - 4);
+                    ctx.lineTo(x, yFront + 2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 3.8;
+                ctx.beginPath();
+                ctx.moveTo(185, 36);
+                ctx.quadraticCurveTo(210, 76, 256, 80);
+                ctx.quadraticCurveTo(302, 76, 327, 36);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(185, 36);
+                ctx.quadraticCurveTo(210, 76, 256, 80);
+                ctx.quadraticCurveTo(302, 76, 327, 36);
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 3.8;
+                ctx.beginPath();
+                ctx.moveTo(185, 36);
+                ctx.quadraticCurveTo(210, 40, 256, 40);
+                ctx.quadraticCurveTo(302, 40, 327, 36);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(185, 36);
+                ctx.quadraticCurveTo(210, 40, 256, 40);
+                ctx.quadraticCurveTo(302, 40, 327, 36);
+                ctx.stroke();
+            }
         } else {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 4.0;
+            // Left torso side seam
             ctx.beginPath();
-            ctx.moveTo(185, 34);
-            ctx.quadraticCurveTo(210, 38, 256, 38);
-            ctx.quadraticCurveTo(302, 38, 327, 34);
+            ctx.moveTo(123, 210);
+            ctx.lineTo(145, 486);
             ctx.stroke();
 
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-            ctx.lineWidth = 1.2;
+            // Right torso side seam
             ctx.beginPath();
-            ctx.moveTo(185, 34);
-            ctx.quadraticCurveTo(210, 38, 256, 38);
-            ctx.quadraticCurveTo(302, 38, 327, 34);
+            ctx.moveTo(389, 210);
+            ctx.lineTo(367, 486);
             ctx.stroke();
+
+            // Underarm seams
+            ctx.beginPath();
+            ctx.moveTo(31, 185);
+            ctx.quadraticCurveTo(80, 200, 123, 210);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(481, 185);
+            ctx.quadraticCurveTo(432, 200, 389, 210);
+            ctx.stroke();
+
+            // Sleeve cuff stitches
+            drawNeedleStitches(19, 95, 33, 180);
+            drawNeedleStitches(493, 95, 479, 180);
+
+            // Shoulder stitches
+            drawNeedleStitches(112, 30, 185, 34);
+            drawNeedleStitches(400, 30, 327, 34);
+
+            // Bottom hem stitches
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(147, 474);
+            ctx.quadraticCurveTo(256, 482, 365, 474);
+            ctx.stroke();
+            ctx.restore();
+
+            // Crewneck collar ribbing & interior
+            if (!isBack) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                ctx.beginPath();
+                ctx.moveTo(185, 34);
+                ctx.quadraticCurveTo(256, 54, 327, 34);
+                ctx.quadraticCurveTo(256, 26, 185, 34);
+                ctx.closePath();
+                ctx.fill();
+
+                // Ribbing vertical hash lines
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.lineWidth = 1.5;
+                for (let x = 192; x <= 320; x += 6) {
+                    let dx = (x - 256) / 70;
+                    let yFront = 75 - 38 * (1 - dx * dx);
+                    ctx.beginPath();
+                    ctx.moveTo(x, yFront - 4);
+                    ctx.lineTo(x, yFront + 2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                // Crewneck rim
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 4.0;
+                ctx.beginPath();
+                ctx.moveTo(185, 34);
+                ctx.quadraticCurveTo(210, 72, 256, 75);
+                ctx.quadraticCurveTo(302, 72, 327, 34);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(185, 34);
+                ctx.quadraticCurveTo(210, 72, 256, 75);
+                ctx.quadraticCurveTo(302, 72, 327, 34);
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 4.0;
+                ctx.beginPath();
+                ctx.moveTo(185, 34);
+                ctx.quadraticCurveTo(210, 38, 256, 38);
+                ctx.quadraticCurveTo(302, 38, 327, 34);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(185, 34);
+                ctx.quadraticCurveTo(210, 38, 256, 38);
+                ctx.quadraticCurveTo(302, 38, 327, 34);
+                ctx.stroke();
+            }
         }
     } else {
-        // Sleeveless side seams
-        ctx.beginPath();
-        ctx.moveTo(66, 185);
-        ctx.lineTo(76, 468);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(446, 185);
-        ctx.lineTo(436, 468);
-        ctx.stroke();
-
-        drawNeedleStitches(122, 60, 172, 44);
-        drawNeedleStitches(390, 60, 340, 44);
-        drawNeedleStitches(120, 72, 70, 185);
-        drawNeedleStitches(392, 72, 442, 185);
-
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([2, 4]);
-        ctx.beginPath();
-        ctx.moveTo(78, 456);
-        ctx.quadraticCurveTo(256, 470, 434, 456);
-        ctx.stroke();
-        ctx.restore();
-
-        if (!isBack) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        if (isFemale) {
+            // Left contoured side seam
             ctx.beginPath();
-            ctx.moveTo(172, 44);
-            ctx.quadraticCurveTo(256, 68, 340, 44);
-            ctx.quadraticCurveTo(256, 32, 172, 44);
-            ctx.closePath();
-            ctx.fill();
+            ctx.moveTo(84, 192);
+            ctx.bezierCurveTo(90, 260, 106, 310, 106, 350);
+            ctx.bezierCurveTo(106, 390, 98, 435, 94, 468);
+            ctx.stroke();
+
+            // Right contoured side seam
+            ctx.beginPath();
+            ctx.moveTo(428, 192);
+            ctx.bezierCurveTo(422, 260, 406, 310, 406, 350);
+            ctx.bezierCurveTo(406, 390, 414, 435, 418, 468);
+            ctx.stroke();
+
+            drawNeedleStitches(134, 62, 180, 48);
+            drawNeedleStitches(378, 62, 332, 48);
+            drawNeedleStitches(132, 74, 88, 192);
+            drawNeedleStitches(380, 74, 424, 192);
 
             ctx.save();
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
-            ctx.lineWidth = 1.5;
-            for (let x = 180; x <= 332; x += 6) {
-                let dx = (x - 256) / 76;
-                let yFront = 82 - 38 * (1 - dx * dx);
-                ctx.beginPath();
-                ctx.moveTo(x, yFront - 4);
-                ctx.lineTo(x, yFront + 2);
-                ctx.stroke();
-            }
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(96, 456);
+            ctx.quadraticCurveTo(256, 470, 416, 456);
+            ctx.stroke();
             ctx.restore();
 
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 3.5;
-            ctx.beginPath();
-            ctx.moveTo(172, 44);
-            ctx.quadraticCurveTo(208, 80, 256, 82);
-            ctx.quadraticCurveTo(304, 80, 340, 44);
-            ctx.stroke();
+            if (!isBack) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                ctx.beginPath();
+                ctx.moveTo(180, 48);
+                ctx.quadraticCurveTo(256, 72, 332, 48);
+                ctx.quadraticCurveTo(256, 36, 180, 48);
+                ctx.closePath();
+                ctx.fill();
 
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            ctx.moveTo(172, 44);
-            ctx.quadraticCurveTo(208, 80, 256, 82);
-            ctx.quadraticCurveTo(304, 80, 340, 44);
-            ctx.stroke();
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.lineWidth = 1.5;
+                for (let x = 188; x <= 324; x += 6) {
+                    let dx = (x - 256) / 72;
+                    let yFront = 86 - 38 * (1 - dx * dx);
+                    ctx.beginPath();
+                    ctx.moveTo(x, yFront - 4);
+                    ctx.lineTo(x, yFront + 2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.moveTo(180, 48);
+                ctx.quadraticCurveTo(208, 84, 256, 86);
+                ctx.quadraticCurveTo(304, 84, 332, 48);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(180, 48);
+                ctx.quadraticCurveTo(208, 84, 256, 86);
+                ctx.quadraticCurveTo(304, 84, 332, 48);
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.moveTo(180, 48);
+                ctx.quadraticCurveTo(208, 54, 256, 54);
+                ctx.quadraticCurveTo(304, 54, 332, 48);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(180, 48);
+                ctx.quadraticCurveTo(208, 54, 256, 54);
+                ctx.quadraticCurveTo(304, 54, 332, 48);
+                ctx.stroke();
+            }
         } else {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-            ctx.lineWidth = 3.5;
+            // Sleeveless side seams
             ctx.beginPath();
-            ctx.moveTo(172, 44);
-            ctx.quadraticCurveTo(205, 52, 256, 52);
-            ctx.quadraticCurveTo(307, 52, 340, 44);
+            ctx.moveTo(66, 185);
+            ctx.lineTo(76, 468);
             ctx.stroke();
 
-            ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-            ctx.lineWidth = 1.2;
             ctx.beginPath();
-            ctx.moveTo(172, 44);
-            ctx.quadraticCurveTo(205, 52, 256, 52);
-            ctx.quadraticCurveTo(307, 52, 340, 44);
+            ctx.moveTo(446, 185);
+            ctx.lineTo(436, 468);
             ctx.stroke();
+
+            drawNeedleStitches(122, 60, 172, 44);
+            drawNeedleStitches(390, 60, 340, 44);
+            drawNeedleStitches(120, 72, 70, 185);
+            drawNeedleStitches(392, 72, 442, 185);
+
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([2, 4]);
+            ctx.beginPath();
+            ctx.moveTo(78, 456);
+            ctx.quadraticCurveTo(256, 470, 434, 456);
+            ctx.stroke();
+            ctx.restore();
+
+            if (!isBack) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                ctx.beginPath();
+                ctx.moveTo(172, 44);
+                ctx.quadraticCurveTo(256, 68, 340, 44);
+                ctx.quadraticCurveTo(256, 32, 172, 44);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.save();
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.lineWidth = 1.5;
+                for (let x = 180; x <= 332; x += 6) {
+                    let dx = (x - 256) / 76;
+                    let yFront = 82 - 38 * (1 - dx * dx);
+                    ctx.beginPath();
+                    ctx.moveTo(x, yFront - 4);
+                    ctx.lineTo(x, yFront + 2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.moveTo(172, 44);
+                ctx.quadraticCurveTo(208, 80, 256, 82);
+                ctx.quadraticCurveTo(304, 80, 340, 44);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(172, 44);
+                ctx.quadraticCurveTo(208, 80, 256, 82);
+                ctx.quadraticCurveTo(304, 80, 340, 44);
+                ctx.stroke();
+            } else {
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.moveTo(172, 44);
+                ctx.quadraticCurveTo(205, 52, 256, 52);
+                ctx.quadraticCurveTo(307, 52, 340, 44);
+                ctx.stroke();
+
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+                ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(172, 44);
+                ctx.quadraticCurveTo(205, 52, 256, 52);
+                ctx.quadraticCurveTo(307, 52, 340, 44);
+                ctx.stroke();
+            }
         }
     }
 
@@ -610,6 +922,43 @@ export function pathTshirtSide(ctx, isRight = false) {
     ctx.closePath();
 }
 
+export function pathFemaleJerseySide(ctx, isRight = false) {
+    ctx.beginPath();
+    // Shoulder strap top
+    ctx.moveTo(238, 52);
+    ctx.lineTo(274, 52);
+    // Back outer contour with athletic lumbar taper
+    ctx.bezierCurveTo(310, 110, 336, 220, 332, 320);
+    ctx.bezierCurveTo(328, 380, 322, 440, 318, 468);
+    // Bottom hem with athletic side vent notch
+    ctx.lineTo(262, 468);
+    ctx.lineTo(256, 456); // notch peak
+    ctx.lineTo(250, 468);
+    ctx.lineTo(194, 468);
+    // Front outer contour: tapered waist & subtle athletic bust curve
+    ctx.bezierCurveTo(190, 440, 188, 390, 184, 340);
+    ctx.bezierCurveTo(180, 290, 170, 240, 172, 210);
+    ctx.bezierCurveTo(174, 160, 204, 105, 238, 52);
+    ctx.closePath();
+}
+
+export function pathFemaleTshirtSide(ctx, isRight = false) {
+    ctx.beginPath();
+    // Shoulder top
+    ctx.moveTo(230, 36);
+    ctx.lineTo(282, 36);
+    // Back outer contour
+    ctx.bezierCurveTo(314, 100, 340, 220, 334, 330);
+    ctx.bezierCurveTo(330, 390, 324, 445, 320, 486);
+    // Bottom hem
+    ctx.quadraticCurveTo(256, 492, 192, 486);
+    // Front outer contour
+    ctx.bezierCurveTo(188, 445, 182, 395, 178, 345);
+    ctx.bezierCurveTo(174, 295, 168, 230, 170, 200);
+    ctx.bezierCurveTo(172, 150, 202, 95, 230, 36);
+    ctx.closePath();
+}
+
 function drawSidePattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
     if (pattern === 'panel') {
         // Side panel centered directly down the side seam (X = 256)
@@ -623,12 +972,12 @@ function drawSidePattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
     }
     else if (pattern === 'stripes') {
         ctx.fillStyle = accentColor;
-        for (let i = 0; i < 512; i += 40) {
-            ctx.fillRect(i, 0, 16, 512);
+        for (let i = 0; i < 512; i += 64) {
+            ctx.fillRect(i, 0, 24, 512);
         }
         ctx.fillStyle = tertiaryColor;
-        for (let i = 16; i < 512; i += 40) {
-            ctx.fillRect(i, 0, 4, 512);
+        for (let i = 24; i < 512; i += 64) {
+            ctx.fillRect(i, 0, 6, 512);
         }
     }
     else if (pattern === 'diagonal') {
@@ -704,10 +1053,12 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         accentColor = '#7C3AED',
         tertiaryColor = '#ffffff',
         pattern = 'none',
-        jerseyType = 'sleeveless'
+        jerseyType = 'sleeveless',
+        gender = 'male'
     } = options;
 
     const isTshirt = jerseyType === 'tshirt';
+    const isFemale = gender === 'female';
 
     ctx.clearRect(0, 0, width, height);
 
@@ -719,9 +1070,15 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         // 1. Armhole Hollow Interior (visible through sleeveless armhole opening)
         ctx.save();
         ctx.beginPath();
-        ctx.moveTo(236, 52);
-        ctx.bezierCurveTo(240, 115, 245, 160, 256, 178);
-        ctx.bezierCurveTo(267, 160, 272, 115, 276, 52);
+        if (isFemale) {
+            ctx.moveTo(238, 52);
+            ctx.bezierCurveTo(242, 115, 246, 160, 256, 182);
+            ctx.bezierCurveTo(266, 160, 270, 115, 274, 52);
+        } else {
+            ctx.moveTo(236, 52);
+            ctx.bezierCurveTo(240, 115, 245, 160, 256, 178);
+            ctx.bezierCurveTo(267, 160, 272, 115, 276, 52);
+        }
         ctx.closePath();
         ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
         ctx.fill();
@@ -729,7 +1086,8 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         // Dark ribbing texture inside armhole
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
         ctx.lineWidth = 1.5;
-        for (let y = 65; y < 170; y += 8) {
+        const ribLimit = isFemale ? 174 : 170;
+        for (let y = 65; y < ribLimit; y += 8) {
             ctx.beginPath();
             ctx.moveTo(246, y);
             ctx.lineTo(266, y);
@@ -741,9 +1099,17 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
     // 2. Torso Silhouette Clip
     ctx.save();
     if (isTshirt) {
-        pathTshirtSide(ctx, isRight);
+        if (isFemale) {
+            pathFemaleTshirtSide(ctx, isRight);
+        } else {
+            pathTshirtSide(ctx, isRight);
+        }
     } else {
-        pathJerseySide(ctx, isRight);
+        if (isFemale) {
+            pathFemaleJerseySide(ctx, isRight);
+        } else {
+            pathJerseySide(ctx, isRight);
+        }
     }
     ctx.clip();
 
@@ -767,22 +1133,36 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
 
     if (isTshirt) {
         // Lateral folds across T-shirt sleeve and waist
-        drawEmbossedFold(ctx, 210, 150, 256, 165, 300, 155, 0.22, 0.10);
-        drawEmbossedFold(ctx, 185, 280, 256, 290, 328, 282, 0.18, 0.08);
-        drawEmbossedFold(ctx, 188, 360, 256, 370, 326, 362, 0.16, 0.07);
-        drawEmbossedFold(ctx, 190, 430, 256, 440, 324, 432, 0.14, 0.06);
+        if (isFemale) {
+            drawEmbossedFold(ctx, 210, 150, 256, 165, 300, 155, 0.22, 0.10);
+            drawEmbossedFold(ctx, 188, 280, 256, 290, 326, 282, 0.18, 0.08);
+            drawEmbossedFold(ctx, 185, 360, 256, 370, 324, 362, 0.16, 0.07);
+            drawEmbossedFold(ctx, 192, 430, 256, 440, 320, 432, 0.14, 0.06);
+        } else {
+            drawEmbossedFold(ctx, 210, 150, 256, 165, 300, 155, 0.22, 0.10);
+            drawEmbossedFold(ctx, 185, 280, 256, 290, 328, 282, 0.18, 0.08);
+            drawEmbossedFold(ctx, 188, 360, 256, 370, 326, 362, 0.16, 0.07);
+            drawEmbossedFold(ctx, 190, 430, 256, 440, 324, 432, 0.14, 0.06);
+        }
     } else {
         // Armpit hollow shadow
-        const armpitGrad = ctx.createRadialGradient(256, 178, 0, 256, 178, 65);
+        const armHoleY = isFemale ? 182 : 178;
+        const armpitGrad = ctx.createRadialGradient(256, armHoleY, 0, 256, armHoleY, 65);
         armpitGrad.addColorStop(0, 'rgba(0,0,0,0.45)');
         armpitGrad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = armpitGrad;
         ctx.fillRect(0, 0, 512, 512);
 
         // Lateral rib folds
-        drawEmbossedFold(ctx, 185, 250, 256, 260, 325, 252, 0.18, 0.08);
-        drawEmbossedFold(ctx, 188, 330, 256, 340, 328, 332, 0.18, 0.08);
-        drawEmbossedFold(ctx, 190, 410, 256, 420, 324, 412, 0.16, 0.07);
+        if (isFemale) {
+            drawEmbossedFold(ctx, 188, 250, 256, 260, 324, 252, 0.18, 0.08);
+            drawEmbossedFold(ctx, 185, 335, 256, 345, 326, 337, 0.18, 0.08);
+            drawEmbossedFold(ctx, 192, 415, 256, 425, 320, 417, 0.16, 0.07);
+        } else {
+            drawEmbossedFold(ctx, 185, 250, 256, 260, 325, 252, 0.18, 0.08);
+            drawEmbossedFold(ctx, 188, 330, 256, 340, 328, 332, 0.18, 0.08);
+            drawEmbossedFold(ctx, 190, 410, 256, 420, 324, 412, 0.16, 0.07);
+        }
     }
 
     // Screen highlight down the center lateral ridge
@@ -851,11 +1231,12 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         ctx.stroke();
         ctx.restore();
     } else {
+        const armHoleY = isFemale ? 182 : 178;
         // Central vertical side seam
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
         ctx.lineWidth = 2.0;
         ctx.beginPath();
-        ctx.moveTo(256, 178);
+        ctx.moveTo(256, armHoleY);
         ctx.lineTo(256, 456);
         ctx.stroke();
 
@@ -865,11 +1246,11 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         ctx.lineWidth = 1.2;
         ctx.setLineDash([2, 3]);
         ctx.beginPath();
-        ctx.moveTo(252, 180);
+        ctx.moveTo(252, armHoleY + 2);
         ctx.lineTo(252, 458);
         ctx.stroke();
         ctx.beginPath();
-        ctx.moveTo(260, 180);
+        ctx.moveTo(260, armHoleY + 2);
         ctx.lineTo(260, 458);
         ctx.stroke();
         ctx.restore();
@@ -878,17 +1259,29 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
         ctx.lineWidth = 3.0;
         ctx.beginPath();
-        ctx.moveTo(236, 52);
-        ctx.bezierCurveTo(240, 115, 245, 160, 256, 178);
-        ctx.bezierCurveTo(267, 160, 272, 115, 276, 52);
+        if (isFemale) {
+            ctx.moveTo(238, 52);
+            ctx.bezierCurveTo(242, 115, 246, 160, 256, 182);
+            ctx.bezierCurveTo(266, 160, 270, 115, 274, 52);
+        } else {
+            ctx.moveTo(236, 52);
+            ctx.bezierCurveTo(240, 115, 245, 160, 256, 178);
+            ctx.bezierCurveTo(267, 160, 272, 115, 276, 52);
+        }
         ctx.stroke();
 
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
         ctx.lineWidth = 1.0;
         ctx.beginPath();
-        ctx.moveTo(236, 52);
-        ctx.bezierCurveTo(240, 115, 245, 160, 256, 178);
-        ctx.bezierCurveTo(267, 160, 272, 115, 276, 52);
+        if (isFemale) {
+            ctx.moveTo(238, 52);
+            ctx.bezierCurveTo(242, 115, 246, 160, 256, 182);
+            ctx.bezierCurveTo(266, 160, 270, 115, 274, 52);
+        } else {
+            ctx.moveTo(236, 52);
+            ctx.bezierCurveTo(240, 115, 245, 160, 256, 178);
+            ctx.bezierCurveTo(267, 160, 272, 115, 276, 52);
+        }
         ctx.stroke();
 
         // Bottom hem double stitching
@@ -897,12 +1290,14 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
         ctx.lineWidth = 1.2;
         ctx.setLineDash([2, 4]);
         ctx.beginPath();
-        ctx.moveTo(190, 456);
+        const hemLeft = isFemale ? 194 : 190;
+        const hemRight = isFemale ? 318 : 324;
+        ctx.moveTo(hemLeft, 456);
         ctx.lineTo(250, 456);
         ctx.stroke();
         ctx.beginPath();
         ctx.moveTo(262, 456);
-        ctx.lineTo(324, 456);
+        ctx.lineTo(hemRight, 456);
         ctx.stroke();
         ctx.restore();
 

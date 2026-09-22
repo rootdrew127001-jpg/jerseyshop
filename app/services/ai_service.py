@@ -32,6 +32,7 @@ RESPONSE_SCHEMA = {
         "teamName": {"type": "STRING"},
         "number": {"type": "STRING"},
         "sponsorText": {"type": "STRING"},
+        "gender": {"type": "STRING", "enum": ["male", "female"]},
         "reasoning": {"type": "STRING"}
     },
     "required": [
@@ -56,7 +57,11 @@ COMMAND EXECUTION RULES:
    - Plain/minimalist -> "none".
 3. SHORT TEAM NAME (Max 10 uppercase letters):
    - Extract or create a punchy team or brand name.
-4. STRICT SCHEMA CONSTRAINTS:
+4. GENDER / FIT CONTEXT:
+   - If user asks for "women", "female", "girls", "wnba", or "ladies", gender MUST be "female".
+   - If user asks for "men", "male", or "boys", gender MUST be "male".
+   - Otherwise PRESERVE the existing gender from CURRENT JERSEY CONFIGURATION.
+5. STRICT SCHEMA CONSTRAINTS:
    - pattern MUST be one of: {json.dumps(ALLOWED_PATTERNS)}
    - logo MUST be one of: {json.dumps(ALLOWED_LOGOS)}
    - font MUST be one of: {json.dumps(ALLOWED_FONTS)}
@@ -69,6 +74,8 @@ def build_prompt(user_prompt: str, current_design: Optional[dict] = None) -> str
     prompt = f"{SYSTEM_DESIGN_PROMPT}\n\nUSER PROMPT / COMMAND: \"{user_prompt}\""
     if current_design and isinstance(current_design, dict):
         curr_info = {
+            "gender": current_design.get("gender", "male"),
+            "jerseyType": current_design.get("jerseyType", "sleeveless"),
             "baseColor": current_design.get("baseColor", "#4F46E5"),
             "accentColor": current_design.get("accentColor", "#7C3AED"),
             "tertiaryColor": current_design.get("tertiaryColor", "#FFFFFF"),
@@ -85,7 +92,7 @@ def build_prompt(user_prompt: str, current_design: Optional[dict] = None) -> str
         prompt += (
             "\n\nITERATIVE TWEAK RULE:\n"
             "If the user is asking to modify or tweak specific features (e.g. 'make stripes gold', "
-            "'change number to 99', 'stealth mode', 'add lightning pattern'), PRESERVE all existing "
+            "'change number to 99', 'stealth mode', 'add lightning pattern', 'switch to female fit'), PRESERVE all existing "
             "attributes from CURRENT JERSEY CONFIGURATION that were NOT specifically asked to change. "
             "Only generate an entirely new theme if the user explicitly asks for a brand new team or concept."
         )
@@ -136,6 +143,13 @@ def sanitize_design(design: dict, user_prompt: str, current_design: Optional[dic
     if design.get("showroom") not in ALLOWED_SHOWROOMS:
         design["showroom"] = cd.get("showroom") if cd.get("showroom") in ALLOWED_SHOWROOMS else "cyber"
 
+    if design.get("gender") not in ["male", "female"]:
+        design["gender"] = cd.get("gender", "male")
+    if any(k in p_lower for k in ["women", "female", "girls", "wnba", "ladies", "woman"]):
+        design["gender"] = "female"
+    elif any(k in p_lower for k in ["men", "male", "boys", "nba", "man"]):
+        design["gender"] = "male"
+
     if not design.get("teamName"):
         clean_name = re.sub(r"[^a-zA-Z0-9\s]", "", user_prompt).strip().upper()
         design["teamName"] = clean_name[:10] if clean_name else (cd.get("frontText") or cd.get("teamName") or "STEALTH")
@@ -149,6 +163,11 @@ def sanitize_design(design: dict, user_prompt: str, current_design: Optional[dic
 def generate_smart_fallback(user_prompt: str, current_design: Optional[dict] = None) -> dict:
     """100% Offline rule-based algorithmic design generator obeying user commands and context."""
     p = user_prompt.lower()
+    fallback_gender = "female" if any(k in p for k in ["women", "female", "girls", "wnba", "ladies", "woman"]) else (
+        "male" if any(k in p for k in ["men", "male", "boys", "nba", "man"]) else (
+            current_design.get("gender", "male") if (current_design and isinstance(current_design, dict)) else "male"
+        )
+    )
 
     if current_design and isinstance(current_design, dict):
         base = current_design.get("baseColor", "#4F46E5")
@@ -211,6 +230,7 @@ def generate_smart_fallback(user_prompt: str, current_design: Optional[dict] = N
                 break
 
         return {
+            "gender": fallback_gender,
             "baseColor": base,
             "accentColor": accent,
             "tertiaryColor": tert,

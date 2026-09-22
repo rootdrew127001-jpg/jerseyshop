@@ -1,5 +1,5 @@
-import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, triggerShowcaseSpin } from './threeViewer.js?v=20260920_01';
-import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260913_01';
+import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, triggerShowcaseSpin } from './threeViewer.js?v=20260920_06';
+import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260920_06';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -12,13 +12,13 @@ const DEFAULT_COORDS = {
     customFont: '',
     logoSize: 60,
     logoX: 256,
-    logoY: 150,
+    logoY: 155,
     sponsorX: 256,
-    sponsorY: 220,
+    sponsorY: 222,
     numberX: 256,
     numberY: 340,
     teamX: 256,
-    teamY: 90,
+    teamY: 96,
     backNameX: 256,
     backNameY: 380,
     backNumberX: 256,
@@ -49,6 +49,17 @@ let currentDesign = {
 };
 
 export function initEditor() {
+    window.currentDesign = currentDesign;
+    window.applyDesign = applyDesign;
+    window.syncUI = syncUI;
+    window.switchModel = (gender, type) => {
+        if (gender) currentDesign.gender = gender;
+        if (type) currentDesign.jerseyType = type;
+        syncUI(currentDesign);
+        loadJerseyModel(currentDesign.jerseyType, currentDesign.gender);
+        applyDesign(currentDesign);
+    };
+
     generateParameterizedPatterns();
     initViewer('jerseyCanvas');
     applyDesign(currentDesign);
@@ -377,6 +388,7 @@ function bindControls() {
             try {
                 // Send current jersey state for context-aware iterative tweaks
                 const currentDesignContext = {
+                    gender: currentDesign.gender || 'male',
                     jerseyType: currentDesign.jerseyType,
                     baseColor: currentDesign.baseColor,
                     accentColor: currentDesign.accentColor,
@@ -412,8 +424,12 @@ function bindControls() {
                         aiTeamInput.value = finalTeamName;
                     }
 
+                    const targetGender = suggestion.gender || currentDesign.gender || 'male';
+                    const genderChanged = targetGender !== currentDesign.gender;
+
                     currentDesign = {
                         ...currentDesign,
+                        gender: targetGender,
                         baseColor: suggestion.baseColor || currentDesign.baseColor,
                         accentColor: suggestion.accentColor || currentDesign.accentColor,
                         tertiaryColor: suggestion.tertiaryColor || currentDesign.tertiaryColor,
@@ -434,6 +450,9 @@ function bindControls() {
                         customFont: ''
                     };
                     Object.assign(currentDesign, DEFAULT_COORDS);
+                    if (genderChanged) {
+                        loadJerseyModel(currentDesign.jerseyType, targetGender);
+                    }
                     syncUI(currentDesign);
                     applyDesign(currentDesign);
                     changeEnvironment(currentDesign.showroom);
@@ -900,7 +919,7 @@ function getDraggableElementsFront(design) {
         list.push({
             name: 'teamName',
             x: design.teamX !== undefined ? design.teamX : 256,
-            y: design.teamY !== undefined ? design.teamY : 90,
+            y: design.teamY !== undefined ? design.teamY : 96,
             width: Math.max(100, (design.frontText || '').length * 20),
             height: 40
         });
@@ -909,7 +928,7 @@ function getDraggableElementsFront(design) {
         list.push({
             name: 'sponsorText',
             x: design.sponsorX !== undefined ? design.sponsorX : 256,
-            y: design.sponsorY !== undefined ? design.sponsorY : 220,
+            y: design.sponsorY !== undefined ? design.sponsorY : 222,
             width: Math.max(120, (design.sponsorText || '').length * 22),
             height: 44
         });
@@ -919,7 +938,7 @@ function getDraggableElementsFront(design) {
         list.push({
             name: 'logo',
             x: design.logoX !== undefined ? design.logoX : 256,
-            y: design.logoY !== undefined ? design.logoY : 150,
+            y: design.logoY !== undefined ? design.logoY : 155,
             width: size,
             height: size
         });
