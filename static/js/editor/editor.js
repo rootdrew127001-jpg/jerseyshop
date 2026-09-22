@@ -332,18 +332,7 @@ function bindControls() {
     const aiLiveStatus = document.getElementById('aiLiveStatus');
     const aiLiveStatusText = document.getElementById('aiLiveStatusText');
 
-    // Wire up 1-Tap Inspiration Chips
-    document.querySelectorAll('.ai-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-            const promptVal = chip.getAttribute('data-prompt') || chip.textContent.trim();
-            if (aiTeamInput) {
-                aiTeamInput.value = promptVal;
-            }
-            if (aiBtn && !aiBtn.disabled) {
-                aiBtn.click();
-            }
-        });
-    });
+
 
     if (aiTeamInput) {
         aiTeamInput.addEventListener('keydown', (e) => {
