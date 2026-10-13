@@ -15,6 +15,91 @@ const clock = new THREE.Clock();
 // Global light references to modify dynamically
 let ambientLight, dirLight, fillLight, backLight;
 
+export const PRESET_SKINS = {
+    'obsidian': {
+        id: 'obsidian',
+        name: 'Studio Slate',
+        color: '#1e293b',
+        roughness: 0.80,
+        metalness: 0.15,
+        preview: '#1e293b'
+    },
+    'fair': {
+        id: 'fair',
+        name: 'Fair / Porcelain',
+        color: '#f6d2b8',
+        roughness: 0.65,
+        metalness: 0.05,
+        preview: '#f6d2b8'
+    },
+    'warm-beige': {
+        id: 'warm-beige',
+        name: 'Warm Beige',
+        color: '#e4b58e',
+        roughness: 0.65,
+        metalness: 0.05,
+        preview: '#e4b58e'
+    },
+    'honey': {
+        id: 'honey',
+        name: 'Honey / Olive',
+        color: '#c68b59',
+        roughness: 0.65,
+        metalness: 0.05,
+        preview: '#c68b59'
+    },
+    'bronze': {
+        id: 'bronze',
+        name: 'Rich Bronze',
+        color: '#9d633b',
+        roughness: 0.65,
+        metalness: 0.05,
+        preview: '#9d633b'
+    },
+    'chestnut': {
+        id: 'chestnut',
+        name: 'Chestnut Brown',
+        color: '#6c3e23',
+        roughness: 0.65,
+        metalness: 0.05,
+        preview: '#6c3e23'
+    },
+    'espresso': {
+        id: 'espresso',
+        name: 'Deep Espresso',
+        color: '#382015',
+        roughness: 0.70,
+        metalness: 0.05,
+        preview: '#382015'
+    },
+    'matte-white': {
+        id: 'matte-white',
+        name: 'Matte White',
+        color: '#f8fafc',
+        roughness: 0.55,
+        metalness: 0.05,
+        preview: '#f8fafc'
+    },
+    'cyber-chrome': {
+        id: 'cyber-chrome',
+        name: 'Cyber Chrome',
+        color: '#94a3b8',
+        roughness: 0.20,
+        metalness: 0.85,
+        preview: '#94a3b8'
+    },
+    'gold': {
+        id: 'gold',
+        name: 'Metallic Bronze Gold',
+        color: '#523e1b',
+        roughness: 0.30,
+        metalness: 0.75,
+        preview: '#d97706'
+    }
+};
+
+let currentSkinKey = 'obsidian';
+
 export function initViewer(canvasId) {
     const canvas = document.getElementById(canvasId);
     const w = canvas.clientWidth || window.innerWidth;
@@ -705,10 +790,11 @@ function tryLoadGLB(path) {
                     meshParts['hair'] = child;
                 // Body / skin / head / limbs / mannequin
                 } else if (name === 'head' || name === 'body' || name.includes('hand') || name.includes('leg') || name.includes('limb') || name.includes('arm') || name.includes('mannequin') || name.includes('skin') || name.includes('human')) {
+                    const skin = PRESET_SKINS[currentSkinKey] || PRESET_SKINS['obsidian'];
                     child.material = new THREE.MeshStandardMaterial({
-                        color: '#1e293b',
-                        roughness: 0.8,
-                        metalness: 0.2
+                        color: skin.color,
+                        roughness: skin.roughness,
+                        metalness: skin.metalness
                     });
                     mannequinMeshes.push(child);
                 // Socks (standalone)
@@ -725,10 +811,11 @@ function tryLoadGLB(path) {
                     });
                     shoeMeshes.push(child);
                 } else {
+                    const skin = PRESET_SKINS[currentSkinKey] || PRESET_SKINS['obsidian'];
                     child.material = new THREE.MeshStandardMaterial({
-                        color: '#1e293b',
-                        roughness: 0.7,
-                        metalness: 0.2
+                        color: skin.color,
+                        roughness: skin.roughness,
+                        metalness: skin.metalness
                     });
                 }
             });
@@ -748,6 +835,7 @@ function tryLoadGLB(path) {
             if (mannequinMeshes.length > 0) {
                 meshParts['mannequin'] = mannequinMeshes[0];
             }
+            setMannequinSkin(currentSkinKey);
 
             console.log('Mapped parts:', Object.keys(meshParts));
 
@@ -848,7 +936,36 @@ export function setPartColor(partName, color) {
     }
 }
 
+export function setMannequinSkin(skinKey) {
+    if (!PRESET_SKINS[skinKey]) return;
+    currentSkinKey = skinKey;
+    const skin = PRESET_SKINS[skinKey];
+
+    const applySkin = (mesh) => {
+        if (!mesh || !mesh.material) return;
+        mesh.material.color.set(skin.color);
+        mesh.material.roughness = skin.roughness;
+        mesh.material.metalness = skin.metalness;
+        mesh.material.needsUpdate = true;
+    };
+
+    if (meshParts['mannequin_list']) {
+        meshParts['mannequin_list'].forEach(applySkin);
+    }
+    if (meshParts['mannequin']) {
+        applySkin(meshParts['mannequin']);
+    }
+}
+
+export function getCurrentMannequinSkin() {
+    return currentSkinKey;
+}
+
 export function setMannequinColor(color) {
+    if (PRESET_SKINS[color]) {
+        setMannequinSkin(color);
+        return;
+    }
     if (meshParts['mannequin_list']) {
         meshParts['mannequin_list'].forEach(mesh => {
             if (mesh && mesh.material) {

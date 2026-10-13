@@ -1,5 +1,5 @@
-import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, triggerShowcaseSpin } from './threeViewer.js?v=20260920_06';
-import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260920_06';
+import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, triggerShowcaseSpin, setMannequinSkin, getCurrentMannequinSkin, PRESET_SKINS } from './threeViewer.js?v=20260920_09';
+import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260920_09';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -45,6 +45,7 @@ let currentDesign = {
     showBackText: true,
     showBackNumber: true,
     showSponsor: false,
+    skinTone: 'obsidian',
     ...DEFAULT_COORDS
 };
 
@@ -52,12 +53,15 @@ export function initEditor() {
     window.currentDesign = currentDesign;
     window.applyDesign = applyDesign;
     window.syncUI = syncUI;
+    window.setMannequinSkin = setMannequinSkin;
+    window.PRESET_SKINS = PRESET_SKINS;
     window.switchModel = (gender, type) => {
         if (gender) currentDesign.gender = gender;
         if (type) currentDesign.jerseyType = type;
         syncUI(currentDesign);
         loadJerseyModel(currentDesign.jerseyType, currentDesign.gender);
         applyDesign(currentDesign);
+        setMannequinSkin(currentDesign.skinTone || 'obsidian');
     };
 
     generateParameterizedPatterns();
@@ -69,6 +73,7 @@ export function initEditor() {
 
     window.addEventListener('viewer:ready', () => {
         applyDesign(currentDesign);
+        setMannequinSkin(currentDesign.skinTone || 'obsidian');
     });
 }
 
@@ -567,17 +572,24 @@ function bindControls() {
         bindDragEvents(canvasBack, true);
     }
 
+    // 3D Model Skin Tone Swatches
+    setupSkinToneControls();
+
     const btn2D = document.getElementById('btnView2D');
     const btn3D = document.getElementById('btnView3D');
     const viewport2D = document.getElementById('viewport2D');
     const viewport3D = document.getElementById('viewport3D');
+    const sidebarSkinSection = document.getElementById('sidebarSkinSection');
 
     if (btn2D && btn3D && viewport2D && viewport3D) {
+        const controls2D = document.getElementById('controls2DViews');
         btn2D.addEventListener('click', () => {
             btn2D.className = 'px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
             btn3D.className = 'px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
             viewport2D.classList.remove('hidden');
             viewport3D.classList.add('hidden');
+            if (controls2D) controls2D.classList.remove('hidden');
+            if (sidebarSkinSection) sidebarSkinSection.classList.add('hidden');
         });
 
         btn3D.addEventListener('click', () => {
@@ -585,6 +597,8 @@ function bindControls() {
             btn2D.className = 'px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
             viewport3D.classList.remove('hidden');
             viewport2D.classList.add('hidden');
+            if (controls2D) controls2D.classList.add('hidden');
+            if (sidebarSkinSection) sidebarSkinSection.classList.remove('hidden');
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
                 fitCameraToObject();
@@ -656,9 +670,9 @@ function bindControls() {
         [btnCamFront, btnCamLeft, btnCamRight, btnCamBack].forEach(btn => {
             if (btn) {
                 if (btn === activeBtn) {
-                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
+                    btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
                 } else {
-                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition';
+                    btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition';
                 }
             }
         });
@@ -688,6 +702,59 @@ function bindControls() {
             setCameraAngle('back');
         });
     }
+}
+
+function setupSkinToneControls() {
+    const toolbarContainer = document.getElementById('skinSwatchesContainer');
+    const sidebarContainer = document.getElementById('sidebarSkinContainer');
+    const lblActiveSkin = document.getElementById('lblActiveSkin');
+
+    function updateActiveSwatches(activeKey) {
+        currentDesign.skinTone = activeKey;
+        const skinObj = PRESET_SKINS[activeKey] || PRESET_SKINS['obsidian'];
+        if (lblActiveSkin) {
+            lblActiveSkin.textContent = skinObj.name;
+        }
+
+        document.querySelectorAll('.skin-swatch-btn').forEach(btn => {
+            const isMatch = btn.getAttribute('data-skin-id') === activeKey;
+            const isToolbar = !!btn.closest('#skinSwatchesContainer');
+            const sizeClass = isToolbar ? 'w-5 h-5' : 'w-6 h-6';
+            if (isMatch) {
+                btn.className = `skin-swatch-btn ${sizeClass} rounded-full border-2 border-white ring-2 ring-indigo-500 scale-110 shadow-md shadow-indigo-500/50 transition-all cursor-pointer relative flex-shrink-0`;
+            } else {
+                btn.className = `skin-swatch-btn ${sizeClass} rounded-full border border-slate-600/80 hover:border-slate-400 hover:scale-105 transition-all cursor-pointer relative opacity-90 hover:opacity-100 flex-shrink-0`;
+            }
+        });
+    }
+
+    function renderSwatchesIn(container, isToolbar = false) {
+        if (!container) return;
+        container.innerHTML = '';
+        const sizeClass = isToolbar ? 'w-5 h-5' : 'w-6 h-6';
+        Object.values(PRESET_SKINS).forEach(skin => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.setAttribute('data-skin-id', skin.id);
+            btn.title = skin.name;
+            btn.style.backgroundColor = skin.preview;
+            const isMatch = (currentDesign.skinTone || 'obsidian') === skin.id;
+            btn.className = isMatch
+                ? `skin-swatch-btn ${sizeClass} rounded-full border-2 border-white ring-2 ring-indigo-500 scale-110 shadow-md shadow-indigo-500/50 transition-all cursor-pointer relative flex-shrink-0`
+                : `skin-swatch-btn ${sizeClass} rounded-full border border-slate-600/80 hover:border-slate-400 hover:scale-105 transition-all cursor-pointer relative opacity-90 hover:opacity-100 flex-shrink-0`;
+
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setMannequinSkin(skin.id);
+                updateActiveSwatches(skin.id);
+            });
+            container.appendChild(btn);
+        });
+    }
+
+    renderSwatchesIn(toolbarContainer, true);
+    renderSwatchesIn(sidebarContainer, false);
+    window._updateActiveSkinSwatches = updateActiveSwatches;
 }
 
 function applyDesign(design) {
@@ -852,6 +919,10 @@ function syncUI(design) {
             }
         }
     });
+
+    if (window._updateActiveSkinSwatches) {
+        window._updateActiveSkinSwatches(design.skinTone || 'obsidian');
+    }
 }
 
 function showReasoning(text) {

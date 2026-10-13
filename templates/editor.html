@@ -445,6 +445,17 @@
                 </div>
             </div>
 
+            <!-- 3D Mannequin Skin Tone Selector (Model Only - Only Visible in 3D Preview) -->
+            <div id="sidebarSkinSection" class="space-y-2 pb-2 border-b border-slate-700/40 hidden">
+                <div class="flex justify-between items-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">3D Model Skin (Preview Only)</p>
+                    <span id="lblActiveSkin" class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Studio Slate</span>
+                </div>
+                <div id="sidebarSkinContainer" class="flex flex-wrap gap-2 pt-0.5">
+                    <!-- Populated dynamically by editor.js -->
+                </div>
+            </div>
+
             <!-- Colors & Finishes Accordion -->
             <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
                 <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
@@ -684,17 +695,16 @@
             <button id="btnView3D" class="px-4 py-2 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">3D Preview</button>
         </div>
 
-        <!-- 2D View Selector Toolbar (All / Front / Side / Back) -->
-        <div id="controls2DViews" class="absolute top-4 left-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
-            <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">2D View:</span>
-            <button id="btn2DAll" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">All Views</button>
-            <button id="btn2DFront" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Front</button>
-            <button id="btn2DSide" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Side</button>
-            <button id="btn2DBack" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Back</button>
-        </div>
-
         <!-- 2D Viewport containing Front, Side, and Back preview cards -->
-        <div id="viewport2D" class="w-full h-full flex flex-col xl:flex-row items-center justify-start xl:justify-center gap-6 p-6 pt-20 xl:pt-6 overflow-auto">
+        <div id="viewport2D" class="w-full h-full flex flex-col xl:flex-row items-center justify-start xl:justify-center gap-6 p-6 pt-20 xl:pt-6 overflow-auto relative">
+            <!-- 2D View Selector Toolbar (All / Front / Side / Back) -->
+            <div id="controls2DViews" class="absolute top-4 left-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
+                <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">2D View:</span>
+                <button id="btn2DAll" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">All Views</button>
+                <button id="btn2DFront" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Front</button>
+                <button id="btn2DSide" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Side</button>
+                <button id="btn2DBack" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Back</button>
+            </div>
             <div id="card2DFront" class="flex flex-col items-center flex-shrink-0 view-card-2d">
                 <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Front View</p>
                 <div class="bg-slate-900 border border-slate-800 rounded-3xl p-4 shadow-xl">
@@ -721,14 +731,31 @@
             </div>
         </div>
 
-        <!-- 3D Viewport with quick angle snapping -->
+        <!-- 3D Viewport with quick angle snapping and skin selector -->
         <div id="viewport3D" class="hidden w-full h-full relative">
-            <div class="absolute top-4 left-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
-                <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">3D Camera:</span>
-                <button id="btnCamFront" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">Front</button>
-                <button id="btnCamLeft" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Left Side</button>
-                <button id="btnCamRight" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Right Side</button>
-                <button id="btnCamBack" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Back</button>
+            <!-- Unified 3D Controls Bar (Camera + Model Skin) -->
+            <div class="absolute top-4 left-4 z-20 flex items-center bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1.5 shadow-lg gap-2.5 max-w-[calc(100%-200px)] pointer-events-auto">
+                <!-- 3D Camera Controls -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <span class="text-xs text-slate-400 font-semibold px-1.5 py-0.5 flex items-center">Camera:</span>
+                    <button id="btnCamFront" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">Front</button>
+                    <button id="btnCamLeft" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Left</button>
+                    <button id="btnCamRight" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Right</button>
+                    <button id="btnCamBack" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Back</button>
+                </div>
+
+                <!-- Sleek Vertical Divider -->
+                <div class="h-5 w-px bg-slate-700 flex-shrink-0"></div>
+
+                <!-- 3D Model Skin Tone Swatches -->
+                <div id="toolbarSkinSelector" class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-xs text-slate-400 font-semibold flex items-center gap-1 pl-1">
+                        <span>🧍</span><span class="hidden md:inline">Skin:</span>
+                    </span>
+                    <div id="skinSwatchesContainer" class="flex items-center gap-1.5">
+                        <!-- Populated dynamically by editor.js -->
+                    </div>
+                </div>
             </div>
             <canvas id="jerseyCanvas" class="w-full h-full"></canvas>
             <div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-slate-500 text-xs pointer-events-none">
@@ -738,7 +765,7 @@
     </div>
 
     <script type="module">
-    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260920_06';
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260920_09';
     initEditor();
      setTimeout(function() {
          const c = document.getElementById('canvasFront2D');
