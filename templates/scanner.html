@@ -10,118 +10,478 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen">
     <main class="max-w-5xl mx-auto p-6 md:p-10 space-y-6">
+        <!-- Header -->
         <header class="flex flex-wrap items-center justify-between gap-3">
             <div>
                 <p class="text-[10px] uppercase tracking-widest text-indigo-400 font-black">MODELYX Scanner</p>
                 <h1 class="text-3xl font-black">Color DNA Capture</h1>
             </div>
-            <button id="backBtn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-sm">Back</button>
-        </header>
-        <section class="grid lg:grid-cols-[2fr_1fr] gap-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden relative">
-                <video id="video" autoplay playsinline class="w-full aspect-video object-cover bg-black"></video>
-                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div class="w-24 h-24 border-2 border-white/80 rounded-xl shadow-[0_0_0_9999px_rgba(0,0,0,0.15)]"></div>
-                </div>
+            <div class="flex items-center gap-2">
+                <button id="backBtn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-sm transition cursor-pointer">Back</button>
             </div>
-            <aside class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-5">
-                <div>
-                    <p class="text-[10px] uppercase tracking-widest text-slate-400 font-black">Sampled Color</p>
-                    <div class="mt-3 flex items-center gap-4">
-                        <div id="previewSwatch" class="w-16 h-16 rounded-2xl border border-slate-600 bg-indigo-600"></div>
-                        <div>
-                            <p id="previewHex" class="text-2xl font-black">#4F46E5</p>
-                            <p class="text-xs text-slate-400">Center-area average (25x25)</p>
-                        </div>
+        </header>
+
+        <!-- Source Mode Switcher Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+            <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Input Source:</span>
+                <button id="btnModeCamera" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer">
+                    <span>📷</span>
+                    <span>Live Camera</span>
+                </button>
+                <button id="btnModeTestCard" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
+                    <span>🧪</span>
+                    <span>Interactive Test Card</span>
+                </button>
+                <button id="btnModeUpload" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
+                    <span>📁</span>
+                    <span>Upload Image</span>
+                </button>
+                <input type="file" id="imageFileInput" accept="image/*" class="hidden">
+            </div>
+
+            <!-- Drag & Drop / Upload hint -->
+            <p id="modeBadge" class="text-[11px] font-mono text-indigo-400 bg-indigo-950/40 border border-indigo-800/40 px-2.5 py-1 rounded-lg">
+                Camera Mode Active
+            </p>
+        </div>
+
+        <!-- Main Scanner Grid -->
+        <section class="grid lg:grid-cols-[2fr_1fr] gap-6">
+            <!-- Left Viewfinder Column -->
+            <div class="space-y-3">
+                <div id="viewfinderWrapper" class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden relative aspect-video flex items-center justify-center cursor-crosshair select-none group shadow-2xl">
+                    <!-- Video for live camera -->
+                    <video id="video" autoplay playsinline class="w-full h-full object-cover bg-black"></video>
+
+                    <!-- Canvas for test card or uploaded image -->
+                    <canvas id="sampleCanvas" class="w-full h-full object-contain bg-slate-950 hidden"></canvas>
+
+                    <!-- Interactive Reticle Box (Centered by default, moves on click/drag) -->
+                    <div id="reticle" class="absolute w-20 h-20 border-2 border-white/90 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)] pointer-events-none transition-all duration-100 flex items-center justify-center ring-1 ring-black/40" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                        <div class="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-black/60 shadow"></div>
+                        <div class="absolute -top-6 text-[10px] font-mono font-bold bg-black/75 px-1.5 py-0.5 rounded text-white shadow pointer-events-none">25x25 DNA</div>
+                    </div>
+
+                    <!-- Reticle Help Hint Overlay -->
+                    <div class="absolute bottom-3 left-3 bg-slate-950/70 backdrop-blur-sm border border-white/10 px-3 py-1 rounded-xl text-[10px] text-slate-300 pointer-events-none flex items-center gap-1.5 shadow">
+                        <span>🎯</span>
+                        <span>Click anywhere inside the frame to move target reticle</span>
                     </div>
                 </div>
-                <div class="space-y-3">
-                    <button id="captureBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 px-4 py-3 rounded-xl font-bold">Capture DNA</button>
-                    <button id="saveBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 px-4 py-3 rounded-xl font-bold">Save & Return</button>
-                    <button id="retryBtn" class="w-full bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-xl font-bold">Rescan</button>
+
+                <!-- Quick Test Preset Chips -->
+                <div class="bg-slate-900/60 border border-slate-800/70 p-3 rounded-2xl space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Test Jersey Palettes</span>
+                        <span class="text-[10px] text-slate-500">Click to instantly sample</span>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#FDB927" data-name="Lakers Gold">
+                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#FDB927"></span>
+                            <span>Gold (#FDB927)</span>
+                        </button>
+                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#CE1141" data-name="Bulls Red">
+                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#CE1141"></span>
+                            <span>Red (#CE1141)</span>
+                        </button>
+                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#007A33" data-name="Celtics Green">
+                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#007A33"></span>
+                            <span>Green (#007A33)</span>
+                        </button>
+                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#06B6D4" data-name="Cyber Cyan">
+                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#06B6D4"></span>
+                            <span>Cyan (#06B6D4)</span>
+                        </button>
+                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#7C3AED" data-name="Royal Purple">
+                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#7C3AED"></span>
+                            <span>Purple (#7C3AED)</span>
+                        </button>
+                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#F97316" data-name="Neon Orange">
+                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#F97316"></span>
+                            <span>Orange (#F97316)</span>
+                        </button>
+                    </div>
                 </div>
-                <p id="statusText" class="text-xs text-slate-400">Point the center box at your target color, then capture.</p>
+            </div>
+
+            <!-- Right Sidebar Panel -->
+            <aside class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between">
+                <div class="space-y-5">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest text-slate-400 font-black">Sampled Color DNA</p>
+                        <div class="mt-3 flex items-center gap-4 bg-slate-950/50 p-3 rounded-2xl border border-slate-800/80">
+                            <div id="previewSwatch" class="w-16 h-16 rounded-2xl border border-slate-700 bg-indigo-600 shadow-md transition-all duration-150"></div>
+                            <div>
+                                <p id="previewHex" class="text-2xl font-black font-mono tracking-tight">#4F46E5</p>
+                                <p id="sampleInfo" class="text-[11px] text-slate-400">Center-area average (25x25)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button id="captureBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 rounded-xl font-bold transition shadow-lg shadow-indigo-900/30 flex items-center justify-center gap-2 cursor-pointer">
+                            <span>🎯</span>
+                            <span>Capture DNA</span>
+                        </button>
+                        <button id="saveBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-3 rounded-xl font-bold transition shadow-lg shadow-emerald-900/30 flex items-center justify-center gap-2 cursor-pointer">
+                            <span>💾</span>
+                            <span>Save & Return to Editor</span>
+                        </button>
+                        <button id="retryBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-3 rounded-xl font-bold transition cursor-pointer">
+                            Center Reticle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Status Feedback Box -->
+                <div id="statusBox" class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl space-y-1.5">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span id="statusIcon">ℹ️</span>
+                        <span>Scanner Status</span>
+                    </p>
+                    <p id="statusText" class="text-xs text-slate-300 leading-relaxed">
+                        Initializing color scanner...
+                    </p>
+                </div>
             </aside>
         </section>
     </main>
+
     <script>
         const $ = (id) => document.getElementById(id);
         const params = new URLSearchParams(window.location.search);
         const returnTarget = params.get('from') === 'editor'
-            ? `editor.html${params.get('exit') === 'index' ? '?exit=index' : ''}`
+            ? `editor.html?scanned=1${params.get('exit') === 'index' ? '&exit=index' : ''}`
             : 'dashboard.html';
+
         let stream = null;
+        let activeMode = 'camera'; // 'camera' | 'testcard' | 'upload'
         let currentHex = localStorage.getItem('modelyx_color') || '#4F46E5';
-        const setPreview = (hex) => {
-            currentHex = hex;
-            $('previewSwatch').style.background = hex;
-            $('previewHex').innerText = hex;
+        let reticleNormX = 0.5;
+        let reticleNormY = 0.5;
+
+        const video = $('video');
+        const sampleCanvas = $('sampleCanvas');
+        const reticle = $('reticle');
+        const tempCanvas = document.createElement('canvas');
+
+        const setPreview = (hex, label = 'Center-area average (25x25)') => {
+            currentHex = hex.toUpperCase();
+            $('previewSwatch').style.backgroundColor = currentHex;
+            $('previewHex').innerText = currentHex;
+            $('sampleInfo').innerText = label;
         };
-        const sampleCenterAverageHex = (ctx, width, height, size = 25) => {
-            const sampleSize = Math.max(3, Math.min(size, width, height));
-            const x = Math.floor((width - sampleSize) / 2);
-            const y = Math.floor((height - sampleSize) / 2);
-            const data = ctx.getImageData(x, y, sampleSize, sampleSize).data;
-            let r = 0;
-            let g = 0;
-            let b = 0;
-            const pixelCount = data.length / 4;
-            for (let i = 0; i < data.length; i += 4) {
-                r += data[i];
-                g += data[i + 1];
-                b += data[i + 2];
-            }
-            const avgR = Math.round(r / pixelCount);
-            const avgG = Math.round(g / pixelCount);
-            const avgB = Math.round(b / pixelCount);
-            return '#' + [avgR, avgG, avgB]
-                .map((n) => n.toString(16).padStart(2, '0'))
-                .join('')
-                .toUpperCase();
-        };
-        const startCamera = async () => {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-                $('video').srcObject = stream;
-                $('statusText').innerText = 'Camera ready. Keep the target color inside the center box.';
-            } catch (err) {
-                $('statusText').innerText = 'Camera access failed. Check browser permissions.';
-                alert('Unable to access the camera.');
+
+        const updateStatus = (text, icon = 'ℹ️', isWarning = false) => {
+            $('statusText').innerText = text;
+            $('statusIcon').innerText = icon;
+            const box = $('statusBox');
+            if (isWarning) {
+                box.className = 'bg-amber-950/30 border border-amber-600/40 p-3.5 rounded-2xl space-y-1.5 text-amber-200';
+            } else {
+                box.className = 'bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl space-y-1.5 text-slate-300';
             }
         };
+
+        // Draw Interactive Multi-Zone Jersey Test Card
+        const drawTestCard = () => {
+            sampleCanvas.width = 800;
+            sampleCanvas.height = 450;
+            const ctx = sampleCanvas.getContext('2d');
+
+            // Dark textured canvas background
+            const bgGrad = ctx.createLinearGradient(0, 0, 800, 450);
+            bgGrad.addColorStop(0, '#0b0f19');
+            bgGrad.addColorStop(1, '#1e293b');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, 800, 450);
+
+            // Subdued grid pattern
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < 800; x += 40) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 450);
+                ctx.stroke();
+            }
+            for (let y = 0; y < 450; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(800, y);
+                ctx.stroke();
+            }
+
+            // Header text on canvas
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.fillText('MODELYX INTERACTIVE TEST CARD — CLICK ANY COLOR ZONE TO SAMPLE', 30, 32);
+
+            // 6 Distinct Jersey Palette Zones
+            const zones = [
+                { name: "Lakers Gold", hex: "#FDB927", x: 30, y: 50, w: 226, h: 170 },
+                { name: "Bulls Red", hex: "#CE1141", x: 286, y: 50, w: 228, h: 170 },
+                { name: "Celtics Green", hex: "#007A33", x: 544, y: 50, w: 226, h: 170 },
+                { name: "Cyber Cyan", hex: "#06B6D4", x: 30, y: 245, w: 226, h: 175 },
+                { name: "Royal Purple", hex: "#7C3AED", x: 286, y: 245, w: 228, h: 175 },
+                { name: "Electric Orange", hex: "#F97316", x: 544, y: 245, w: 226, h: 175 }
+            ];
+
+            zones.forEach(z => {
+                // Color swatch box
+                ctx.fillStyle = z.hex;
+                ctx.beginPath();
+                ctx.roundRect(z.x, z.y, z.w, z.h, 16);
+                ctx.fill();
+
+                // Bottom badge
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                ctx.beginPath();
+                ctx.roundRect(z.x + 12, z.y + z.h - 42, z.w - 24, 30, 8);
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillText(z.name + ' ' + z.hex, z.x + 22, z.y + z.h - 22);
+            });
+        };
+
+        // Draw image onto canvas
+        const drawImageToCanvas = (img) => {
+            sampleCanvas.width = 800;
+            sampleCanvas.height = 450;
+            const ctx = sampleCanvas.getContext('2d');
+            ctx.fillStyle = '#0b0f19';
+            ctx.fillRect(0, 0, 800, 450);
+
+            // Scale aspect-fit
+            const scale = Math.min(800 / img.width, 450 / img.height);
+            const w = img.width * scale;
+            const h = img.height * scale;
+            const x = (800 - w) / 2;
+            const y = (450 - h) / 2;
+            ctx.drawImage(img, x, y, w, h);
+        };
+
+        // Sample 25x25 average around (normX, normY)
+        const sampleAreaHex = (normX, normY, size = 25) => {
+            let ctx, w, h;
+            if (activeMode === 'camera' && video.videoWidth > 0) {
+                tempCanvas.width = video.videoWidth;
+                tempCanvas.height = video.videoHeight;
+                const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+                tempCtx.drawImage(video, 0, 0);
+                ctx = tempCtx;
+                w = video.videoWidth;
+                h = video.videoHeight;
+            } else {
+                ctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+                w = sampleCanvas.width;
+                h = sampleCanvas.height;
+            }
+
+            if (!ctx || w <= 0 || h <= 0) return currentHex;
+
+            const centerX = Math.floor(normX * w);
+            const centerY = Math.floor(normY * h);
+            const half = Math.floor(size / 2);
+            const startX = Math.max(0, Math.min(w - size, centerX - half));
+            const startY = Math.max(0, Math.min(h - size, centerY - half));
+            const actualW = Math.min(size, w - startX);
+            const actualH = Math.min(size, h - startY);
+
+            if (actualW <= 0 || actualH <= 0) return currentHex;
+
+            const imgData = ctx.getImageData(startX, startY, actualW, actualH).data;
+            let r = 0, g = 0, b = 0, count = 0;
+            for (let i = 0; i < imgData.length; i += 4) {
+                if (imgData[i + 3] > 10) {
+                    r += imgData[i];
+                    g += imgData[i + 1];
+                    b += imgData[i + 2];
+                    count++;
+                }
+            }
+            if (count === 0) return currentHex;
+            const avgR = Math.round(r / count);
+            const avgG = Math.round(g / count);
+            const avgB = Math.round(b / count);
+            return '#' + [avgR, avgG, avgB].map(n => n.toString(16).padStart(2, '0')).join('').toUpperCase();
+        };
+
+        const updateReticlePosition = (normX, normY, sampleNow = true) => {
+            reticleNormX = Math.max(0.05, Math.min(0.95, normX));
+            reticleNormY = Math.max(0.05, Math.min(0.95, normY));
+            reticle.style.left = `${(reticleNormX * 100).toFixed(1)}%`;
+            reticle.style.top = `${(reticleNormY * 100).toFixed(1)}%`;
+
+            if (sampleNow) {
+                const hex = sampleAreaHex(reticleNormX, reticleNormY, 25);
+                setPreview(hex, `Target (${Math.round(reticleNormX * 100)}%, ${Math.round(reticleNormY * 100)}%)`);
+            }
+        };
+
         const stopCamera = () => {
-            stream?.getTracks().forEach((track) => track.stop());
-            stream = null;
-        };
-        const capture = () => {
-            const video = $('video');
-            if (!video.videoWidth || !video.videoHeight) {
-                $('statusText').innerText = 'Camera is still loading. Try again in a moment.';
-                return;
+            if (stream) {
+                stream.getTracks().forEach((track) => track.stop());
+                stream = null;
             }
-            const canvas = document.createElement('canvas');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0);
-            const hex = sampleCenterAverageHex(ctx, canvas.width, canvas.height, 25);
-            setPreview(hex);
-            $('statusText').innerText = 'Color captured. Save when ready.';
         };
+
+        const switchMode = (mode) => {
+            activeMode = mode;
+            const btnCam = $('btnModeCamera');
+            const btnTest = $('btnModeTestCard');
+            const btnUpload = $('btnModeUpload');
+
+            btnCam.className = mode === 'camera'
+                ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer'
+                : 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer';
+
+            btnTest.className = mode === 'testcard'
+                ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer'
+                : 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer';
+
+            btnUpload.className = mode === 'upload'
+                ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer'
+                : 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer';
+
+            if (mode === 'camera') {
+                video.classList.remove('hidden');
+                sampleCanvas.classList.add('hidden');
+                $('modeBadge').innerText = 'Camera Mode Active';
+            } else {
+                video.classList.add('hidden');
+                sampleCanvas.classList.remove('hidden');
+                stopCamera();
+                if (mode === 'testcard') {
+                    $('modeBadge').innerText = 'Test Card Mode Active';
+                    drawTestCard();
+                    reticleNormX = 0.50;
+                    reticleNormY = 0.30;
+                    updateReticlePosition(reticleNormX, reticleNormY, true);
+                } else if (mode === 'upload') {
+                    $('modeBadge').innerText = 'Image Upload Mode Active';
+                }
+            }
+        };
+
+        const startCamera = async () => {
+            switchMode('camera');
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia not supported');
+                }
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                updateStatus('Camera ready. Point reticle at your target color or click anywhere in frame to sample.', '✅');
+            } catch (err) {
+                // Graceful fallback when no camera is connected or permission denied
+                switchMode('testcard');
+                updateStatus('Camera not detected on this device. Switched to Interactive Test Mode — click any color on the card or upload an image to test color capture!', '🧪', true);
+            }
+        };
+
+        // Reticle click-to-point on the viewfinder
+        $('viewfinderWrapper').addEventListener('click', (e) => {
+            const rect = $('viewfinderWrapper').getBoundingClientRect();
+            const normX = (e.clientX - rect.left) / rect.width;
+            const normY = (e.clientY - rect.top) / rect.height;
+            updateReticlePosition(normX, normY, true);
+            updateStatus(`Sampled target at (${Math.round(normX * 100)}%, ${Math.round(normY * 100)}%). Ready to capture.`, '🎯');
+        });
+
+        // Quick Preset Palettes
+        const PRESET_COORDS = {
+            "#FDB927": { x: 0.18, y: 0.30 }, // Lakers Gold
+            "#CE1141": { x: 0.50, y: 0.30 }, // Bulls Red
+            "#007A33": { x: 0.82, y: 0.30 }, // Celtics Green
+            "#06B6D4": { x: 0.18, y: 0.74 }, // Cyber Cyan
+            "#7C3AED": { x: 0.50, y: 0.74 }, // Royal Purple
+            "#F97316": { x: 0.82, y: 0.74 }  // Neon Orange
+        };
+
+        document.querySelectorAll('.presetBtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const hex = btn.getAttribute('data-hex');
+                const name = btn.getAttribute('data-name');
+                if (activeMode !== 'testcard') {
+                    switchMode('testcard');
+                }
+                const coords = PRESET_COORDS[hex];
+                if (coords) {
+                    updateReticlePosition(coords.x, coords.y, false);
+                }
+                setPreview(hex, `${name} Preset`);
+                updateStatus(`Targeted ${name} (${hex}). Click "Capture DNA" or "Save & Return"!`, '✨');
+            });
+        });
+
+        // Capture DNA button
+        $('captureBtn').addEventListener('click', () => {
+            const hex = sampleAreaHex(reticleNormX, reticleNormY, 25);
+            setPreview(hex, 'DNA Captured (25x25)');
+            updateStatus(`Color DNA ${hex} captured! Click "Save & Return to Editor" to apply it to your jersey.`, '✨');
+        });
+
+        // Save & Return
         const saveAndReturn = () => {
             localStorage.setItem('modelyx_color', currentHex);
             window.location.href = returnTarget;
         };
-        $('captureBtn').addEventListener('click', capture);
+
         $('saveBtn').addEventListener('click', saveAndReturn);
+
+        // Reset Reticle to Center
         $('retryBtn').addEventListener('click', () => {
-            $('statusText').innerText = 'Rescan ready. Capture again when centered.';
+            updateReticlePosition(0.5, 0.5, true);
+            updateStatus('Reticle reset to center. Ready to capture.', '🎯');
         });
+
+        // Mode switch buttons
+        $('btnModeCamera').addEventListener('click', () => {
+            startCamera();
+        });
+
+        $('btnModeTestCard').addEventListener('click', () => {
+            switchMode('testcard');
+            updateStatus('Interactive Test Card loaded. Click anywhere on the colors to sample.', '🧪');
+        });
+
+        $('btnModeUpload').addEventListener('click', () => {
+            $('imageFileInput').click();
+        });
+
+        // Handle Image File Upload
+        $('imageFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    switchMode('upload');
+                    drawImageToCanvas(img);
+                    updateReticlePosition(0.5, 0.5, true);
+                    updateStatus(`Loaded image "${file.name}". Click anywhere on the image to sample colors.`, '🖼️');
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Back button
         $('backBtn').addEventListener('click', () => {
-            window.location.href = returnTarget;
+            window.location.href = params.get('from') === 'editor'
+                ? `editor.html${params.get('exit') === 'index' ? '?exit=index' : ''}`
+                : 'dashboard.html';
         });
+
         window.addEventListener('beforeunload', stopCamera);
         setPreview(currentHex);
+
+        // Auto-start camera or gracefully fall back to test card
         startCamera();
     </script>
 </body>

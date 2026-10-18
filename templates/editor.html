@@ -463,6 +463,26 @@
                     <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
                 </summary>
                 <div class="space-y-3 pt-3">
+                    <!-- Color DNA Scanner Action & Last Scanned Swatch Pill -->
+                    <div class="space-y-2 bg-slate-900/60 p-2.5 rounded-2xl border border-slate-700/50 shadow-inner">
+                        <button id="btnLaunchScanner" type="button"
+                            class="w-full flex items-center justify-center gap-2 py-2 px-3 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 hover:text-white rounded-xl text-xs font-bold transition cursor-pointer shadow-sm">
+                            <span class="text-sm">📷</span>
+                            <span>Scan Real-World Color (Camera DNA)</span>
+                        </button>
+                        <div id="scannedColorContainer" class="hidden items-center justify-between bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-700/60 text-[11px]">
+                            <div class="flex items-center gap-2">
+                                <div id="scannedColorSwatch" class="w-4 h-4 rounded-full border border-white/20 shadow-sm" style="background-color: #4F46E5;"></div>
+                                <span class="text-slate-400 font-medium">Scanned:</span>
+                                <span id="lblScannedHex" class="font-mono font-bold text-slate-200">#4F46E5</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <button type="button" id="btnApplyScannedBase" class="px-2 py-0.5 bg-slate-700 hover:bg-indigo-600 text-[10px] font-semibold text-slate-200 hover:text-white rounded-lg transition" title="Apply to Base Color">Base</button>
+                                <button type="button" id="btnApplyScannedAccent" class="px-2 py-0.5 bg-slate-700 hover:bg-purple-600 text-[10px] font-semibold text-slate-200 hover:text-white rounded-lg transition" title="Apply to Accent Color">Accent</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div>
                         <label class="text-[11px] text-slate-300 mb-1 block">Base Color</label>
                         <input type="color" id="baseColor" value="#4F46E5"

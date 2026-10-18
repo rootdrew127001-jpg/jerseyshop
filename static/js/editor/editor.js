@@ -50,6 +50,28 @@ let currentDesign = {
 };
 
 export function initEditor() {
+    // Restore saved design draft if returning from Color Scanner or previous session
+    const savedDraft = sessionStorage.getItem('modelyx_editor_draft');
+    if (savedDraft) {
+        try {
+            const parsed = JSON.parse(savedDraft);
+            Object.assign(currentDesign, parsed);
+        } catch (e) {
+            console.error('Failed to parse draft', e);
+        }
+    }
+
+    // Auto-apply newly scanned color if returning fresh from scanner
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('scanned') === '1') {
+        const scannedColor = localStorage.getItem('modelyx_color');
+        if (scannedColor) {
+            currentDesign.baseColor = scannedColor;
+        }
+        const cleanUrl = window.location.pathname + (urlParams.get('exit') ? `?exit=${urlParams.get('exit')}` : '');
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+
     window.currentDesign = currentDesign;
     window.applyDesign = applyDesign;
     window.syncUI = syncUI;
@@ -167,6 +189,41 @@ function bindControls() {
         currentDesign.tertiaryColor = e.target.value;
         applyDesign(currentDesign);
     });
+
+    // Color DNA Scanner launch & quick-apply controls
+    const btnLaunchScanner = document.getElementById('btnLaunchScanner');
+    if (btnLaunchScanner) {
+        btnLaunchScanner.addEventListener('click', () => {
+            sessionStorage.setItem('modelyx_editor_draft', JSON.stringify(currentDesign));
+            window.location.href = 'scanner.html?from=editor';
+        });
+    }
+
+    const btnApplyScannedBase = document.getElementById('btnApplyScannedBase');
+    if (btnApplyScannedBase) {
+        btnApplyScannedBase.addEventListener('click', () => {
+            const scannedColor = localStorage.getItem('modelyx_color');
+            if (scannedColor) {
+                currentDesign.baseColor = scannedColor;
+                const baseInput = document.getElementById('baseColor');
+                if (baseInput) baseInput.value = scannedColor;
+                applyDesign(currentDesign);
+            }
+        });
+    }
+
+    const btnApplyScannedAccent = document.getElementById('btnApplyScannedAccent');
+    if (btnApplyScannedAccent) {
+        btnApplyScannedAccent.addEventListener('click', () => {
+            const scannedColor = localStorage.getItem('modelyx_color');
+            if (scannedColor) {
+                currentDesign.accentColor = scannedColor;
+                const accentInput = document.getElementById('accentColor');
+                if (accentInput) accentInput.value = scannedColor;
+                applyDesign(currentDesign);
+            }
+        });
+    }
 
     // Dropdown selectors
     document.getElementById('pattern').addEventListener('change', e => {
@@ -819,6 +876,7 @@ function syncUI(design) {
     document.getElementById('baseColor').value = design.baseColor;
     document.getElementById('accentColor').value = design.accentColor;
     document.getElementById('tertiaryColor').value = design.tertiaryColor || '#ffffff';
+    syncScannedColorUI();
     const setChecked = (id, val) => {
         const el = document.getElementById(id);
         if (el) el.checked = !!val;
@@ -922,6 +980,24 @@ function syncUI(design) {
 
     if (window._updateActiveSkinSwatches) {
         window._updateActiveSkinSwatches(design.skinTone || 'obsidian');
+    }
+}
+
+function syncScannedColorUI() {
+    const scannedColor = localStorage.getItem('modelyx_color');
+    const scannedContainer = document.getElementById('scannedColorContainer');
+    if (scannedContainer) {
+        if (scannedColor) {
+            scannedContainer.classList.remove('hidden');
+            scannedContainer.classList.add('flex');
+            const swatch = document.getElementById('scannedColorSwatch');
+            const hexLabel = document.getElementById('lblScannedHex');
+            if (swatch) swatch.style.backgroundColor = scannedColor;
+            if (hexLabel) hexLabel.textContent = scannedColor;
+        } else {
+            scannedContainer.classList.add('hidden');
+            scannedContainer.classList.remove('flex');
+        }
     }
 }
 
