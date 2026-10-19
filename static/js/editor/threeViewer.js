@@ -563,6 +563,175 @@ function splitTorsoGeometry(originalMesh) {
     return { frontMesh, backMesh };
 }
 
+/**
+ * Conformal Arc-Length Cylindrical Shorts Unwrapping.
+ * 
+ * Parameterizes UVs proportionally to circumferential surface arc-length around
+ * the pelvis and thighs ellipse. Perfectly aligns with 2D shorts front/back silhouettes
+ * and side seams with 1-to-1 fidelity.
+ *
+ * @param {THREE.BufferGeometry} geometry - Target shorts mesh geometry
+ * @param {boolean} isBack - True for back half, false for front half
+ * @param {THREE.Box3} [customBBox] - Optional bounding box of the shorts
+ * @param {number} [customCenterZ] - Coronal split plane Z coordinate
+ */
+function applyShortsConformalUVs(geometry, isBack = false, customBBox = null, customCenterZ = null) {
+    if (!geometry) return;
+    if (!customBBox) {
+        geometry.computeBoundingBox();
+    }
+    const bbox = customBBox || geometry.boundingBox;
+
+    const posAttr = geometry.attributes.position;
+    if (!posAttr) return;
+
+    const minX = bbox.min.x, maxX = bbox.max.x;
+    const minY = bbox.min.y, maxY = bbox.max.y;
+    const minZ = bbox.min.z, maxZ = bbox.max.z;
+
+    const rangeX = (maxX - minX) || 1;
+    const rangeY = (maxY - minY) || 1;
+    const rangeZ = (maxZ - minZ) || 1;
+
+    const centerX = (minX + maxX) / 2;
+    const centerZ = (customCenterZ !== null && customCenterZ !== undefined && !isNaN(customCenterZ))
+        ? customCenterZ
+        : (minZ + maxZ) / 2;
+
+    const rx = rangeX / 2;
+    const rz = rangeZ / 2;
+
+    // Waistband top is mapped to V = 0.96, bottom leg hem is mapped to V = 0.08
+    const vWaistband = 0.96;
+    const vHem = 0.08;
+    const uHalf = 0.38;
+
+    const uvs = new Float32Array(posAttr.count * 2);
+
+    for (let i = 0; i < posAttr.count; i++) {
+        const x = posAttr.getX(i);
+        const y = posAttr.getY(i);
+        const z = posAttr.getZ(i);
+
+        const tY = Math.min(1.0, Math.max(0.0, (y - minY) / rangeY));
+        let v = vHem + tY * (vWaistband - vHem);
+
+        const dx = x - centerX;
+        const dz = z - centerZ;
+
+        const nx = Math.min(1.0, Math.abs(dx) / (rx || 1));
+        const nz = Math.max(0.0, Math.abs(dz) / (rz || 1));
+        const phi = Math.atan2(nx, Math.max(1e-4, nz));
+        const normPhi = phi / (Math.PI / 2);
+
+        const w = (nz * nz) / (nx * nx + nz * nz + 1e-5);
+        const tHoriz = Math.min(1.0, Math.max(0.0, w * nx + (1 - w) * normPhi));
+        const sign = dx >= 0 ? 1.0 : -1.0;
+
+        let u;
+        if (!isBack) {
+            u = 0.50 + sign * tHoriz * uHalf;
+        } else {
+            u = 0.50 - sign * tHoriz * uHalf;
+        }
+
+        u = Math.max(0.01, Math.min(0.99, u));
+        v = Math.max(0.01, Math.min(0.99, v));
+
+        uvs[i * 2] = u;
+        uvs[i * 2 + 1] = v;
+    }
+
+    geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+    geometry.attributes.uv.needsUpdate = true;
+}
+
+/**
+ * Splits shorts mesh into distinct front and back halves along the coronal Z-plane.
+ * Computes median Z value to produce a balanced 50/50 split without seam tears,
+ * correctly preparing the shorts for front and back texture mapping.
+ *
+ * @param {THREE.Mesh} originalMesh - The source shorts mesh from GLTF loader
+ * @returns {{ frontMesh: THREE.Mesh, backMesh: THREE.Mesh }}
+ */
+function splitShortsGeometry(originalMesh) {
+    const origGeom = originalMesh.geometry.clone();
+    origGeom.computeVertexNormals();
+    origGeom.computeBoundingBox();
+    const bbox = origGeom.boundingBox;
+
+    const nonIndexed = origGeom.toNonIndexed();
+    const pos = nonIndexed.attributes.position;
+    const norm = nonIndexed.attributes.normal;
+    const vertCount = pos.count;
+
+    const zList = [];
+    for (let i = 0; i < vertCount; i += 3) {
+        zList.push((pos.getZ(i) + pos.getZ(i + 1) + pos.getZ(i + 2)) / 3);
+    }
+    zList.sort((a, b) => a - b);
+    const medianZ = zList[Math.floor(zList.length / 2)];
+    const centerZ = (medianZ !== undefined && !isNaN(medianZ)) ? medianZ : (bbox.min.z + bbox.max.z) / 2;
+
+    const frontPositions = [];
+    const frontNormals = [];
+    const backPositions = [];
+    const backNormals = [];
+
+    for (let i = 0; i < vertCount; i += 3) {
+        const z0 = pos.getZ(i);
+        const z1 = pos.getZ(i + 1);
+        const z2 = pos.getZ(i + 2);
+        const avgZ = (z0 + z1 + z2) / 3;
+
+        const isFront = avgZ >= centerZ;
+        const targetPos = isFront ? frontPositions : backPositions;
+        const targetNorm = isFront ? frontNormals : backNormals;
+
+        for (let j = 0; j < 3; j++) {
+            const idx = i + j;
+            targetPos.push(pos.getX(idx), pos.getY(idx), pos.getZ(idx));
+            targetNorm.push(norm.getX(idx), norm.getY(idx), norm.getZ(idx));
+        }
+    }
+
+    // Build Front Geometry
+    const frontGeom = new THREE.BufferGeometry();
+    frontGeom.setAttribute('position', new THREE.Float32BufferAttribute(frontPositions, 3));
+    frontGeom.setAttribute('normal', new THREE.Float32BufferAttribute(frontNormals, 3));
+    applyShortsConformalUVs(frontGeom, false, bbox, centerZ);
+
+    // Build Back Geometry
+    const backGeom = new THREE.BufferGeometry();
+    backGeom.setAttribute('position', new THREE.Float32BufferAttribute(backPositions, 3));
+    backGeom.setAttribute('normal', new THREE.Float32BufferAttribute(backNormals, 3));
+    applyShortsConformalUVs(backGeom, true, bbox, centerZ);
+
+    const frontMesh = new THREE.Mesh(frontGeom, cleanMaterial('#7C3AED'));
+    frontMesh.name = 'shorts_front';
+    frontMesh.position.copy(originalMesh.position);
+    frontMesh.rotation.copy(originalMesh.rotation);
+    frontMesh.scale.copy(originalMesh.scale);
+    frontMesh.castShadow = true;
+    frontMesh.receiveShadow = true;
+
+    const backMesh = new THREE.Mesh(backGeom, cleanMaterial('#7C3AED'));
+    backMesh.name = 'shorts_back';
+    backMesh.position.copy(originalMesh.position);
+    backMesh.rotation.copy(originalMesh.rotation);
+    backMesh.scale.copy(originalMesh.scale);
+    backMesh.castShadow = true;
+    backMesh.receiveShadow = true;
+
+    if (originalMesh.parent) {
+        originalMesh.parent.add(frontMesh);
+        originalMesh.parent.add(backMesh);
+        originalMesh.visible = false;
+    }
+
+    return { frontMesh, backMesh };
+}
+
 function sanitizeClipInPlace(clip) {
     const newTracks = [];
     clip.tracks.forEach(track => {
@@ -624,6 +793,25 @@ export function setCameraAngle(angleName) {
     }
 
     camera.lookAt(target);
+    controls.update();
+}
+
+export function setCameraFocus(focusName) {
+    if (!camera || !controls) return;
+    const currentAngle = camera.position.clone().sub(controls.target);
+    const angle = Math.atan2(currentAngle.x, currentAngle.z);
+
+    if (focusName === 'shorts') {
+        controls.target.set(0, -0.32, 0);
+        camera.position.set(Math.sin(angle) * 2.3, -0.28, Math.cos(angle) * 2.3);
+    } else if (focusName === 'jersey') {
+        controls.target.set(0, 0.35, 0);
+        camera.position.set(Math.sin(angle) * 2.3, 0.38, Math.cos(angle) * 2.3);
+    } else {
+        // 'full'
+        controls.target.set(0, 0.05, 0);
+        camera.position.set(Math.sin(angle) * 3.8, 0.1, Math.cos(angle) * 3.8);
+    }
     controls.update();
 }
 
@@ -746,6 +934,7 @@ function tryLoadGLB(path) {
             const trimMeshes = [];
             const shoeMeshes = [];
             let shirtMeshFound = null;
+            let shortsMeshFound = null;
 
             const allMeshes = [];
             jerseyGroup.traverse((child) => {
@@ -773,8 +962,7 @@ function tryLoadGLB(path) {
                     shirtMeshFound = child;
                 // Shorts
                 } else if (name === 'short' || name === 'shorts') {
-                    child.material = cleanMaterial('#7C3AED');
-                    meshParts['shorts'] = child;
+                    shortsMeshFound = child;
                 // Trim pieces (neckband, armband)
                 } else if (name.includes('neckband') || (name.includes('armband') && !name.includes('limb'))) {
                     child.material = cleanMaterial('#ffffff');
@@ -827,6 +1015,14 @@ function tryLoadGLB(path) {
                 meshParts['jersey_back'] = backMesh;
                 meshParts['shirt'] = frontMesh;
                 meshParts['jersey_body'] = frontMesh;
+            }
+
+            // If shorts was found and needs splitting into front/back
+            if (shortsMeshFound && (!meshParts['shorts_front'] || !meshParts['shorts_back'] || meshParts['shorts_front'] === shortsMeshFound)) {
+                const { frontMesh, backMesh } = splitShortsGeometry(shortsMeshFound);
+                meshParts['shorts_front'] = frontMesh;
+                meshParts['shorts_back'] = backMesh;
+                meshParts['shorts'] = frontMesh;
             }
 
             meshParts['mannequin_list'] = mannequinMeshes;
@@ -925,6 +1121,15 @@ export function setPartColor(partName, color) {
             if (mesh && mesh.material) {
                 mesh.material.color.set(color);
                 mesh.material.needsUpdate = true;
+            }
+        });
+    }
+    if (partName === 'shorts') {
+        ['shorts_front', 'shorts_back', 'shorts'].forEach(name => {
+            if (meshParts[name] && meshParts[name].material) {
+                const targetColor = meshParts[name].material.map ? '#ffffff' : color;
+                meshParts[name].material.color.set(targetColor);
+                meshParts[name].material.needsUpdate = true;
             }
         });
     }
@@ -1046,6 +1251,26 @@ export function applyTextureToBack(canvasTexture) {
     }
 }
 
+export function applyTextureToShortsFront(canvasTexture) {
+    if (meshParts['shorts_front']) {
+        meshParts['shorts_front'].material.color.set('#ffffff');
+        meshParts['shorts_front'].material.map = canvasTexture;
+        meshParts['shorts_front'].material.needsUpdate = true;
+    } else if (meshParts['shorts']) {
+        meshParts['shorts'].material.color.set('#ffffff');
+        meshParts['shorts'].material.map = canvasTexture;
+        meshParts['shorts'].material.needsUpdate = true;
+    }
+}
+
+export function applyTextureToShortsBack(canvasTexture) {
+    if (meshParts['shorts_back']) {
+        meshParts['shorts_back'].material.color.set('#ffffff');
+        meshParts['shorts_back'].material.map = canvasTexture;
+        meshParts['shorts_back'].material.needsUpdate = true;
+    }
+}
+
 export function applyTextureToPanel(canvasTexture) {
     applyTextureToFront(canvasTexture);
 }
@@ -1096,7 +1321,7 @@ export function applyMaterialFinish(finishName) {
         bumpScale = 0.018;
     }
 
-    const targetMeshes = ['jersey_front', 'jersey_back', 'jersey_body', 'shorts', 'sleeve_left', 'sleeve_right'];
+    const targetMeshes = ['jersey_front', 'jersey_back', 'jersey_body', 'shorts', 'shorts_front', 'shorts_back', 'sleeve_left', 'sleeve_right'];
     targetMeshes.forEach(name => {
         const mesh = meshParts[name];
         if (mesh && mesh.material) {
@@ -1107,7 +1332,7 @@ export function applyMaterialFinish(finishName) {
                 mesh.material.clearcoatRoughness = clearcoatRoughness;
             }
             mesh.material.bumpMap = activeBumpMap;
-            mesh.material.bumpScale = name === 'shorts' ? Math.min(bumpScale, 0.003) : bumpScale;
+            mesh.material.bumpScale = (name === 'shorts' || name.startsWith('shorts')) ? Math.min(bumpScale, 0.003) : bumpScale;
             mesh.material.needsUpdate = true;
         }
     });

@@ -157,6 +157,10 @@
                         <p class="font-bold text-white capitalize" id="summaryJerseyType">Sleeveless Tank</p>
                     </div>
                     <div>
+                        <p class="text-slate-400">Shorts Design</p>
+                        <p class="font-bold text-white capitalize" id="summaryShorts">Matching Kit</p>
+                    </div>
+                    <div>
                         <p class="text-slate-400">Sponsor</p>
                         <p class="font-bold text-white" id="summarySponsor">-</p>
                     </div>
@@ -537,6 +541,123 @@
                 </div>
             </details>
 
+            <!-- Shorts Customization Accordion -->
+            <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
+                <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
+                    <span>🩳 Shorts Customization</span>
+                    <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
+                </summary>
+                <div class="space-y-3 pt-3 text-xs">
+                    <!-- Match Jersey Colors Toggle -->
+                    <div class="flex justify-between items-center bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                        <div class="space-y-0.5">
+                            <label class="text-[11px] font-bold text-slate-300 block">Match Jersey Colors</label>
+                            <p class="text-[9px] text-slate-400">Keep shorts base &amp; side panels in sync with jersey</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer select-none">
+                            <input type="checkbox" id="matchJerseyColors" class="sr-only peer" checked>
+                            <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                        </label>
+                    </div>
+
+                    <!-- Custom Shorts Colors Container (Shown only when un-matched) -->
+                    <div id="customShortsColorsContainer" class="hidden space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                        <div>
+                            <label class="text-[11px] text-slate-300 mb-1 block">Shorts Base Color</label>
+                            <input type="color" id="shortsBaseColor" value="#4F46E5"
+                                class="w-full h-9 rounded-xl border-0 cursor-pointer bg-slate-700">
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-300 mb-1 block">Shorts Side Panel &amp; Trim Color</label>
+                            <input type="color" id="shortsAccentColor" value="#7C3AED"
+                                class="w-full h-9 rounded-xl border-0 cursor-pointer bg-slate-700">
+                        </div>
+                    </div>
+
+                    <!-- Draggable notification tip -->
+                    <div class="flex items-center gap-2 p-2.5 bg-indigo-500/10 border border-indigo-500/25 rounded-2xl text-[10px] text-indigo-300 font-medium">
+                        <span class="text-sm">👆</span>
+                        <span>Drag &amp; drop the shorts number, crest, or text directly on the 2D canvas to position them anywhere on either leg!</span>
+                    </div>
+
+                    <!-- Shorts Badges, Numbers & Custom Text -->
+                    <div class="space-y-3 bg-slate-900/40 p-3 rounded-2xl border border-slate-700/30">
+                        <p class="text-[9px] font-black text-indigo-400 uppercase tracking-wider">Leg Embellishments &amp; Customization</p>
+
+                        <!-- Crest Logo -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center py-0.5">
+                                <label class="text-[11px] text-slate-300 font-semibold">Team Crest on Leg</label>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="showShortsLogo" class="sr-only peer" checked>
+                                    <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center text-[10px]">
+                                    <span class="text-slate-400">Crest Size</span>
+                                    <span id="lblShortsLogoSize" class="font-bold text-indigo-400">46px</span>
+                                </div>
+                                <input type="range" id="shortsLogoSize" min="20" max="100" value="46"
+                                    class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
+                        </div>
+
+                        <!-- Player Number -->
+                        <div class="space-y-2 pt-2 border-t border-slate-700/30">
+                            <div class="flex justify-between items-center py-0.5">
+                                <label class="text-[11px] text-slate-300 font-semibold">Player Number on Leg</label>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="showShortsNumber" class="sr-only peer" checked>
+                                    <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div class="space-y-1">
+                                <div class="flex justify-between items-center text-[10px]">
+                                    <span class="text-slate-400">Number Size</span>
+                                    <span id="lblShortsNumberSize" class="font-bold text-indigo-400">54px</span>
+                                </div>
+                                <input type="range" id="shortsNumberSize" min="20" max="100" value="54"
+                                    class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                            </div>
+                        </div>
+
+                        <!-- Custom Shorts Wordmark / Text -->
+                        <div class="space-y-2 pt-2 border-t border-slate-700/30">
+                            <div class="flex justify-between items-center py-0.5">
+                                <label class="text-[11px] text-slate-300 font-semibold">Shorts Wordmark / Text</label>
+                                <label class="relative inline-flex items-center cursor-pointer select-none">
+                                    <input type="checkbox" id="showShortsText" class="sr-only peer">
+                                    <div class="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-indigo-600"></div>
+                                </label>
+                            </div>
+                            <div id="shortsTextContainer" class="space-y-2 hidden">
+                                <input type="text" id="shortsText" placeholder="e.g. CITY, BULLS, 2026" maxlength="15"
+                                    class="w-full bg-slate-800 text-white text-xs rounded-xl px-3 py-2 border border-slate-700 outline-none focus:border-indigo-500">
+                                <div class="space-y-1">
+                                    <div class="flex justify-between items-center text-[10px]">
+                                        <span class="text-slate-400">Text Size</span>
+                                        <span id="lblShortsTextSize" class="font-bold text-indigo-400">32px</span>
+                                    </div>
+                                    <input type="range" id="shortsTextSize" min="16" max="64" value="32"
+                                        class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reset Shorts Element Positions -->
+                        <button id="btnResetShortsPositions" type="button" class="w-full mt-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white font-medium py-1.5 px-3 rounded-xl transition text-[11px] border border-slate-700 flex items-center justify-center gap-1.5 cursor-pointer">
+                            <span>↺ Reset Shorts Element Positions</span>
+                        </button>
+                    </div>
+
+                    <!-- Quick 3D Focus Shorts Button -->
+                    <button id="btnSidebarFocusShorts" type="button" class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-300 hover:text-white font-bold py-2 px-3 rounded-xl transition text-xs border border-slate-600/50 flex items-center justify-center gap-2 cursor-pointer">
+                        <span>🔍 View &amp; Focus Shorts in 3D</span>
+                    </button>
+                </div>
+            </details>
+
             <!-- Badges & Graphics Accordion -->
             <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
                 <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
@@ -717,13 +838,20 @@
 
         <!-- 2D Viewport containing Front, Side, and Back preview cards -->
         <div id="viewport2D" class="w-full h-full flex flex-col xl:flex-row items-center justify-start xl:justify-center gap-6 p-6 pt-20 xl:pt-6 overflow-auto relative">
-            <!-- 2D View Selector Toolbar (All / Front / Side / Back) -->
-            <div id="controls2DViews" class="absolute top-4 left-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
+            <!-- 2D View Selector Toolbar (All / Front / Side / Back & Piece Filter) -->
+            <div id="controls2DViews" class="absolute top-4 left-4 z-20 flex items-center bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg gap-1">
                 <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">2D View:</span>
                 <button id="btn2DAll" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">All Views</button>
                 <button id="btn2DFront" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Front</button>
                 <button id="btn2DSide" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Side</button>
                 <button id="btn2DBack" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">Back</button>
+
+                <div class="h-5 w-px bg-slate-700 mx-1"></div>
+
+                <span class="text-xs text-slate-400 font-semibold px-2 py-1 flex items-center">Outfit Piece:</span>
+                <button id="btnPieceFull" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition" title="Show Full Kit: Jersey and Shorts together">Full Kit</button>
+                <button id="btnPieceJersey" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition" title="Show Jersey Top Only">Jersey Only</button>
+                <button id="btnPieceShorts" class="px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition" title="Show Shorts Only">Shorts Only</button>
             </div>
             <div id="card2DFront" class="flex flex-col items-center flex-shrink-0 view-card-2d">
                 <p class="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">Front View</p>
@@ -753,7 +881,7 @@
 
         <!-- 3D Viewport with quick angle snapping and skin selector -->
         <div id="viewport3D" class="hidden w-full h-full relative">
-            <!-- Unified 3D Controls Bar (Camera + Model Skin) -->
+            <!-- Unified 3D Controls Bar (Camera + Focus + Model Skin) -->
             <div class="absolute top-4 left-4 z-20 flex items-center bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1.5 shadow-lg gap-2.5 max-w-[calc(100%-200px)] pointer-events-auto">
                 <!-- 3D Camera Controls -->
                 <div class="flex items-center gap-1 flex-shrink-0">
@@ -762,6 +890,17 @@
                     <button id="btnCamLeft" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Left</button>
                     <button id="btnCamRight" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Right</button>
                     <button id="btnCamBack" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Back</button>
+                </div>
+
+                <!-- Sleek Vertical Divider -->
+                <div class="h-5 w-px bg-slate-700 flex-shrink-0"></div>
+
+                <!-- 3D Camera Focus Controls -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <span class="text-xs text-slate-400 font-semibold px-1.5 py-0.5 flex items-center">Focus:</span>
+                    <button id="btnFocusFull" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">Full Body</button>
+                    <button id="btnFocusJersey" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Jersey</button>
+                    <button id="btnFocusShorts" class="px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition">Shorts</button>
                 </div>
 
                 <!-- Sleek Vertical Divider -->
@@ -785,7 +924,7 @@
     </div>
 
     <script type="module">
-    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20260920_09';
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20261019_shorts_drag';
     initEditor();
      setTimeout(function() {
          const c = document.getElementById('canvasFront2D');
@@ -1085,6 +1224,10 @@
         document.getElementById('summaryFont').textContent = design.font || 'athletic';
         const elJType = document.getElementById('summaryJerseyType');
         if (elJType) elJType.textContent = design.jerseyType === 'tshirt' ? 'T-Shirt (With Sleeves)' : 'Sleeveless (Tank Top)';
+        const elShorts = document.getElementById('summaryShorts');
+        if (elShorts) {
+            elShorts.textContent = (design.matchJerseyColors !== false) ? 'Matching Jersey Kit' : `Custom Colors (${design.shortsBaseColor || design.baseColor})`;
+        }
         document.getElementById('summarySponsor').textContent = design.sponsorText || 'None';
         prefillShippingDetails();
         updatePrice();
@@ -1189,7 +1332,7 @@
                     price: context.total,
                     shipping_fee: SHIPPING_FEE,
                     ...context.shipping,
-                    notes: `JerseyType: ${context.design.jerseyType || 'sleeveless'} | Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
+                    notes: `JerseyType: ${context.design.jerseyType || 'sleeveless'} | Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Shorts: [Match: ${context.design.matchJerseyColors !== false} | Base: ${context.design.shortsBaseColor || context.design.baseColor} | Accent: ${context.design.shortsAccentColor || context.design.accentColor} | Logo: ${context.design.showShortsLogo !== false} | Num: ${context.design.showShortsNumber !== false} | Text: "${context.design.shortsText || ''}" (Show: ${!!context.design.showShortsText})] | ShortsCoords: [Num: ${context.design.shortsNumberX ?? 127},${context.design.shortsNumberY ?? 385} (${context.design.shortsNumberSize || 54}px) | Logo: ${context.design.shortsLogoX ?? 385},${context.design.shortsLogoY ?? 385} (${context.design.shortsLogoSize || 46}px) | Text: ${context.design.shortsTextX ?? 385},${context.design.shortsTextY ?? 320} (${context.design.shortsTextSize || 32}px)] | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 

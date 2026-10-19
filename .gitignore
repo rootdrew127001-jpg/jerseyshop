@@ -7,3 +7,6 @@ __pycache__/
 
 docker-compose.override.yml
 scratch/
+*.db
+*.sqlite
+*.sqlite3

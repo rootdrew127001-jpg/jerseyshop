@@ -42,6 +42,218 @@ export function buildBackTexture(options = {}) {
     return cachedBackTexture;
 }
 
+let cachedShortsFrontCanvas = null;
+let cachedShortsFrontTexture = null;
+
+export function buildShortsTexture(options = {}) {
+    if (!cachedShortsFrontCanvas) {
+        cachedShortsFrontCanvas = document.createElement('canvas');
+        cachedShortsFrontCanvas.width = 512;
+        cachedShortsFrontCanvas.height = 512;
+    }
+    const ctx = cachedShortsFrontCanvas.getContext('2d');
+    drawRawShortsDesign(ctx, options, false);
+    if (!cachedShortsFrontTexture) {
+        cachedShortsFrontTexture = new THREE.CanvasTexture(cachedShortsFrontCanvas);
+    }
+    if (THREE.SRGBColorSpace) {
+        cachedShortsFrontTexture.colorSpace = THREE.SRGBColorSpace;
+    }
+    cachedShortsFrontTexture.needsUpdate = true;
+    return cachedShortsFrontTexture;
+}
+
+let cachedShortsBackCanvas = null;
+let cachedShortsBackTexture = null;
+
+export function buildShortsBackTexture(options = {}) {
+    if (!cachedShortsBackCanvas) {
+        cachedShortsBackCanvas = document.createElement('canvas');
+        cachedShortsBackCanvas.width = 512;
+        cachedShortsBackCanvas.height = 512;
+    }
+    const ctx = cachedShortsBackCanvas.getContext('2d');
+    drawRawShortsDesign(ctx, options, true);
+    if (!cachedShortsBackTexture) {
+        cachedShortsBackTexture = new THREE.CanvasTexture(cachedShortsBackCanvas);
+    }
+    if (THREE.SRGBColorSpace) {
+        cachedShortsBackTexture.colorSpace = THREE.SRGBColorSpace;
+    }
+    cachedShortsBackTexture.needsUpdate = true;
+    return cachedShortsBackTexture;
+}
+
+export function drawRawShortsDesign(ctx, options, isBack = false) {
+    const matchJersey = options.matchJerseyColors !== false;
+    const baseColor = matchJersey ? (options.baseColor || '#4F46E5') : (options.shortsBaseColor || options.baseColor || '#4F46E5');
+    const accentColor = matchJersey ? (options.accentColor || '#7C3AED') : (options.shortsAccentColor || options.accentColor || '#7C3AED');
+    const tertiaryColor = options.tertiaryColor || '#ffffff';
+    const pattern = options.pattern || 'none';
+    const logo = options.logo || 'none';
+    const number = options.number || '23';
+    const font = options.font || 'athletic';
+    const customFont = options.customFont || '';
+    const outlineWeight = options.outlineWeight !== undefined ? options.outlineWeight : 8;
+    const showShortsLogo = options.showShortsLogo !== undefined ? options.showShortsLogo : true;
+    const showShortsNumber = options.showShortsNumber !== undefined ? options.showShortsNumber : true;
+    const customLogoImage = options.customLogoImage || null;
+
+    // Shorts front draggable coordinates & sizes
+    const shortsNumberX = options.shortsNumberX !== undefined ? options.shortsNumberX : 127;
+    const shortsNumberY = options.shortsNumberY !== undefined ? options.shortsNumberY : 385;
+    const shortsNumberSize = options.shortsNumberSize !== undefined ? options.shortsNumberSize : 54;
+
+    const shortsLogoX = options.shortsLogoX !== undefined ? options.shortsLogoX : 385;
+    const shortsLogoY = options.shortsLogoY !== undefined ? options.shortsLogoY : 385;
+    const shortsLogoSize = options.shortsLogoSize !== undefined ? options.shortsLogoSize : 46;
+
+    const showShortsText = options.showShortsText !== undefined ? options.showShortsText : false;
+    const shortsText = options.shortsText || '';
+    const shortsTextX = options.shortsTextX !== undefined ? options.shortsTextX : 385;
+    const shortsTextY = options.shortsTextY !== undefined ? options.shortsTextY : 320;
+    const shortsTextSize = options.shortsTextSize !== undefined ? options.shortsTextSize : 32;
+
+    // Shorts back draggable coordinates & sizes
+    const showShortsBackNumber = options.showShortsBackNumber !== undefined ? options.showShortsBackNumber : false;
+    const shortsBackNumberX = options.shortsBackNumberX !== undefined ? options.shortsBackNumberX : 385;
+    const shortsBackNumberY = options.shortsBackNumberY !== undefined ? options.shortsBackNumberY : 385;
+    const shortsBackNumberSize = options.shortsBackNumberSize !== undefined ? options.shortsBackNumberSize : 54;
+
+    const showShortsBackText = options.showShortsBackText !== undefined ? options.showShortsBackText : false;
+    const shortsBackText = options.shortsBackText || '';
+    const shortsBackTextX = options.shortsBackTextX !== undefined ? options.shortsBackTextX : 256;
+    const shortsBackTextY = options.shortsBackTextY !== undefined ? options.shortsBackTextY : 385;
+    const shortsBackTextSize = options.shortsBackTextSize !== undefined ? options.shortsBackTextSize : 32;
+
+    // 1. Base shorts background
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // 2. Coordinated pattern matching jersey
+    if (pattern === 'panel') {
+        // Lateral outer side panels
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(0, 0, 110, 512);
+        ctx.fillRect(402, 0, 110, 512);
+        ctx.fillStyle = tertiaryColor;
+        ctx.fillRect(110, 0, 12, 512);
+        ctx.fillRect(390, 0, 12, 512);
+    } else {
+        drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
+    }
+
+    // 3. Elastic Waistband at top (Y = 0..48)
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(0, 0, 512, 48);
+
+    ctx.fillStyle = tertiaryColor;
+    ctx.fillRect(0, 20, 512, 8);
+
+    // Fine elastic waistband ribbing
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+    for (let x = 0; x < 512; x += 8) {
+        ctx.fillRect(x, 0, 1.5, 48);
+    }
+
+    // Waistband bottom seam shadow
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(0, 48);
+    ctx.lineTo(512, 48);
+    ctx.stroke();
+
+    // 4. Leg Bottom Opening Hem Trim (Y = 466..512)
+    // Left leg opening (X: 0..248)
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(0, 472, 248, 40);
+    ctx.fillStyle = tertiaryColor;
+    ctx.fillRect(0, 466, 248, 6);
+
+    // Right leg opening (X: 264..512)
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(264, 472, 248, 40);
+    ctx.fillStyle = tertiaryColor;
+    ctx.fillRect(264, 466, 248, 6);
+
+    // 5. Front-only leg details (Logo, Player Number, Custom Shorts Wordmark)
+    if (!isBack) {
+        // Team Crest Badge on leg
+        if (showShortsLogo && logo !== 'none') {
+            drawLogo(ctx, logo, shortsLogoX, shortsLogoY, shortsLogoSize, tertiaryColor, accentColor, customLogoImage);
+        }
+
+        // Shorts Custom Text / Wordmark
+        if (showShortsText && shortsText) {
+            ctx.save();
+            ctx.fillStyle = tertiaryColor || '#ffffff';
+            ctx.strokeStyle = baseColor || '#000000';
+            ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.35));
+            ctx.font = getFontString('shorts_text', font, customFont, shortsTextSize);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 4;
+            ctx.strokeText(shortsText, shortsTextX, shortsTextY);
+            ctx.shadowBlur = 0;
+            ctx.fillText(shortsText, shortsTextX, shortsTextY);
+            ctx.restore();
+        }
+
+        // Player Number on leg
+        if (showShortsNumber && number) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
+            ctx.font = getFontString('number', font, customFont, shortsNumberSize);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 6;
+            ctx.strokeText(number, shortsNumberX, shortsNumberY);
+            ctx.shadowBlur = 0;
+            ctx.fillText(number, shortsNumberX, shortsNumberY);
+            ctx.restore();
+        }
+    } else {
+        // Back leg details (if enabled)
+        if (showShortsBackNumber && number) {
+            ctx.save();
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = tertiaryColor;
+            ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
+            ctx.font = getFontString('number', font, customFont, shortsBackNumberSize);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 6;
+            ctx.strokeText(number, shortsBackNumberX, shortsBackNumberY);
+            ctx.shadowBlur = 0;
+            ctx.fillText(number, shortsBackNumberX, shortsBackNumberY);
+            ctx.restore();
+        }
+
+        if (showShortsBackText && shortsBackText) {
+            ctx.save();
+            ctx.fillStyle = tertiaryColor || '#ffffff';
+            ctx.strokeStyle = baseColor || '#000000';
+            ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.35));
+            ctx.font = getFontString('shorts_text', font, customFont, shortsBackTextSize);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+            ctx.shadowBlur = 4;
+            ctx.strokeText(shortsBackText, shortsBackTextX, shortsBackTextY);
+            ctx.shadowBlur = 0;
+            ctx.fillText(shortsBackText, shortsBackTextX, shortsBackTextY);
+            ctx.restore();
+        }
+    }
+}
+
+
 export function drawRawDesign(ctx, options, isBack = false, mirrorBack = false) {
     const isFemale = options && options.gender === 'female';
     if (!isBack) {
@@ -1314,6 +1526,378 @@ export function renderJersey2DSide(targetCanvas, options = {}, isRight = false) 
     ctx.restore();
 }
 
+export function pathShorts(ctx, isBack = false) {
+    ctx.beginPath();
+    if (isBack) {
+        ctx.moveTo(136, 68);
+        ctx.quadraticCurveTo(256, 76, 376, 68);
+    } else {
+        ctx.moveTo(136, 72);
+        ctx.quadraticCurveTo(256, 84, 376, 72);
+    }
+    ctx.bezierCurveTo(388, 170, 402, 310, 410, 460);
+    ctx.quadraticCurveTo(345, 470, 280, 456);
+    ctx.quadraticCurveTo(270, 365, 256, 305);
+    ctx.quadraticCurveTo(242, 365, 232, 456);
+    ctx.quadraticCurveTo(167, 470, 102, 460);
+    ctx.bezierCurveTo(110, 310, 124, 170, 136, isBack ? 68 : 72);
+    ctx.closePath();
+}
+
+export function pathFemaleShorts(ctx, isBack = false) {
+    ctx.beginPath();
+    if (isBack) {
+        ctx.moveTo(144, 82);
+        ctx.quadraticCurveTo(256, 90, 368, 82);
+    } else {
+        ctx.moveTo(144, 86);
+        ctx.quadraticCurveTo(256, 98, 368, 86);
+    }
+    ctx.bezierCurveTo(380, 170, 392, 285, 398, 436);
+    ctx.quadraticCurveTo(338, 444, 278, 432);
+    ctx.quadraticCurveTo(268, 355, 256, 305);
+    ctx.quadraticCurveTo(244, 355, 234, 432);
+    ctx.quadraticCurveTo(174, 444, 114, 436);
+    ctx.bezierCurveTo(120, 285, 132, 170, 144, isBack ? 82 : 86);
+    ctx.closePath();
+}
+
+export function pathShortsSide(ctx, isRight = false) {
+    ctx.beginPath();
+    ctx.moveTo(186, 75);
+    ctx.quadraticCurveTo(256, 70, 326, 72);
+    ctx.bezierCurveTo(342, 175, 340, 310, 324, 458);
+    ctx.lineTo(262, 458);
+    ctx.lineTo(256, 426);
+    ctx.lineTo(250, 458);
+    ctx.lineTo(188, 458);
+    ctx.bezierCurveTo(172, 310, 170, 175, 186, 75);
+    ctx.closePath();
+}
+
+export function pathFemaleShortsSide(ctx, isRight = false) {
+    ctx.beginPath();
+    ctx.moveTo(192, 86);
+    ctx.quadraticCurveTo(256, 82, 320, 84);
+    ctx.bezierCurveTo(336, 180, 332, 295, 318, 436);
+    ctx.lineTo(262, 436);
+    ctx.lineTo(256, 408);
+    ctx.lineTo(250, 436);
+    ctx.lineTo(194, 436);
+    ctx.bezierCurveTo(180, 295, 178, 180, 192, 86);
+    ctx.closePath();
+}
+
+function drawShortsStitches(ctx, isFemale = false, isBack = false) {
+    const waistY = isFemale ? (isBack ? 82 : 86) : (isBack ? 68 : 72);
+    const hemY = isFemale ? 436 : 460;
+    const crotchY = 305;
+
+    // Waistband bottom stitch
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(136, waistY + 36);
+    ctx.quadraticCurveTo(256, waistY + 44, 376, waistY + 36);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(136, waistY + 34);
+    ctx.quadraticCurveTo(256, waistY + 42, 376, waistY + 34);
+    ctx.stroke();
+    ctx.restore();
+
+    // Inseam stitches
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.30)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(256, crotchY);
+    ctx.lineTo(234, hemY - 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(256, crotchY);
+    ctx.lineTo(278, hemY - 6);
+    ctx.stroke();
+    ctx.restore();
+
+    // Central crotch seam line
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(256, waistY + 36);
+    ctx.lineTo(256, crotchY);
+    ctx.stroke();
+    ctx.restore();
+
+    // Hem stitches
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(108, hemY - 14);
+    ctx.quadraticCurveTo(167, hemY - 4, 230, hemY - 14);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(282, hemY - 14);
+    ctx.quadraticCurveTo(345, hemY - 4, 404, hemY - 14);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawShortsSideStitches(ctx, isFemale = false, isRight = false) {
+    const waistY = isFemale ? 86 : 75;
+    const slitY = isFemale ? 408 : 426;
+
+    // Central lateral side seam
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.lineWidth = 2.0;
+    ctx.beginPath();
+    ctx.moveTo(256, waistY + 34);
+    ctx.lineTo(256, slitY);
+    ctx.stroke();
+
+    // Double needle topstitching flanking side seam
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.24)';
+    ctx.lineWidth = 1.2;
+    ctx.setLineDash([2, 3]);
+    ctx.beginPath();
+    ctx.moveTo(252, waistY + 34);
+    ctx.lineTo(252, slitY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(260, waistY + 34);
+    ctx.lineTo(260, slitY);
+    ctx.stroke();
+    ctx.restore();
+
+    // V-notch slit reinforcement
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.beginPath();
+    ctx.moveTo(256, slitY);
+    ctx.lineTo(250, slitY + 12);
+    ctx.lineTo(262, slitY + 12);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+}
+
+export function renderShorts2D(targetCanvas, options = {}, isBack = false) {
+    if (!targetCanvas) return;
+    const ctx = targetCanvas.getContext('2d');
+    const width = targetCanvas.width;
+    const height = targetCanvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const isFemale = options && options.gender === 'female';
+    const scaleFactor = width / 512;
+
+    const designCanvas = document.createElement('canvas');
+    designCanvas.width = 512;
+    designCanvas.height = 512;
+    const designCtx = designCanvas.getContext('2d');
+    drawRawShortsDesign(designCtx, options, isBack);
+
+    ctx.save();
+    ctx.scale(scaleFactor, scaleFactor);
+
+    if (isFemale) {
+        pathFemaleShorts(ctx, isBack);
+    } else {
+        pathShorts(ctx, isBack);
+    }
+    ctx.clip();
+
+    ctx.drawImage(designCanvas, 0, 0, 512, 512);
+
+    // Cylindrical shadow across thighs
+    ctx.globalCompositeOperation = 'multiply';
+    const flankGrad = ctx.createLinearGradient(0, 0, 512, 0);
+    flankGrad.addColorStop(0, 'rgba(0, 0, 0, 0.32)');
+    flankGrad.addColorStop(0.2, 'rgba(0, 0, 0, 0.05)');
+    flankGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+    flankGrad.addColorStop(0.8, 'rgba(0, 0, 0, 0.05)');
+    flankGrad.addColorStop(1, 'rgba(0, 0, 0, 0.32)');
+    ctx.fillStyle = flankGrad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Groin / inseam shadow
+    const groinGrad = ctx.createRadialGradient(256, 305, 5, 256, 320, 110);
+    groinGrad.addColorStop(0, 'rgba(0, 0, 0, 0.40)');
+    groinGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = groinGrad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Realistic fabric folds across thighs
+    drawEmbossedFold(ctx, 160, 240, 200, 265, 240, 250, 0.16, 0.08);
+    drawEmbossedFold(ctx, 352, 240, 312, 265, 272, 250, 0.16, 0.08);
+    drawEmbossedFold(ctx, 150, 350, 190, 375, 230, 360, 0.14, 0.07);
+    drawEmbossedFold(ctx, 362, 350, 322, 375, 282, 360, 0.14, 0.07);
+
+    // Screen highlights over quad convexities
+    ctx.globalCompositeOperation = 'screen';
+    const highlightGrad = ctx.createLinearGradient(130, 0, 380, 0);
+    highlightGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    highlightGrad.addColorStop(0.25, 'rgba(255, 255, 255, 0.08)');
+    highlightGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+    highlightGrad.addColorStop(0.75, 'rgba(255, 255, 255, 0.08)');
+    highlightGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = highlightGrad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    ctx.restore();
+
+    // Seams and stitches
+    ctx.save();
+    ctx.scale(scaleFactor, scaleFactor);
+    drawShortsStitches(ctx, isFemale, isBack);
+    ctx.restore();
+}
+
+export function renderShorts2DSide(targetCanvas, options = {}, isRight = false) {
+    if (!targetCanvas) return;
+    const ctx = targetCanvas.getContext('2d');
+    const width = targetCanvas.width;
+    const height = targetCanvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const isFemale = options && options.gender === 'female';
+    const scaleFactor = width / 512;
+
+    const matchJersey = options.matchJerseyColors !== false;
+    const baseColor = matchJersey ? (options.baseColor || '#4F46E5') : (options.shortsBaseColor || options.baseColor || '#4F46E5');
+    const accentColor = matchJersey ? (options.accentColor || '#7C3AED') : (options.shortsAccentColor || options.accentColor || '#7C3AED');
+    const tertiaryColor = options.tertiaryColor || '#ffffff';
+    const pattern = options.pattern || 'none';
+
+    ctx.save();
+    ctx.scale(scaleFactor, scaleFactor);
+
+    if (isFemale) {
+        pathFemaleShortsSide(ctx, isRight);
+    } else {
+        pathShortsSide(ctx, isRight);
+    }
+    ctx.clip();
+
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, 512, 512);
+
+    // Draw side pattern on shorts (centered at X = 256)
+    drawSidePattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
+
+    // Waistband at top
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(0, 65, 512, 40);
+    ctx.fillStyle = tertiaryColor;
+    ctx.fillRect(0, 80, 512, 6);
+
+    // Bottom hem trim
+    ctx.fillStyle = accentColor;
+    ctx.fillRect(0, 442, 512, 30);
+    ctx.fillStyle = tertiaryColor;
+    ctx.fillRect(0, 436, 512, 6);
+
+    // Side lighting
+    ctx.globalCompositeOperation = 'multiply';
+    const flankGrad = ctx.createLinearGradient(170, 0, 340, 0);
+    flankGrad.addColorStop(0, 'rgba(0, 0, 0, 0.35)');
+    flankGrad.addColorStop(0.3, 'rgba(0, 0, 0, 0.05)');
+    flankGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+    flankGrad.addColorStop(0.7, 'rgba(0, 0, 0, 0.05)');
+    flankGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+    ctx.fillStyle = flankGrad;
+    ctx.fillRect(0, 0, 512, 512);
+
+    drawEmbossedFold(ctx, 205, 250, 256, 260, 305, 252, 0.18, 0.08);
+    drawEmbossedFold(ctx, 200, 360, 256, 370, 310, 362, 0.16, 0.07);
+
+    ctx.restore();
+
+    // Side stitches and V-notch slit accent
+    ctx.save();
+    ctx.scale(scaleFactor, scaleFactor);
+    drawShortsSideStitches(ctx, isFemale, isRight);
+    ctx.restore();
+}
+
+export function renderUniform2D(targetCanvas, options = {}, isBack = false) {
+    if (!targetCanvas) return;
+    const ctx = targetCanvas.getContext('2d');
+    const width = targetCanvas.width;
+    const height = targetCanvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const uniformCanvas = document.createElement('canvas');
+    uniformCanvas.width = 512;
+    uniformCanvas.height = 512;
+    const uCtx = uniformCanvas.getContext('2d');
+
+    // 1. Draw Jersey Top
+    const jerseyCanvas = document.createElement('canvas');
+    jerseyCanvas.width = 512;
+    jerseyCanvas.height = 512;
+    renderJersey2D(jerseyCanvas, options, isBack);
+
+    // 2. Draw Shorts
+    const shortsCanvas = document.createElement('canvas');
+    shortsCanvas.width = 512;
+    shortsCanvas.height = 512;
+    renderShorts2D(shortsCanvas, options, isBack);
+
+    // 3. Composite both on uniformCanvas
+    const scale = 0.58;
+    const offsetX = (512 - 512 * scale) / 2;
+    const jOffsetY = 8;
+    const sOffsetY = 210;
+
+    uCtx.drawImage(jerseyCanvas, offsetX, jOffsetY, 512 * scale, 512 * scale);
+    uCtx.drawImage(shortsCanvas, offsetX, sOffsetY, 512 * scale, 512 * scale);
+
+    ctx.drawImage(uniformCanvas, 0, 0, width, height);
+}
+
+export function renderUniform2DSide(targetCanvas, options = {}, isRight = false) {
+    if (!targetCanvas) return;
+    const ctx = targetCanvas.getContext('2d');
+    const width = targetCanvas.width;
+    const height = targetCanvas.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const uniformCanvas = document.createElement('canvas');
+    uniformCanvas.width = 512;
+    uniformCanvas.height = 512;
+    const uCtx = uniformCanvas.getContext('2d');
+
+    const jerseySideCanvas = document.createElement('canvas');
+    jerseySideCanvas.width = 512;
+    jerseySideCanvas.height = 512;
+    renderJersey2DSide(jerseySideCanvas, options, isRight);
+
+    const shortsSideCanvas = document.createElement('canvas');
+    shortsSideCanvas.width = 512;
+    shortsSideCanvas.height = 512;
+    renderShorts2DSide(shortsSideCanvas, options, isRight);
+
+    const scale = 0.58;
+    const offsetX = (512 - 512 * scale) / 2;
+    const jOffsetY = 8;
+    const sOffsetY = 210;
+
+    uCtx.drawImage(jerseySideCanvas, offsetX, jOffsetY, 512 * scale, 512 * scale);
+    uCtx.drawImage(shortsSideCanvas, offsetX, sOffsetY, 512 * scale, 512 * scale);
+
+    ctx.drawImage(uniformCanvas, 0, 0, width, height);
+}
+
+
 function drawEmbossedFold(ctx, x1, y1, cx, cy, x2, y2, shadowOpacity, highlightOpacity) {
     ctx.save();
     ctx.strokeStyle = `rgba(0, 0, 0, ${shadowOpacity})`;
@@ -1361,10 +1945,11 @@ function getFontString(type, fontStyle, customFont = '', numSizeVal = 140) {
 
     if (type === 'number') return `${weight} ${italicStr}${numSizeVal}px ${base}`;
     if (type === 'number_back') return `${weight} ${italicStr}${Math.round(numSizeVal * 1.15)}px ${base}`;
-    if (type === 'name') return `${weight} ${italicStr}38px ${base}`;
-    if (type === 'team') return `bold 32px ${base}`;
-    if (type === 'sponsor') return `bold italic 36px ${base}`;
-    return `bold 24px ${base}`;
+    if (type === 'name') return `${weight} ${italicStr}${numSizeVal !== 140 ? numSizeVal : 38}px ${base}`;
+    if (type === 'team') return `bold ${numSizeVal !== 140 ? numSizeVal : 32}px ${base}`;
+    if (type === 'sponsor') return `bold italic ${numSizeVal !== 140 ? numSizeVal : 36}px ${base}`;
+    if (type === 'shorts_text') return `bold ${italicStr}${numSizeVal || 32}px ${base}`;
+    return `bold ${numSizeVal !== 140 ? numSizeVal : 24}px ${base}`;
 }
 
 

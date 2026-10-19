@@ -1,5 +1,5 @@
-import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, triggerShowcaseSpin, setMannequinSkin, getCurrentMannequinSkin, PRESET_SKINS } from './threeViewer.js?v=20260920_09';
-import { buildTexture, buildBackTexture, renderJersey2D, renderJersey2DSide } from './textureBuilder.js?v=20260920_09';
+import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyTextureToShortsFront, applyTextureToShortsBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, setCameraFocus, triggerShowcaseSpin, setMannequinSkin, getCurrentMannequinSkin, PRESET_SKINS } from './threeViewer.js?v=20261019_shorts_drag';
+import { buildTexture, buildBackTexture, buildShortsTexture, buildShortsBackTexture, renderJersey2D, renderJersey2DSide, renderShorts2D, renderShorts2DSide, renderUniform2D, renderUniform2DSide } from './textureBuilder.js?v=20261019_shorts_drag';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -22,7 +22,29 @@ const DEFAULT_COORDS = {
     backNameX: 256,
     backNameY: 380,
     backNumberX: 256,
-    backNumberY: 290
+    backNumberY: 290,
+    // Shorts front coordinates & sizes
+    shortsNumberX: 127,
+    shortsNumberY: 385,
+    shortsNumberSize: 54,
+    shortsLogoX: 385,
+    shortsLogoY: 385,
+    shortsLogoSize: 46,
+    shortsText: '',
+    showShortsText: false,
+    shortsTextX: 385,
+    shortsTextY: 320,
+    shortsTextSize: 32,
+    // Shorts back coordinates & sizes
+    shortsBackNumberX: 385,
+    shortsBackNumberY: 385,
+    shortsBackNumberSize: 54,
+    showShortsBackNumber: false,
+    shortsBackText: '',
+    showShortsBackText: false,
+    shortsBackTextX: 256,
+    shortsBackTextY: 385,
+    shortsBackTextSize: 32
 };
 
 let currentDesign = {
@@ -46,6 +68,13 @@ let currentDesign = {
     showBackNumber: true,
     showSponsor: false,
     skinTone: 'obsidian',
+    // Shorts settings
+    matchJerseyColors: true,
+    shortsBaseColor: '#4F46E5',
+    shortsAccentColor: '#7C3AED',
+    showShortsLogo: true,
+    showShortsNumber: true,
+    viewPiece: 'full', // 'full' | 'jersey' | 'shorts'
     ...DEFAULT_COORDS
 };
 
@@ -374,6 +403,8 @@ function bindControls() {
             ...rand,
             frontText: rand.teamName || 'TEAM',
             backName: 'PLAYER',
+            shortsBaseColor: rand.baseColor,
+            shortsAccentColor: rand.accentColor,
             showFrontText: true,
             showFrontNumber: true,
             showBackText: true,
@@ -493,6 +524,8 @@ function bindControls() {
                         backName: currentDesign.backName || 'PLAYER',
                         number: suggestion.number || currentDesign.number || '23',
                         sponsorText: (suggestion.sponsorText !== undefined && suggestion.sponsorText !== null) ? suggestion.sponsorText : currentDesign.sponsorText,
+                        shortsBaseColor: suggestion.baseColor || currentDesign.baseColor,
+                        shortsAccentColor: suggestion.accentColor || currentDesign.accentColor,
                         showFrontText: true,
                         showFrontNumber: true,
                         showBackText: true,
@@ -759,6 +792,216 @@ function bindControls() {
             setCameraAngle('back');
         });
     }
+
+    // 3D Camera Focus Controls (Full Body / Jersey / Shorts)
+    const btnFocusFull = document.getElementById('btnFocusFull');
+    const btnFocusJersey = document.getElementById('btnFocusJersey');
+    const btnFocusShorts = document.getElementById('btnFocusShorts');
+
+    function setActiveFocusBtn(focusId) {
+        [
+            { btn: btnFocusFull, id: 'full' },
+            { btn: btnFocusJersey, id: 'jersey' },
+            { btn: btnFocusShorts, id: 'shorts' }
+        ].forEach(({ btn, id }) => {
+            if (btn) {
+                if (focusId === id) {
+                    btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
+                } else {
+                    btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-200 transition';
+                }
+            }
+        });
+    }
+    window._setActiveFocusBtn = setActiveFocusBtn;
+
+    if (btnFocusFull) {
+        btnFocusFull.addEventListener('click', () => {
+            setActiveFocusBtn('full');
+            setCameraFocus('full');
+        });
+    }
+    if (btnFocusJersey) {
+        btnFocusJersey.addEventListener('click', () => {
+            setActiveFocusBtn('jersey');
+            setCameraFocus('jersey');
+        });
+    }
+    if (btnFocusShorts) {
+        btnFocusShorts.addEventListener('click', () => {
+            setActiveFocusBtn('shorts');
+            setCameraFocus('shorts');
+        });
+    }
+
+    // 2D Outfit Piece Switcher (Full Kit / Jersey Only / Shorts Only)
+    const btnPieceFull = document.getElementById('btnPieceFull');
+    const btnPieceJersey = document.getElementById('btnPieceJersey');
+    const btnPieceShorts = document.getElementById('btnPieceShorts');
+
+    function updatePieceUI(piece) {
+        currentDesign.viewPiece = piece;
+        [
+            { btn: btnPieceFull, id: 'full' },
+            { btn: btnPieceJersey, id: 'jersey' },
+            { btn: btnPieceShorts, id: 'shorts' }
+        ].forEach(({ btn, id }) => {
+            if (btn) {
+                if (piece === id) {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
+                } else {
+                    btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+                }
+            }
+        });
+        applyDesign(currentDesign);
+    }
+    window._updatePieceUI = updatePieceUI;
+
+    if (btnPieceFull) btnPieceFull.addEventListener('click', () => updatePieceUI('full'));
+    if (btnPieceJersey) btnPieceJersey.addEventListener('click', () => updatePieceUI('jersey'));
+    if (btnPieceShorts) btnPieceShorts.addEventListener('click', () => updatePieceUI('shorts'));
+
+    // Shorts Customization Controls
+    const cbMatchJersey = document.getElementById('matchJerseyColors');
+    const customShortsContainer = document.getElementById('customShortsColorsContainer');
+    if (cbMatchJersey) {
+        cbMatchJersey.addEventListener('change', e => {
+            currentDesign.matchJerseyColors = e.target.checked;
+            if (currentDesign.matchJerseyColors) {
+                if (customShortsContainer) customShortsContainer.classList.add('hidden');
+                currentDesign.shortsBaseColor = currentDesign.baseColor;
+                currentDesign.shortsAccentColor = currentDesign.accentColor;
+            } else {
+                if (customShortsContainer) customShortsContainer.classList.remove('hidden');
+                const baseIn = document.getElementById('shortsBaseColor');
+                const accIn = document.getElementById('shortsAccentColor');
+                if (baseIn) currentDesign.shortsBaseColor = baseIn.value;
+                if (accIn) currentDesign.shortsAccentColor = accIn.value;
+            }
+            applyDesign(currentDesign);
+        });
+    }
+
+    const shortsBaseInput = document.getElementById('shortsBaseColor');
+    if (shortsBaseInput) {
+        shortsBaseInput.addEventListener('input', e => {
+            currentDesign.shortsBaseColor = e.target.value;
+            applyDesign(currentDesign);
+        });
+    }
+
+    const shortsAccentInput = document.getElementById('shortsAccentColor');
+    if (shortsAccentInput) {
+        shortsAccentInput.addEventListener('input', e => {
+            currentDesign.shortsAccentColor = e.target.value;
+            applyDesign(currentDesign);
+        });
+    }
+
+    const cbShortsLogo = document.getElementById('showShortsLogo');
+    if (cbShortsLogo) {
+        cbShortsLogo.addEventListener('change', e => {
+            currentDesign.showShortsLogo = e.target.checked;
+            applyDesign(currentDesign);
+        });
+    }
+
+    const cbShortsNumber = document.getElementById('showShortsNumber');
+    if (cbShortsNumber) {
+        cbShortsNumber.addEventListener('change', e => {
+            currentDesign.showShortsNumber = e.target.checked;
+            applyDesign(currentDesign);
+        });
+    }
+
+    // Shorts Number Size Slider
+    const sliderShortsNumberSize = document.getElementById('shortsNumberSize');
+    const lblShortsNumberSize = document.getElementById('lblShortsNumberSize');
+    if (sliderShortsNumberSize) {
+        sliderShortsNumberSize.addEventListener('input', e => {
+            currentDesign.shortsNumberSize = parseInt(e.target.value, 10);
+            if (lblShortsNumberSize) lblShortsNumberSize.textContent = `${currentDesign.shortsNumberSize}px`;
+            applyDesign(currentDesign);
+        });
+    }
+
+    // Shorts Crest Logo Size Slider
+    const sliderShortsLogoSize = document.getElementById('shortsLogoSize');
+    const lblShortsLogoSize = document.getElementById('lblShortsLogoSize');
+    if (sliderShortsLogoSize) {
+        sliderShortsLogoSize.addEventListener('input', e => {
+            currentDesign.shortsLogoSize = parseInt(e.target.value, 10);
+            if (lblShortsLogoSize) lblShortsLogoSize.textContent = `${currentDesign.shortsLogoSize}px`;
+            applyDesign(currentDesign);
+        });
+    }
+
+    // Shorts Custom Text / Wordmark Controls
+    const cbShortsText = document.getElementById('showShortsText');
+    const shortsTextContainer = document.getElementById('shortsTextContainer');
+    if (cbShortsText) {
+        cbShortsText.addEventListener('change', e => {
+            currentDesign.showShortsText = e.target.checked;
+            if (shortsTextContainer) {
+                if (currentDesign.showShortsText) shortsTextContainer.classList.remove('hidden');
+                else shortsTextContainer.classList.add('hidden');
+            }
+            applyDesign(currentDesign);
+        });
+    }
+
+    const inputShortsText = document.getElementById('shortsText');
+    if (inputShortsText) {
+        inputShortsText.addEventListener('input', e => {
+            currentDesign.shortsText = e.target.value;
+            applyDesign(currentDesign);
+        });
+    }
+
+    const sliderShortsTextSize = document.getElementById('shortsTextSize');
+    const lblShortsTextSize = document.getElementById('lblShortsTextSize');
+    if (sliderShortsTextSize) {
+        sliderShortsTextSize.addEventListener('input', e => {
+            currentDesign.shortsTextSize = parseInt(e.target.value, 10);
+            if (lblShortsTextSize) lblShortsTextSize.textContent = `${currentDesign.shortsTextSize}px`;
+            applyDesign(currentDesign);
+        });
+    }
+
+    // Reset Shorts Element Positions & Sizes Button
+    const btnResetShortsPositions = document.getElementById('btnResetShortsPositions');
+    if (btnResetShortsPositions) {
+        btnResetShortsPositions.addEventListener('click', () => {
+            currentDesign.shortsNumberX = DEFAULT_COORDS.shortsNumberX;
+            currentDesign.shortsNumberY = DEFAULT_COORDS.shortsNumberY;
+            currentDesign.shortsNumberSize = DEFAULT_COORDS.shortsNumberSize;
+            currentDesign.shortsLogoX = DEFAULT_COORDS.shortsLogoX;
+            currentDesign.shortsLogoY = DEFAULT_COORDS.shortsLogoY;
+            currentDesign.shortsLogoSize = DEFAULT_COORDS.shortsLogoSize;
+            currentDesign.shortsTextX = DEFAULT_COORDS.shortsTextX;
+            currentDesign.shortsTextY = DEFAULT_COORDS.shortsTextY;
+            currentDesign.shortsTextSize = DEFAULT_COORDS.shortsTextSize;
+            currentDesign.shortsBackNumberX = DEFAULT_COORDS.shortsBackNumberX;
+            currentDesign.shortsBackNumberY = DEFAULT_COORDS.shortsBackNumberY;
+            currentDesign.shortsBackNumberSize = DEFAULT_COORDS.shortsBackNumberSize;
+            currentDesign.shortsBackTextX = DEFAULT_COORDS.shortsBackTextX;
+            currentDesign.shortsBackTextY = DEFAULT_COORDS.shortsBackTextY;
+            currentDesign.shortsBackTextSize = DEFAULT_COORDS.shortsBackTextSize;
+            syncUI(currentDesign);
+            applyDesign(currentDesign);
+        });
+    }
+
+    const btnSidebarFocusShorts = document.getElementById('btnSidebarFocusShorts');
+    if (btnSidebarFocusShorts) {
+        btnSidebarFocusShorts.addEventListener('click', () => {
+            const btn3D = document.getElementById('btnView3D');
+            if (btn3D) btn3D.click();
+            setCameraFocus('shorts');
+            setActiveFocusBtn('shorts');
+        });
+    }
 }
 
 function setupSkinToneControls() {
@@ -815,23 +1058,52 @@ function setupSkinToneControls() {
 }
 
 function applyDesign(design) {
+    // If matchJerseyColors is true, ensure shorts colors match jersey
+    if (design.matchJerseyColors !== false) {
+        design.shortsBaseColor = design.baseColor;
+        design.shortsAccentColor = design.accentColor;
+    } else {
+        design.shortsBaseColor = design.shortsBaseColor || design.baseColor;
+        design.shortsAccentColor = design.shortsAccentColor || design.accentColor;
+    }
+
     const canvasFront = document.getElementById('canvasFront2D');
     const canvasBack = document.getElementById('canvasBack2D');
     const canvasSide = document.getElementById('canvasSide2D');
+
+    const piece = design.viewPiece || 'full';
+
     if (canvasFront) {
-        renderJersey2D(canvasFront, design, false);
+        if (piece === 'shorts') {
+            renderShorts2D(canvasFront, design, false);
+        } else if (piece === 'jersey') {
+            renderJersey2D(canvasFront, design, false);
+        } else {
+            renderUniform2D(canvasFront, design, false);
+        }
     }
     if (canvasBack) {
-        renderJersey2D(canvasBack, design, true);
+        if (piece === 'shorts') {
+            renderShorts2D(canvasBack, design, true);
+        } else if (piece === 'jersey') {
+            renderJersey2D(canvasBack, design, true);
+        } else {
+            renderUniform2D(canvasBack, design, true);
+        }
     }
     if (canvasSide) {
-        renderJersey2DSide(canvasSide, design, false);
+        if (piece === 'shorts') {
+            renderShorts2DSide(canvasSide, design, false);
+        } else if (piece === 'jersey') {
+            renderJersey2DSide(canvasSide, design, false);
+        } else {
+            renderUniform2DSide(canvasSide, design, false);
+        }
     }
 
     setPartColor('jersey_body', design.baseColor);
     setPartColor('jersey_front', design.baseColor);
     setPartColor('jersey_back', design.baseColor);
-    setPartColor('shorts', design.accentColor);
     setTrimColor(design.accentColor, design.tertiaryColor || '#ffffff');
 
     const frontTexture = buildTexture(design);
@@ -840,7 +1112,15 @@ function applyDesign(design) {
     const backTexture = buildBackTexture(design);
     applyTextureToBack(backTexture);
 
-    // Apply material finishes in Three.js
+    // Apply shorts textures & colors to 3D model
+    setPartColor('shorts', design.shortsBaseColor || design.baseColor);
+    const shortsFrontTexture = buildShortsTexture(design);
+    applyTextureToShortsFront(shortsFrontTexture);
+
+    const shortsBackTexture = buildShortsBackTexture(design);
+    applyTextureToShortsBack(shortsBackTexture);
+
+    // Apply material finishes in Three.js (both jersey and shorts)
     applyMaterialFinish(design.finish);
 }
 
@@ -981,6 +1261,64 @@ function syncUI(design) {
     if (window._updateActiveSkinSwatches) {
         window._updateActiveSkinSwatches(design.skinTone || 'obsidian');
     }
+
+    // Sync Shorts Controls
+    setChecked('matchJerseyColors', design.matchJerseyColors !== false);
+    const customShortsContainer = document.getElementById('customShortsColorsContainer');
+    if (customShortsContainer) {
+        if (design.matchJerseyColors !== false) {
+            customShortsContainer.classList.add('hidden');
+        } else {
+            customShortsContainer.classList.remove('hidden');
+        }
+    }
+    setVal('shortsBaseColor', design.shortsBaseColor || design.baseColor);
+    setVal('shortsAccentColor', design.shortsAccentColor || design.accentColor);
+    setChecked('showShortsLogo', design.showShortsLogo !== false);
+    setChecked('showShortsNumber', design.showShortsNumber !== false);
+
+    // Shorts sizes & labels
+    const sNumSize = design.shortsNumberSize !== undefined ? design.shortsNumberSize : 54;
+    setVal('shortsNumberSize', sNumSize);
+    const lblShortsNumberSize = document.getElementById('lblShortsNumberSize');
+    if (lblShortsNumberSize) lblShortsNumberSize.textContent = `${sNumSize}px`;
+
+    const sLogoSize = design.shortsLogoSize !== undefined ? design.shortsLogoSize : 46;
+    setVal('shortsLogoSize', sLogoSize);
+    const lblShortsLogoSize = document.getElementById('lblShortsLogoSize');
+    if (lblShortsLogoSize) lblShortsLogoSize.textContent = `${sLogoSize}px`;
+
+    // Shorts text
+    setChecked('showShortsText', !!design.showShortsText);
+    const shortsTextContainer = document.getElementById('shortsTextContainer');
+    if (shortsTextContainer) {
+        if (design.showShortsText) shortsTextContainer.classList.remove('hidden');
+        else shortsTextContainer.classList.add('hidden');
+    }
+    setVal('shortsText', design.shortsText || '');
+    const sTextSize = design.shortsTextSize !== undefined ? design.shortsTextSize : 32;
+    setVal('shortsTextSize', sTextSize);
+    const lblShortsTextSize = document.getElementById('lblShortsTextSize');
+    if (lblShortsTextSize) lblShortsTextSize.textContent = `${sTextSize}px`;
+
+    // Sync active piece buttons
+    const activePiece = design.viewPiece || 'full';
+    const btnPieceFull = document.getElementById('btnPieceFull');
+    const btnPieceJersey = document.getElementById('btnPieceJersey');
+    const btnPieceShorts = document.getElementById('btnPieceShorts');
+    [
+        { btn: btnPieceFull, id: 'full' },
+        { btn: btnPieceJersey, id: 'jersey' },
+        { btn: btnPieceShorts, id: 'shorts' }
+    ].forEach(({ btn, id }) => {
+        if (btn) {
+            if (activePiece === id) {
+                btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-600 text-white transition';
+            } else {
+                btn.className = 'px-3 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition';
+            }
+        }
+    });
 }
 
 function syncScannedColorUI() {
@@ -1051,68 +1389,259 @@ function loadGoogleFont(fontName) {
 
 function getDraggableElementsFront(design) {
     const list = [];
-    if (design.showFrontText && design.frontText) {
-        list.push({
-            name: 'teamName',
-            x: design.teamX !== undefined ? design.teamX : 256,
-            y: design.teamY !== undefined ? design.teamY : 96,
-            width: Math.max(100, (design.frontText || '').length * 20),
-            height: 40
-        });
+    const piece = design.viewPiece || 'full';
+
+    // 1. Jersey Front Elements (shown in 'full' or 'jersey')
+    if (piece !== 'shorts') {
+        const isFull = (piece !== 'jersey');
+        const scale = isFull ? 0.58 : 1.0;
+        const offsetX = isFull ? (512 - 512 * scale) / 2 : 0;
+        const offsetY = isFull ? 8 : 0;
+
+        if (design.showFrontText && design.frontText) {
+            const origX = design.teamX !== undefined ? design.teamX : 256;
+            const origY = design.teamY !== undefined ? design.teamY : 96;
+            const rawW = Math.max(100, (design.frontText || '').length * 20);
+            const rawH = 40;
+            list.push({
+                name: 'teamName',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: scale,
+                x: offsetX + origX * scale,
+                y: offsetY + origY * scale,
+                width: rawW * scale,
+                height: rawH * scale
+            });
+        }
+        if (design.showSponsor && design.sponsorText) {
+            const origX = design.sponsorX !== undefined ? design.sponsorX : 256;
+            const origY = design.sponsorY !== undefined ? design.sponsorY : 222;
+            const rawW = Math.max(120, (design.sponsorText || '').length * 22);
+            const rawH = 44;
+            list.push({
+                name: 'sponsorText',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: scale,
+                x: offsetX + origX * scale,
+                y: offsetY + origY * scale,
+                width: rawW * scale,
+                height: rawH * scale
+            });
+        }
+        if (design.logo && design.logo !== 'none') {
+            const size = design.logoSize !== undefined ? design.logoSize : 60;
+            const origX = design.logoX !== undefined ? design.logoX : 256;
+            const origY = design.logoY !== undefined ? design.logoY : 155;
+            list.push({
+                name: 'logo',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: scale,
+                x: offsetX + origX * scale,
+                y: offsetY + origY * scale,
+                width: size * scale,
+                height: size * scale
+            });
+        }
+        if (design.showFrontNumber) {
+            const frontSizeVal = design.frontNumberSize !== undefined ? design.frontNumberSize : (design.numberSize || 140);
+            const origX = design.numberX !== undefined ? design.numberX : 256;
+            const origY = design.numberY !== undefined ? design.numberY : 340;
+            const rawW = Math.max(80, (design.number || '').length * frontSizeVal * 0.5);
+            const rawH = frontSizeVal * 0.8;
+            list.push({
+                name: 'number',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: scale,
+                x: offsetX + origX * scale,
+                y: offsetY + origY * scale,
+                width: rawW * scale,
+                height: rawH * scale
+            });
+        }
     }
-    if (design.showSponsor && design.sponsorText) {
-        list.push({
-            name: 'sponsorText',
-            x: design.sponsorX !== undefined ? design.sponsorX : 256,
-            y: design.sponsorY !== undefined ? design.sponsorY : 222,
-            width: Math.max(120, (design.sponsorText || '').length * 22),
-            height: 44
-        });
+
+    // 2. Shorts Front Elements (shown in 'full' or 'shorts')
+    if (piece !== 'jersey') {
+        const isFull = (piece !== 'shorts');
+        const sScale = isFull ? 0.58 : 1.0;
+        const sOffsetX = isFull ? (512 - 512 * sScale) / 2 : 0;
+        const sOffsetY = isFull ? 210 : 0;
+
+        // Shorts Player Number
+        if (design.showShortsNumber !== false && design.number) {
+            const origX = design.shortsNumberX !== undefined ? design.shortsNumberX : 127;
+            const origY = design.shortsNumberY !== undefined ? design.shortsNumberY : 385;
+            const sizeVal = design.shortsNumberSize !== undefined ? design.shortsNumberSize : 54;
+            const rawW = Math.max(50, (design.number || '23').length * sizeVal * 0.65);
+            const rawH = sizeVal * 0.9;
+            list.push({
+                name: 'shortsNumber',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: sScale,
+                x: sOffsetX + origX * sScale,
+                y: sOffsetY + origY * sScale,
+                width: rawW * sScale,
+                height: rawH * sScale
+            });
+        }
+
+        // Shorts Crest Badge
+        if (design.showShortsLogo !== false && design.logo && design.logo !== 'none') {
+            const origX = design.shortsLogoX !== undefined ? design.shortsLogoX : 385;
+            const origY = design.shortsLogoY !== undefined ? design.shortsLogoY : 385;
+            const size = design.shortsLogoSize !== undefined ? design.shortsLogoSize : 46;
+            list.push({
+                name: 'shortsLogo',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: sScale,
+                x: sOffsetX + origX * sScale,
+                y: sOffsetY + origY * sScale,
+                width: size * sScale,
+                height: size * sScale
+            });
+        }
+
+        // Shorts Custom Text / Wordmark
+        if (design.showShortsText && design.shortsText) {
+            const origX = design.shortsTextX !== undefined ? design.shortsTextX : 385;
+            const origY = design.shortsTextY !== undefined ? design.shortsTextY : 320;
+            const size = design.shortsTextSize !== undefined ? design.shortsTextSize : 32;
+            const rawW = Math.max(50, (design.shortsText || '').length * size * 0.65);
+            const rawH = size * 0.9;
+            list.push({
+                name: 'shortsText',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: sScale,
+                x: sOffsetX + origX * sScale,
+                y: sOffsetY + origY * sScale,
+                width: rawW * sScale,
+                height: rawH * sScale
+            });
+        }
     }
-    if (design.logo && design.logo !== 'none') {
-        const size = design.logoSize !== undefined ? design.logoSize : 60;
-        list.push({
-            name: 'logo',
-            x: design.logoX !== undefined ? design.logoX : 256,
-            y: design.logoY !== undefined ? design.logoY : 155,
-            width: size,
-            height: size
-        });
-    }
-    if (design.showFrontNumber) {
-        const frontSizeVal = design.frontNumberSize !== undefined ? design.frontNumberSize : (design.numberSize || 140);
-        list.push({
-            name: 'number',
-            x: design.numberX !== undefined ? design.numberX : 256,
-            y: design.numberY !== undefined ? design.numberY : 340,
-            width: Math.max(80, (design.number || '').length * frontSizeVal * 0.5),
-            height: frontSizeVal * 0.8
-        });
-    }
+
     return list;
 }
 
 function getDraggableElementsBack(design) {
     const list = [];
-    if (design.showBackText && design.backName) {
-        list.push({
-            name: 'backName',
-            x: design.backNameX !== undefined ? design.backNameX : 256,
-            y: (design.backNameY !== undefined ? design.backNameY : 380) - 260,
-            width: Math.max(120, (design.backName || '').length * 22),
-            height: 44
-        });
+    const piece = design.viewPiece || 'full';
+
+    // 1. Jersey Back Elements (shown in 'full' or 'jersey')
+    if (piece !== 'shorts') {
+        const isFull = (piece !== 'jersey');
+        const scale = isFull ? 0.58 : 1.0;
+        const offsetX = isFull ? (512 - 512 * scale) / 2 : 0;
+        const offsetY = isFull ? 8 : 0;
+
+        if (design.showBackText && design.backName) {
+            const origX = design.backNameX !== undefined ? design.backNameX : 256;
+            const origY = (design.backNameY !== undefined ? design.backNameY : 380) - 260;
+            const rawW = Math.max(120, (design.backName || '').length * 22);
+            const rawH = 44;
+            list.push({
+                name: 'backName',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: scale,
+                x: offsetX + origX * scale,
+                y: offsetY + origY * scale,
+                width: rawW * scale,
+                height: rawH * scale
+            });
+        }
+        if (design.showBackNumber) {
+            const backSizeVal = design.backNumberSize !== undefined ? design.backNumberSize : (design.numberSize || 140);
+            const origX = design.backNumberX !== undefined ? design.backNumberX : 256;
+            const origY = design.backNumberY !== undefined ? design.backNumberY : 290;
+            const rawW = Math.max(80, (design.number || '').length * backSizeVal * 0.5);
+            const rawH = backSizeVal * 0.8;
+            list.push({
+                name: 'backNumber',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: scale,
+                x: offsetX + origX * scale,
+                y: offsetY + origY * scale,
+                width: rawW * scale,
+                height: rawH * scale
+            });
+        }
     }
-    if (design.showBackNumber) {
-        const backSizeVal = design.backNumberSize !== undefined ? design.backNumberSize : (design.numberSize || 140);
-        list.push({
-            name: 'backNumber',
-            x: design.backNumberX !== undefined ? design.backNumberX : 256,
-            y: design.backNumberY !== undefined ? design.backNumberY : 290,
-            width: Math.max(80, (design.number || '').length * backSizeVal * 0.5),
-            height: backSizeVal * 0.8
-        });
+
+    // 2. Shorts Back Elements (shown in 'full' or 'shorts')
+    if (piece !== 'jersey') {
+        const isFull = (piece !== 'shorts');
+        const sScale = isFull ? 0.58 : 1.0;
+        const sOffsetX = isFull ? (512 - 512 * sScale) / 2 : 0;
+        const sOffsetY = isFull ? 210 : 0;
+
+        if (design.showShortsBackNumber && design.number) {
+            const origX = design.shortsBackNumberX !== undefined ? design.shortsBackNumberX : 385;
+            const origY = design.shortsBackNumberY !== undefined ? design.shortsBackNumberY : 385;
+            const sizeVal = design.shortsBackNumberSize !== undefined ? design.shortsBackNumberSize : 54;
+            const rawW = Math.max(50, (design.number || '23').length * sizeVal * 0.65);
+            const rawH = sizeVal * 0.9;
+            list.push({
+                name: 'shortsBackNumber',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: sScale,
+                x: sOffsetX + origX * sScale,
+                y: sOffsetY + origY * sScale,
+                width: rawW * sScale,
+                height: rawH * sScale
+            });
+        }
+
+        if (design.showShortsBackText && design.shortsBackText) {
+            const origX = design.shortsBackTextX !== undefined ? design.shortsBackTextX : 256;
+            const origY = design.shortsBackTextY !== undefined ? design.shortsBackTextY : 385;
+            const size = design.shortsBackTextSize !== undefined ? design.shortsBackTextSize : 32;
+            const rawW = Math.max(50, (design.shortsBackText || '').length * size * 0.65);
+            const rawH = size * 0.9;
+            list.push({
+                name: 'shortsBackText',
+                origJerseyX: origX,
+                origJerseyY: origY,
+                origX: origX,
+                origY: origY,
+                scale: sScale,
+                x: sOffsetX + origX * sScale,
+                y: sOffsetY + origY * sScale,
+                width: rawW * sScale,
+                height: rawH * sScale
+            });
+        }
     }
+
     return list;
 }
 
@@ -1142,8 +1671,9 @@ function bindDragEvents(canvas, isBack) {
         if (clicked) {
             activeDrag = {
                 name: clicked.name,
-                origX: clicked.x,
-                origY: clicked.y,
+                scale: clicked.scale || 1.0,
+                origX: clicked.origX !== undefined ? clicked.origX : clicked.origJerseyX,
+                origY: clicked.origY !== undefined ? clicked.origY : clicked.origJerseyY,
                 startCx: coords.x,
                 startCy: coords.y
             };
@@ -1160,11 +1690,11 @@ function bindDragEvents(canvas, isBack) {
         if (e.cancelable) e.preventDefault();
 
         const coords = getMouseCoords(e, canvas);
-        const dx = coords.x - activeDrag.startCx;
-        const dy = coords.y - activeDrag.startCy;
+        const dx = (coords.x - activeDrag.startCx) / (activeDrag.scale || 1.0);
+        const dy = (coords.y - activeDrag.startCy) / (activeDrag.scale || 1.0);
 
-        const newX = Math.max(10, Math.min(502, activeDrag.origX + dx));
-        const newY = Math.max(10, Math.min(502, activeDrag.origY + dy));
+        const newX = Math.round(Math.max(10, Math.min(502, activeDrag.origX + dx)));
+        const newY = Math.round(Math.max(10, Math.min(502, activeDrag.origY + dy)));
 
         if (activeDrag.name === 'teamName') {
             currentDesign.teamX = newX;
@@ -1184,6 +1714,21 @@ function bindDragEvents(canvas, isBack) {
         } else if (activeDrag.name === 'backNumber') {
             currentDesign.backNumberX = newX;
             currentDesign.backNumberY = newY;
+        } else if (activeDrag.name === 'shortsNumber') {
+            currentDesign.shortsNumberX = newX;
+            currentDesign.shortsNumberY = newY;
+        } else if (activeDrag.name === 'shortsLogo') {
+            currentDesign.shortsLogoX = newX;
+            currentDesign.shortsLogoY = newY;
+        } else if (activeDrag.name === 'shortsText') {
+            currentDesign.shortsTextX = newX;
+            currentDesign.shortsTextY = newY;
+        } else if (activeDrag.name === 'shortsBackNumber') {
+            currentDesign.shortsBackNumberX = newX;
+            currentDesign.shortsBackNumberY = newY;
+        } else if (activeDrag.name === 'shortsBackText') {
+            currentDesign.shortsBackTextX = newX;
+            currentDesign.shortsBackTextY = newY;
         }
 
         applyDesign(currentDesign);

@@ -1,9 +1,12 @@
 /**
  * Order Preview & Design Specification Renderer
- * Renders 2D Front & Back visual jersey canvases and human-readable product notes.
+ * Renders 2D Front & Back visual kit canvases (Full Kit, Jersey Only, Shorts Only)
+ * and comprehensive human-readable product specifications.
  */
 
 window.OrderPreview = (function () {
+    const ordersCache = {};
+    const ordersPieceCache = {};
 
     function parseOrderNotes(notesString = '', order = {}) {
         const defaults = {
@@ -34,6 +37,24 @@ window.OrderPreview = (function () {
             teamX: 256, teamY: 90,
             backNameX: 256, backNameY: 380,
             backNumberX: 256, backNumberY: 290,
+            // Shorts defaults
+            hasShorts: false,
+            matchJerseyColors: true,
+            shortsBaseColor: order.base_color || '#4F46E5',
+            shortsAccentColor: order.accent_color || '#7C3AED',
+            showShortsLogo: true,
+            showShortsNumber: true,
+            showShortsText: false,
+            shortsText: '',
+            shortsNumberX: 127,
+            shortsNumberY: 385,
+            shortsNumberSize: 54,
+            shortsLogoX: 385,
+            shortsLogoY: 385,
+            shortsLogoSize: 46,
+            shortsTextX: 385,
+            shortsTextY: 320,
+            shortsTextSize: 32,
             userNotes: '',
             rawNotes: notesString || ''
         };
@@ -59,7 +80,58 @@ window.OrderPreview = (function () {
             if (bNum) { result.backNumberX = parseFloat(bNum[1]); result.backNumberY = parseFloat(bNum[2]); }
         }
 
-        const cleanNotes = notesString.replace(/Coordinates:\s*\[[^\]]+\]/gi, '');
+        // Shorts specs parsing
+        const shortsMatch = notesString.match(/Shorts:\s*\[([^\]]+)\]/i);
+        if (shortsMatch) {
+            result.hasShorts = true;
+            const sStr = shortsMatch[1];
+            const mMatch = sStr.match(/Match:\s*(true|false)/i);
+            if (mMatch) result.matchJerseyColors = mMatch[1].toLowerCase() === 'true';
+
+            const baseMatch = sStr.match(/Base:\s*(#[0-9a-fA-F]+)/i);
+            if (baseMatch) result.shortsBaseColor = baseMatch[1];
+
+            const accMatch = sStr.match(/Accent:\s*(#[0-9a-fA-F]+)/i);
+            if (accMatch) result.shortsAccentColor = accMatch[1];
+
+            const logoMatch = sStr.match(/Logo:\s*(true|false)/i);
+            if (logoMatch) result.showShortsLogo = logoMatch[1].toLowerCase() === 'true';
+
+            const numMatch = sStr.match(/Num:\s*(true|false)/i);
+            if (numMatch) result.showShortsNumber = numMatch[1].toLowerCase() === 'true';
+
+            const textMatch = sStr.match(/Text:\s*"([^"]*)"(?:\s*\(Show:\s*(true|false)\))?/i);
+            if (textMatch) {
+                result.shortsText = textMatch[1];
+                if (textMatch[2]) result.showShortsText = textMatch[2].toLowerCase() === 'true';
+                else if (result.shortsText) result.showShortsText = true;
+            }
+        }
+
+        const sCoordMatch = notesString.match(/ShortsCoords:\s*\[([^\]]+)\]/i);
+        if (sCoordMatch) {
+            const scStr = sCoordMatch[1];
+            const scNum = scStr.match(/Num:\s*(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\s*\((\d+)px\))?/i);
+            if (scNum) {
+                result.shortsNumberX = parseFloat(scNum[1]);
+                result.shortsNumberY = parseFloat(scNum[2]);
+                if (scNum[3]) result.shortsNumberSize = parseInt(scNum[3], 10);
+            }
+            const scLogo = scStr.match(/Logo:\s*(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\s*\((\d+)px\))?/i);
+            if (scLogo) {
+                result.shortsLogoX = parseFloat(scLogo[1]);
+                result.shortsLogoY = parseFloat(scLogo[2]);
+                if (scLogo[3]) result.shortsLogoSize = parseInt(scLogo[3], 10);
+            }
+            const scText = scStr.match(/Text:\s*(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)(?:\s*\((\d+)px\))?/i);
+            if (scText) {
+                result.shortsTextX = parseFloat(scText[1]);
+                result.shortsTextY = parseFloat(scText[2]);
+                if (scText[3]) result.shortsTextSize = parseInt(scText[3], 10);
+            }
+        }
+
+        const cleanNotes = notesString.replace(/Coordinates:\s*\[[^\]]+\]/gi, '').replace(/ShortsCoords:\s*\[[^\]]+\]/gi, '').replace(/Shorts:\s*\[[^\]]+\]/gi, '');
 
         const getVal = (key) => {
             const m = cleanNotes.match(new RegExp(`(?:^|\\||\\s)${key}:\\s*([^|]+)`, 'i'));
@@ -86,8 +158,9 @@ window.OrderPreview = (function () {
         const parseElementWithShow = (key) => {
             const m = cleanNotes.match(new RegExp(`(?:^|\\||\\s)${key}:\\s*([^(|]+)(?:\\(Show:\\s*(true|false)\\))?`, 'i'));
             if (m) {
+                let v = m[1].trim().replace(/^["']+|["']+$/g, '');
                 return {
-                    val: m[1].trim(),
+                    val: v,
                     show: m[2] !== undefined ? m[2].toLowerCase() === 'true' : true
                 };
             }
@@ -122,8 +195,13 @@ window.OrderPreview = (function () {
         if (jTypeMatch) result.jerseyType = jTypeMatch[1].trim().toLowerCase();
         else result.jerseyType = 'sleeveless';
 
-        const userNotesMatch = cleanNotes.match(/Notes:\s*(.*)$/i);
-        if (userNotesMatch) result.userNotes = userNotesMatch[1].trim();
+        const userNotesMatch = cleanNotes.match(/(?:CustomerNotes|Notes):\s*(.*)$/i);
+        if (userNotesMatch) result.userNotes = userNotesMatch[1].trim().replace(/^["']+|["']+$/g, '');
+
+        if (result.matchJerseyColors !== false) {
+            result.shortsBaseColor = result.baseColor;
+            result.shortsAccentColor = result.accentColor;
+        }
 
         return result;
     }
@@ -131,11 +209,11 @@ window.OrderPreview = (function () {
     function pathJersey(ctx, isBack = false) {
         ctx.beginPath();
         if (isBack) {
-            ctx.moveTo(256, 52);
-            ctx.quadraticCurveTo(205, 52, 172, 44);
+            ctx.moveTo(256, 48);
+            ctx.quadraticCurveTo(205, 48, 172, 44);
         } else {
-            ctx.moveTo(256, 82);
-            ctx.quadraticCurveTo(208, 80, 172, 44);
+            ctx.moveTo(256, 68);
+            ctx.quadraticCurveTo(208, 66, 172, 44);
         }
         ctx.lineTo(122, 60);
         ctx.bezierCurveTo(145, 115, 120, 160, 66, 185);
@@ -145,9 +223,9 @@ window.OrderPreview = (function () {
         ctx.bezierCurveTo(392, 160, 367, 115, 390, 60);
         ctx.lineTo(340, 44);
         if (isBack) {
-            ctx.quadraticCurveTo(307, 52, 256, 52);
+            ctx.quadraticCurveTo(307, 48, 256, 48);
         } else {
-            ctx.quadraticCurveTo(304, 80, 256, 82);
+            ctx.quadraticCurveTo(304, 66, 256, 68);
         }
         ctx.closePath();
     }
@@ -178,6 +256,86 @@ window.OrderPreview = (function () {
             ctx.quadraticCurveTo(302, 72, 256, 75);
         }
         ctx.closePath();
+    }
+
+    function pathShorts(ctx, isBack = false) {
+        ctx.beginPath();
+        if (isBack) {
+            ctx.moveTo(136, 68);
+            ctx.quadraticCurveTo(256, 76, 376, 68);
+        } else {
+            ctx.moveTo(136, 72);
+            ctx.quadraticCurveTo(256, 84, 376, 72);
+        }
+        ctx.bezierCurveTo(388, 170, 402, 310, 410, 460);
+        ctx.quadraticCurveTo(345, 470, 280, 456);
+        ctx.quadraticCurveTo(270, 365, 256, 305);
+        ctx.quadraticCurveTo(242, 365, 232, 456);
+        ctx.quadraticCurveTo(167, 470, 102, 460);
+        ctx.bezierCurveTo(110, 310, 124, 170, 136, isBack ? 68 : 72);
+        ctx.closePath();
+    }
+
+    function drawShortsStitches(ctx, isFemale = false, isBack = false) {
+        const waistY = isFemale ? (isBack ? 82 : 86) : (isBack ? 68 : 72);
+        const hemY = isFemale ? 436 : 460;
+        const crotchY = 305;
+
+        // Waistband bottom stitch
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(136, waistY + 36);
+        ctx.quadraticCurveTo(256, waistY + 44, 376, waistY + 36);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+        ctx.setLineDash([2, 3]);
+        ctx.beginPath();
+        ctx.moveTo(136, waistY + 34);
+        ctx.quadraticCurveTo(256, waistY + 42, 376, waistY + 34);
+        ctx.stroke();
+        ctx.restore();
+
+        // Inseam stitches
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.30)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(256, crotchY);
+        ctx.lineTo(234, hemY - 6);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(256, crotchY);
+        ctx.lineTo(278, hemY - 6);
+        ctx.stroke();
+        ctx.restore();
+
+        // Central crotch seam line
+        ctx.save();
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.lineWidth = 1.6;
+        ctx.beginPath();
+        ctx.moveTo(256, waistY + 36);
+        ctx.lineTo(256, crotchY);
+        ctx.stroke();
+        ctx.restore();
+
+        // Hem stitches
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(108, hemY - 14);
+        ctx.quadraticCurveTo(167, hemY - 4, 230, hemY - 14);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(282, hemY - 14);
+        ctx.quadraticCurveTo(345, hemY - 4, 404, hemY - 14);
+        ctx.stroke();
+        ctx.restore();
     }
 
     function drawEmbossedFold(ctx, x1, y1, cx, cy, x2, y2, shadowOpacity, highlightOpacity) {
@@ -223,6 +381,7 @@ window.OrderPreview = (function () {
         if (type === 'name') return `${weight} ${italicStr}38px ${base}`;
         if (type === 'team') return `bold 32px ${base}`;
         if (type === 'sponsor') return `bold italic 36px ${base}`;
+        if (type === 'shorts_text') return `bold ${italicStr}${numSizeVal || 32}px ${base}`;
         return `bold 24px ${base}`;
     }
 
@@ -584,6 +743,119 @@ window.OrderPreview = (function () {
         }
     }
 
+    function drawRawShortsDesign(ctx, options, isBack = false) {
+        const matchJersey = options.matchJerseyColors !== false;
+        const baseColor = matchJersey ? (options.baseColor || '#4F46E5') : (options.shortsBaseColor || options.baseColor || '#4F46E5');
+        const accentColor = matchJersey ? (options.accentColor || '#7C3AED') : (options.shortsAccentColor || options.accentColor || '#7C3AED');
+        const tertiaryColor = options.tertiaryColor || '#ffffff';
+        const pattern = options.pattern || 'none';
+        const logo = options.logo || 'none';
+        const number = options.number || '23';
+        const font = options.font || 'athletic';
+        const customFont = options.customFont || '';
+        const outlineWeight = options.outlineWeight !== undefined ? options.outlineWeight : 8;
+        const showShortsLogo = options.showShortsLogo !== undefined ? options.showShortsLogo : true;
+        const showShortsNumber = options.showShortsNumber !== undefined ? options.showShortsNumber : true;
+
+        const shortsNumberX = options.shortsNumberX !== undefined ? options.shortsNumberX : 127;
+        const shortsNumberY = options.shortsNumberY !== undefined ? options.shortsNumberY : 385;
+        const shortsNumberSize = options.shortsNumberSize !== undefined ? options.shortsNumberSize : 54;
+
+        const shortsLogoX = options.shortsLogoX !== undefined ? options.shortsLogoX : 385;
+        const shortsLogoY = options.shortsLogoY !== undefined ? options.shortsLogoY : 385;
+        const shortsLogoSize = options.shortsLogoSize !== undefined ? options.shortsLogoSize : 46;
+
+        const showShortsText = options.showShortsText !== undefined ? options.showShortsText : false;
+        const shortsText = options.shortsText || '';
+        const shortsTextX = options.shortsTextX !== undefined ? options.shortsTextX : 385;
+        const shortsTextY = options.shortsTextY !== undefined ? options.shortsTextY : 320;
+        const shortsTextSize = options.shortsTextSize !== undefined ? options.shortsTextSize : 32;
+
+        // Base shorts background
+        ctx.fillStyle = baseColor;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Pattern
+        if (pattern === 'panel') {
+            ctx.fillStyle = accentColor;
+            ctx.fillRect(0, 0, 110, 512);
+            ctx.fillRect(402, 0, 110, 512);
+            ctx.fillStyle = tertiaryColor;
+            ctx.fillRect(110, 0, 12, 512);
+            ctx.fillRect(390, 0, 12, 512);
+        } else {
+            drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
+        }
+
+        // Elastic Waistband
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(0, 0, 512, 48);
+        ctx.fillStyle = tertiaryColor;
+        ctx.fillRect(0, 20, 512, 8);
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
+        for (let x = 0; x < 512; x += 8) {
+            ctx.fillRect(x, 0, 1.5, 48);
+        }
+
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        ctx.moveTo(0, 48);
+        ctx.lineTo(512, 48);
+        ctx.stroke();
+
+        // Leg Opening Hem Trim
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(0, 472, 248, 40);
+        ctx.fillStyle = tertiaryColor;
+        ctx.fillRect(0, 466, 248, 6);
+
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(264, 472, 248, 40);
+        ctx.fillStyle = tertiaryColor;
+        ctx.fillRect(264, 466, 248, 6);
+
+        // Leg details (Logo, Player Number, Wordmark)
+        if (!isBack) {
+            if (showShortsLogo && logo !== 'none') {
+                drawLogo(ctx, logo, shortsLogoX, shortsLogoY, shortsLogoSize, tertiaryColor, accentColor);
+            }
+
+            if (showShortsText && shortsText) {
+                ctx.save();
+                ctx.fillStyle = tertiaryColor || '#ffffff';
+                ctx.strokeStyle = baseColor || '#000000';
+                ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.35));
+                ctx.font = getFontString('shorts_text', font, customFont, shortsTextSize);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowBlur = 4;
+                ctx.strokeText(shortsText, shortsTextX, shortsTextY);
+                ctx.shadowBlur = 0;
+                ctx.fillText(shortsText, shortsTextX, shortsTextY);
+                ctx.restore();
+            }
+
+            if (showShortsNumber && number) {
+                ctx.save();
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = tertiaryColor;
+                ctx.lineWidth = Math.max(1, Math.round(outlineWeight * 0.5));
+                ctx.font = getFontString('number', font, customFont, shortsNumberSize);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+                ctx.shadowBlur = 6;
+                ctx.strokeText(number, shortsNumberX, shortsNumberY);
+                ctx.shadowBlur = 0;
+                ctx.fillText(number, shortsNumberX, shortsNumberY);
+                ctx.restore();
+            }
+        }
+    }
+
     function renderJersey2D(targetCanvas, options, isBack = false) {
         if (!targetCanvas) return;
         const ctx = targetCanvas.getContext('2d');
@@ -604,7 +876,9 @@ window.OrderPreview = (function () {
         const offsetX = (width - 512 * scaleFactor) / 2;
         const offsetY = (height - 512 * scaleFactor) / 2;
         ctx.translate(offsetX, offsetY);
-        if (options && options.jerseyType === 'tshirt') {
+        ctx.scale(scaleFactor, scaleFactor);
+
+        if (options && (options.jerseyType === 'tshirt' || options.jerseyType === 't-shirt' || options.jerseyType === 't shirt')) {
             pathTshirt(ctx, isBack);
         } else {
             pathJersey(ctx, isBack);
@@ -643,33 +917,169 @@ window.OrderPreview = (function () {
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
         ctx.beginPath();
-        ctx.moveTo(216, 56); ctx.quadraticCurveTo(256, 36, 296, 56); ctx.quadraticCurveTo(256, 70, 216, 56);
+        ctx.moveTo(216, 50); ctx.quadraticCurveTo(256, 36, 296, 50); ctx.quadraticCurveTo(256, 60, 216, 50);
         ctx.closePath(); ctx.fill();
 
         ctx.restore();
     }
 
+    function renderShorts2D(targetCanvas, options, isBack = false) {
+        if (!targetCanvas) return;
+        const ctx = targetCanvas.getContext('2d');
+        const width = targetCanvas.width;
+        const height = targetCanvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        const designCanvas = document.createElement('canvas');
+        designCanvas.width = 512;
+        designCanvas.height = 512;
+        const designCtx = designCanvas.getContext('2d');
+        drawRawShortsDesign(designCtx, options, isBack);
+
+        ctx.save();
+        const scaleFactor = width / 512;
+        const offsetX = (width - 512 * scaleFactor) / 2;
+        const offsetY = (height - 512 * scaleFactor) / 2;
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scaleFactor, scaleFactor);
+
+        pathShorts(ctx, isBack);
+        ctx.clip();
+
+        ctx.drawImage(designCanvas, 0, 0, 512, 512);
+
+        ctx.globalCompositeOperation = 'multiply';
+        const flankGrad = ctx.createLinearGradient(0, 0, 512, 0);
+        flankGrad.addColorStop(0, 'rgba(0, 0, 0, 0.32)');
+        flankGrad.addColorStop(0.2, 'rgba(0, 0, 0, 0.05)');
+        flankGrad.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+        flankGrad.addColorStop(0.8, 'rgba(0, 0, 0, 0.05)');
+        flankGrad.addColorStop(1, 'rgba(0, 0, 0, 0.32)');
+        ctx.fillStyle = flankGrad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        const groinGrad = ctx.createRadialGradient(256, 305, 5, 256, 320, 110);
+        groinGrad.addColorStop(0, 'rgba(0, 0, 0, 0.40)');
+        groinGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = groinGrad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        drawEmbossedFold(ctx, 160, 240, 200, 265, 240, 250, 0.16, 0.08);
+        drawEmbossedFold(ctx, 352, 240, 312, 265, 272, 250, 0.16, 0.08);
+        drawEmbossedFold(ctx, 150, 350, 190, 375, 230, 360, 0.14, 0.07);
+        drawEmbossedFold(ctx, 362, 350, 322, 375, 282, 360, 0.14, 0.07);
+
+        ctx.globalCompositeOperation = 'screen';
+        const highlightGrad = ctx.createLinearGradient(130, 0, 380, 0);
+        highlightGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+        highlightGrad.addColorStop(0.25, 'rgba(255, 255, 255, 0.08)');
+        highlightGrad.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+        highlightGrad.addColorStop(0.75, 'rgba(255, 255, 255, 0.08)');
+        highlightGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = highlightGrad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.translate(offsetX, offsetY);
+        ctx.scale(scaleFactor, scaleFactor);
+        drawShortsStitches(ctx, false, isBack);
+        ctx.restore();
+    }
+
+    function renderUniform2D(targetCanvas, options, isBack = false) {
+        if (!targetCanvas) return;
+        const ctx = targetCanvas.getContext('2d');
+        const width = targetCanvas.width;
+        const height = targetCanvas.height;
+        ctx.clearRect(0, 0, width, height);
+
+        const uniformCanvas = document.createElement('canvas');
+        uniformCanvas.width = 512;
+        uniformCanvas.height = 512;
+        const uCtx = uniformCanvas.getContext('2d');
+
+        // 1. Draw Jersey
+        const jerseyCanvas = document.createElement('canvas');
+        jerseyCanvas.width = 512;
+        jerseyCanvas.height = 512;
+        renderJersey2D(jerseyCanvas, options, isBack);
+
+        // 2. Draw Shorts
+        const shortsCanvas = document.createElement('canvas');
+        shortsCanvas.width = 512;
+        shortsCanvas.height = 512;
+        renderShorts2D(shortsCanvas, options, isBack);
+
+        // 3. Composite both on uniformCanvas
+        const scale = 0.58;
+        const offsetX = (512 - 512 * scale) / 2;
+        const jOffsetY = 8;
+        const sOffsetY = 210;
+
+        uCtx.drawImage(jerseyCanvas, offsetX, jOffsetY, 512 * scale, 512 * scale);
+        uCtx.drawImage(shortsCanvas, offsetX, sOffsetY, 512 * scale, 512 * scale);
+
+        ctx.save();
+        const scaleFactor = width / 512;
+        const cOffsetX = (width - 512 * scaleFactor) / 2;
+        const cOffsetY = (height - 512 * scaleFactor) / 2;
+        ctx.translate(cOffsetX, cOffsetY);
+        ctx.scale(scaleFactor, scaleFactor);
+        ctx.drawImage(uniformCanvas, 0, 0, 512, 512);
+        ctx.restore();
+    }
+
+    function renderView2D(targetCanvas, options, isBack = false, piece = 'full') {
+        if (piece === 'jersey') {
+            renderJersey2D(targetCanvas, options, isBack);
+        } else if (piece === 'shorts') {
+            renderShorts2D(targetCanvas, options, isBack);
+        } else {
+            renderUniform2D(targetCanvas, options, isBack);
+        }
+    }
+
     function renderOrderPreviewCardHTML(order, prefix = 'ord') {
         const specs = parseOrderNotes(order.notes, order);
+        ordersCache[order.id] = order;
+        const pieceKey = `${prefix}-${order.id}`;
+        if (!ordersPieceCache[pieceKey]) {
+            ordersPieceCache[pieceKey] = 'full';
+        }
+        const currentPiece = ordersPieceCache[pieceKey];
 
         return `
         <div class="bg-[#070b14] border border-slate-800 rounded-3xl p-5 shadow-2xl my-4 text-white font-sans">
             <!-- Section Header -->
-            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4 flex-wrap gap-2">
                 <div class="flex items-center gap-2">
                     <span class="text-xs px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-400 font-bold border border-indigo-500/30">🎨 Selected Design</span>
-                    <span class="text-xs text-slate-400 font-medium">Visual Preview & Specifications</span>
+                    <span class="text-xs text-slate-400 font-medium">Visual Preview &amp; Specifications</span>
                 </div>
-                <button onclick="OrderPreview.toggleSpecs('specs-body-${prefix}-${order.id}', this)" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-800">
-                    <span>Hide Specs</span> ⚙️
-                </button>
+                <div class="flex items-center gap-2">
+                    <!-- Piece Toggle Buttons -->
+                    <div id="piece-selector-${prefix}-${order.id}" class="flex items-center bg-slate-900 rounded-xl p-0.5 border border-slate-800 text-[11px] font-bold">
+                        <button type="button" onclick="OrderPreview.switchPiece('${order.id}', 'full', '${prefix}')" id="btn-piece-full-${prefix}-${order.id}" class="px-2.5 py-1 rounded-lg ${currentPiece === 'full' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'} transition cursor-pointer">Full Kit</button>
+                        <button type="button" onclick="OrderPreview.switchPiece('${order.id}', 'jersey', '${prefix}')" id="btn-piece-jersey-${prefix}-${order.id}" class="px-2.5 py-1 rounded-lg ${currentPiece === 'jersey' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'} transition cursor-pointer">Jersey</button>
+                        <button type="button" onclick="OrderPreview.switchPiece('${order.id}', 'shorts', '${prefix}')" id="btn-piece-shorts-${prefix}-${order.id}" class="px-2.5 py-1 rounded-lg ${currentPiece === 'shorts' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'} transition cursor-pointer">Shorts</button>
+                    </div>
+
+                    <button onclick="OrderPreview.toggleSpecs('specs-body-${prefix}-${order.id}', this)" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1 bg-slate-900/80 px-2.5 py-1 rounded-xl border border-slate-800 cursor-pointer">
+                        <span>Hide Specs</span> ⚙️
+                    </button>
+                </div>
             </div>
 
             <!-- Front View & Back View Canvas Container -->
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <!-- FRONT VIEW -->
                 <div class="bg-[#030712] rounded-2xl border border-slate-800/80 p-4 flex flex-col items-center justify-center relative">
-                    <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-3 text-center">FRONT VIEW</p>
+                    <div class="flex items-center justify-between w-full mb-3 px-1">
+                        <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase">FRONT VIEW</p>
+                        <span id="${prefix}-lbl-piece-front-${order.id}" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-wider">${currentPiece === 'full' ? 'Full Kit' : (currentPiece === 'jersey' ? 'Jersey Only' : 'Shorts Only')}</span>
+                    </div>
                     <div class="relative w-full aspect-square max-w-[280px] flex items-center justify-center">
                         <canvas id="${prefix}-canvas-front-${order.id}" width="320" height="320" class="w-full h-full object-contain rounded-xl drop-shadow-2xl"></canvas>
                     </div>
@@ -677,7 +1087,10 @@ window.OrderPreview = (function () {
 
                 <!-- BACK VIEW -->
                 <div class="bg-[#030712] rounded-2xl border border-slate-800/80 p-4 flex flex-col items-center justify-center relative">
-                    <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase mb-3 text-center">BACK VIEW</p>
+                    <div class="flex items-center justify-between w-full mb-3 px-1">
+                        <p class="text-[10px] font-black tracking-widest text-slate-400 uppercase">BACK VIEW</p>
+                        <span id="${prefix}-lbl-piece-back-${order.id}" class="text-[9px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 uppercase tracking-wider">${currentPiece === 'full' ? 'Full Kit' : (currentPiece === 'jersey' ? 'Jersey Only' : 'Shorts Only')}</span>
+                    </div>
                     <div class="relative w-full aspect-square max-w-[280px] flex items-center justify-center">
                         <canvas id="${prefix}-canvas-back-${order.id}" width="320" height="320" class="w-full h-full object-contain rounded-xl drop-shadow-2xl"></canvas>
                     </div>
@@ -688,12 +1101,12 @@ window.OrderPreview = (function () {
             <div id="specs-body-${prefix}-${order.id}" class="bg-slate-900/90 rounded-2xl border border-slate-800 p-4 space-y-3">
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                     <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Size & Finish</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Size &amp; Finish</p>
                         <p class="font-bold text-white mt-0.5"><span class="px-1.5 py-0.5 rounded bg-indigo-600 text-white text-[11px] font-black">${specs.size}</span> · <span class="capitalize text-slate-300">${specs.finish}</span></p>
                     </div>
 
                     <div class="bg-slate-800/50 p-2.5 rounded-xl border border-slate-700/50">
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Pattern & Style</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Pattern &amp; Style</p>
                         <p class="font-bold text-white capitalize mt-0.5">${specs.pattern || 'None'}</p>
                         <p class="text-[10px] text-slate-400 font-medium capitalize">Font: ${specs.font || 'athletic'}${specs.customFont && specs.customFont !== 'None' ? ' (' + specs.customFont + ')' : ''}</p>
                     </div>
@@ -717,8 +1130,9 @@ window.OrderPreview = (function () {
                     </div>
                 </div>
 
+                <!-- Jersey Print & Placement Customization -->
                 <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 space-y-2 text-xs">
-                    <p class="text-[10px] font-black uppercase text-indigo-400 tracking-wider">Print & Placement Customization</p>
+                    <p class="text-[10px] font-black uppercase text-indigo-400 tracking-wider">🎽 Jersey Print &amp; Placement Customization</p>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <div>
                             <span class="text-slate-400 text-[11px]">Front Text:</span>
@@ -739,6 +1153,30 @@ window.OrderPreview = (function () {
                     </div>
                 </div>
 
+                <!-- Shorts & Leg Customization -->
+                <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-700/50 space-y-2 text-xs">
+                    <p class="text-[10px] font-black uppercase text-indigo-400 tracking-wider">🩳 Shorts &amp; Leg Customization</p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <div>
+                            <span class="text-slate-400 text-[11px]">Shorts Colors:</span>
+                            <p class="font-bold text-white">${specs.matchJerseyColors !== false ? '<span class="text-emerald-400">Matching Jersey Kit</span>' : `Custom (${specs.shortsBaseColor || specs.baseColor})`}</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px]">Leg Crest Badge:</span>
+                            <p class="font-bold text-white">${specs.showShortsLogo !== false && specs.logo !== 'none' ? `<span class="capitalize">${specs.logo}</span> <span class="text-indigo-400 text-[10px]">(${specs.shortsLogoSize || 46}px)</span>` : '<span class="text-slate-500">None</span>'}</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px]">Leg Player Number:</span>
+                            <p class="font-bold text-white">${specs.showShortsNumber !== false ? `#${specs.number || '00'} <span class="text-indigo-400 text-[10px]">(${specs.shortsNumberSize || 54}px)</span>` : '<span class="text-slate-500">None</span>'}</p>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[11px]">Shorts Wordmark / Text:</span>
+                            <p class="font-bold text-white">${specs.showShortsText && specs.shortsText ? `"${specs.shortsText}" <span class="text-indigo-400 text-[10px]">(${specs.shortsTextSize || 32}px)</span>` : '<span class="text-slate-500">None</span>'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Coordinates Bar -->
                 <div class="bg-slate-950/70 p-2.5 rounded-xl border border-slate-800 text-[11px] text-slate-400 font-mono flex flex-wrap gap-y-1 gap-x-3">
                     <span><strong class="text-slate-300">Num Size:</strong> F-${specs.frontNumberSize}px / B-${specs.backNumberSize}px</span>
                     <span><strong class="text-slate-300">Outline:</strong> ${specs.outlineWeight}px</span>
@@ -748,6 +1186,9 @@ window.OrderPreview = (function () {
                     <span><strong class="text-slate-300">F-Num:</strong> (${specs.numberX}, ${specs.numberY})</span>
                     <span><strong class="text-slate-300">B-Name:</strong> (${specs.backNameX}, ${specs.backNameY})</span>
                     <span><strong class="text-slate-300">B-Num:</strong> (${specs.backNumberX}, ${specs.backNumberY})</span>
+                    <span><strong class="text-indigo-300">Shorts-Num:</strong> (${specs.shortsNumberX ?? 127}, ${specs.shortsNumberY ?? 385})</span>
+                    <span><strong class="text-indigo-300">Shorts-Logo:</strong> (${specs.shortsLogoX ?? 385}, ${specs.shortsLogoY ?? 385})</span>
+                    ${specs.showShortsText && specs.shortsText ? `<span><strong class="text-indigo-300">Shorts-Text:</strong> (${specs.shortsTextX ?? 385}, ${specs.shortsTextY ?? 320})</span>` : ''}
                 </div>
 
                 ${specs.userNotes ? `
@@ -762,12 +1203,51 @@ window.OrderPreview = (function () {
     }
 
     function initOrderCanvases(order, prefix = 'ord') {
+        if (!order) return;
+        ordersCache[order.id] = order;
+        const pieceKey = `${prefix}-${order.id}`;
+        if (!ordersPieceCache[pieceKey]) {
+            ordersPieceCache[pieceKey] = 'full';
+        }
+        const currentPiece = ordersPieceCache[pieceKey];
         const specs = parseOrderNotes(order.notes, order);
         const frontCanvas = document.getElementById(`${prefix}-canvas-front-${order.id}`);
         const backCanvas = document.getElementById(`${prefix}-canvas-back-${order.id}`);
 
-        if (frontCanvas) renderJersey2D(frontCanvas, specs, false);
-        if (backCanvas) renderJersey2D(backCanvas, specs, true);
+        if (frontCanvas) renderView2D(frontCanvas, specs, false, currentPiece);
+        if (backCanvas) renderView2D(backCanvas, specs, true, currentPiece);
+    }
+
+    function switchPiece(orderId, piece, prefix = 'ord') {
+        const order = ordersCache[orderId];
+        if (!order) return;
+        ordersPieceCache[`${prefix}-${orderId}`] = piece;
+
+        const specs = parseOrderNotes(order.notes, order);
+        const frontCanvas = document.getElementById(`${prefix}-canvas-front-${orderId}`);
+        const backCanvas = document.getElementById(`${prefix}-canvas-back-${orderId}`);
+
+        if (frontCanvas) renderView2D(frontCanvas, specs, false, piece);
+        if (backCanvas) renderView2D(backCanvas, specs, true, piece);
+
+        // Update labels
+        const pieceName = piece === 'full' ? 'Full Kit' : (piece === 'jersey' ? 'Jersey Only' : 'Shorts Only');
+        const lblFront = document.getElementById(`${prefix}-lbl-piece-front-${orderId}`);
+        const lblBack = document.getElementById(`${prefix}-lbl-piece-back-${orderId}`);
+        if (lblFront) lblFront.textContent = pieceName;
+        if (lblBack) lblBack.textContent = pieceName;
+
+        // Update button active styles
+        ['full', 'jersey', 'shorts'].forEach(p => {
+            const btn = document.getElementById(`btn-piece-${p}-${prefix}-${orderId}`);
+            if (btn) {
+                if (p === piece) {
+                    btn.className = 'px-2.5 py-1 rounded-lg bg-indigo-600 text-white shadow transition cursor-pointer';
+                } else {
+                    btn.className = 'px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition cursor-pointer';
+                }
+            }
+        });
     }
 
     function initAllCanvases(ordersArray = [], prefix = 'ord') {
@@ -789,9 +1269,13 @@ window.OrderPreview = (function () {
     return {
         parseNotes: parseOrderNotes,
         renderJersey2D: renderJersey2D,
+        renderShorts2D: renderShorts2D,
+        renderUniform2D: renderUniform2D,
+        renderView2D: renderView2D,
         renderCardHTML: renderOrderPreviewCardHTML,
         initCanvases: initOrderCanvases,
         initAllCanvases: initAllCanvases,
+        switchPiece: switchPiece,
         toggleSpecs: toggleSpecs
     };
 })();
