@@ -436,132 +436,212 @@ function bindControls() {
         });
     }
 
-    if (aiBtn) {
-        aiBtn.addEventListener('click', async () => {
-            const teamInputVal = aiTeamInput ? aiTeamInput.value.trim() : '';
-            const frontTextVal = document.getElementById('frontText') ? document.getElementById('frontText').value.trim() : '';
-            const promptText = teamInputVal || frontTextVal || 'CHAMPION';
+    // Conversational AI Co-Pilot State
+    let aiChatHistory = [];
 
+    function appendAIChatBubble(role, text, deltaTag = null) {
+        const stream = document.getElementById('aiChatStream');
+        if (!stream) return;
+
+        const bubbleWrap = document.createElement('div');
+        if (role === 'user') {
+            bubbleWrap.className = 'flex justify-end';
+            bubbleWrap.innerHTML = `
+                <div class="bg-violet-600 text-white rounded-xl rounded-tr-sm p-2 max-w-[85%] shadow text-[11px] leading-relaxed">
+                    <p>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                </div>
+            `;
+        } else {
+            bubbleWrap.className = 'flex gap-1.5 items-start';
+            bubbleWrap.innerHTML = `
+                <div class="w-5 h-5 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-[10px] shrink-0 font-bold">AI</div>
+                <div class="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-sm p-2 text-slate-300 max-w-[88%] shadow-sm space-y-1 text-[11px] leading-relaxed">
+                    ${deltaTag ? `
+                    <div class="flex items-center gap-1">
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Delta Updated</span>
+                        <span class="text-[9px] text-emerald-400 font-mono">${deltaTag}</span>
+                    </div>` : ''}
+                    <p class="text-white">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                </div>
+            `;
+        }
+        stream.appendChild(bubbleWrap);
+        stream.scrollTop = stream.scrollHeight;
+    }
+
+    window.toggleAIChatStream = function() {
+        const stream = document.getElementById('aiChatStream');
+        const btn = document.getElementById('btnToggleChatStream');
+        if (!stream) return;
+        const isHidden = stream.style.display === 'none';
+        stream.style.display = isHidden ? 'block' : 'none';
+        if (btn) btn.textContent = isHidden ? '− Fold' : '+ Chat';
+    };
+
+
+    window.clearAIChat = function() {
+        aiChatHistory = [];
+        const stream = document.getElementById('aiChatStream');
+        if (stream) {
+            stream.innerHTML = `
+                <div class="flex gap-2 items-start">
+                    <div class="w-5 h-5 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-[10px] shrink-0 font-bold">AI</div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-sm p-2 text-slate-300 leading-relaxed text-[11px]">
+                        Chat reset! Tell me what to design, or request tweaks as we go (e.g. <em class="text-violet-300">"generate blue jersey"</em> then <em class="text-emerald-300">"rename player as drew"</em>).
+                    </div>
+                </div>
+            `;
+        }
+        if (aiTeamInput) aiTeamInput.value = '';
+    };
+
+    window.sendAIQuickPrompt = function(promptText) {
+        if (aiTeamInput) aiTeamInput.value = promptText;
+        window.submitAIChat();
+    };
+
+    window.submitAIChat = async function() {
+        const promptText = aiTeamInput ? aiTeamInput.value.trim() : '';
+        if (!promptText) return;
+
+        if (aiTeamInput) aiTeamInput.value = '';
+        appendAIChatBubble('user', promptText);
+
+        if (aiBtn) {
             aiBtn.disabled = true;
             aiBtn.classList.add('animate-pulse', 'opacity-80');
-            if (aiBtnText) aiBtnText.textContent = '⚡ Co-Pilot Designing...';
-            else aiBtn.textContent = '⚡ Co-Pilot Designing...';
-            hideReasoning();
+        }
+        if (aiBtnText) aiBtnText.textContent = '...';
 
-            // Dynamic multi-stage progress indicator
-            const progressSteps = [
-                '🧠 Analyzing design concept...',
-                '🎨 Formulating dynamic color harmony...',
-                '📐 Structuring jersey graphics & badges...',
-                '✨ Rendering 3D textures & reflections...'
-            ];
-            let stepIndex = 0;
-            if (aiLiveStatus) {
-                aiLiveStatus.style.display = 'flex';
-                if (aiLiveStatusText) aiLiveStatusText.textContent = progressSteps[0];
-            }
-            const statusTimer = setInterval(() => {
-                stepIndex = (stepIndex + 1) % progressSteps.length;
-                if (aiLiveStatusText) {
-                    aiLiveStatusText.textContent = progressSteps[stepIndex];
-                }
-            }, 600);
+        const progressSteps = [
+            '🧠 Analyzing command...',
+            '🎨 Formulating delta update...',
+            '📐 Structuring jersey graphics...',
+            '✨ Synchronizing 3D textures...'
+        ];
+        let stepIndex = 0;
+        if (aiLiveStatus) {
+            aiLiveStatus.style.display = 'flex';
+            if (aiLiveStatusText) aiLiveStatusText.textContent = progressSteps[0];
+        }
+        const statusTimer = setInterval(() => {
+            stepIndex = (stepIndex + 1) % progressSteps.length;
+            if (aiLiveStatusText) aiLiveStatusText.textContent = progressSteps[stepIndex];
+        }, 500);
 
-            try {
-                // Send current jersey state for context-aware iterative tweaks
-                const currentDesignContext = {
-                    gender: currentDesign.gender || 'male',
-                    jerseyType: currentDesign.jerseyType,
-                    baseColor: currentDesign.baseColor,
-                    accentColor: currentDesign.accentColor,
-                    tertiaryColor: currentDesign.tertiaryColor,
-                    pattern: currentDesign.pattern,
-                    logo: currentDesign.logo,
-                    font: currentDesign.font,
-                    finish: currentDesign.finish,
-                    showroom: currentDesign.showroom,
-                    frontText: currentDesign.frontText,
-                    backName: currentDesign.backName,
-                    number: currentDesign.number,
-                    sponsorText: currentDesign.sponsorText
+        try {
+            const currentDesignContext = {
+                gender: currentDesign.gender || 'male',
+                jerseyType: currentDesign.jerseyType,
+                baseColor: currentDesign.baseColor,
+                accentColor: currentDesign.accentColor,
+                tertiaryColor: currentDesign.tertiaryColor,
+                pattern: currentDesign.pattern,
+                logo: currentDesign.logo,
+                font: currentDesign.font,
+                finish: currentDesign.finish,
+                showroom: currentDesign.showroom,
+                frontText: currentDesign.frontText,
+                backName: currentDesign.backName || 'PLAYER',
+                number: currentDesign.number,
+                sponsorText: currentDesign.sponsorText,
+                matchJerseyColors: currentDesign.matchJerseyColors !== false,
+                shortsBaseColor: currentDesign.shortsBaseColor || currentDesign.baseColor,
+                shortsAccentColor: currentDesign.shortsAccentColor || currentDesign.accentColor
+            };
+
+            const res = await fetch('/ai/suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    prompt: promptText,
+                    team_name: promptText,
+                    history: aiChatHistory,
+                    current_design: currentDesignContext
+                })
+            });
+
+            const suggestion = await res.json();
+
+            if (res.ok && suggestion) {
+                const targetGender = suggestion.gender || currentDesign.gender || 'male';
+                const genderChanged = targetGender !== currentDesign.gender;
+
+                // Merge updates into currentDesign while strictly preserving custom coordinates & untouched properties
+                currentDesign = {
+                    ...currentDesign,
+                    gender: targetGender,
+                    baseColor: suggestion.baseColor || currentDesign.baseColor,
+                    accentColor: suggestion.accentColor || currentDesign.accentColor,
+                    tertiaryColor: suggestion.tertiaryColor || currentDesign.tertiaryColor,
+                    pattern: suggestion.pattern || currentDesign.pattern || 'none',
+                    logo: suggestion.logo || currentDesign.logo || 'none',
+                    font: suggestion.font || currentDesign.font || 'athletic',
+                    finish: suggestion.finish || currentDesign.finish || 'matte',
+                    showroom: suggestion.showroom || currentDesign.showroom || 'cyber',
+                    frontText: suggestion.teamName || currentDesign.frontText || 'TEAM',
+                    backName: suggestion.backName || currentDesign.backName || 'PLAYER',
+                    number: suggestion.number || currentDesign.number || '23',
+                    sponsorText: (suggestion.sponsorText !== undefined && suggestion.sponsorText !== null) ? suggestion.sponsorText : currentDesign.sponsorText,
+                    matchJerseyColors: suggestion.matchJerseyColors !== undefined ? suggestion.matchJerseyColors : (currentDesign.matchJerseyColors !== false),
+                    shortsBaseColor: suggestion.shortsBaseColor || suggestion.baseColor || currentDesign.shortsBaseColor,
+                    shortsAccentColor: suggestion.shortsAccentColor || suggestion.accentColor || currentDesign.shortsAccentColor,
+                    showFrontText: true,
+                    showFrontNumber: true,
+                    showBackText: true,
+                    showBackNumber: true,
+                    showSponsor: !!(suggestion.sponsorText || currentDesign.sponsorText)
                 };
 
-                const res = await fetch('/ai/suggest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        team_name: promptText,
-                        current_design: currentDesignContext
-                    })
-                });
-
-                const suggestion = await res.json();
-
-                if (res.ok && suggestion) {
-                    const finalTeamName = suggestion.teamName || currentDesign.frontText || promptText;
-                    
-                    // Don't overwrite the prompt box if the user was typing an iterative tweak command
-                    const isTweak = /^(?:make|change|set|add|switch|tweak|keep|more|less)\b/i.test(promptText);
-                    if (aiTeamInput && !isTweak) {
-                        aiTeamInput.value = finalTeamName;
-                    }
-
-                    const targetGender = suggestion.gender || currentDesign.gender || 'male';
-                    const genderChanged = targetGender !== currentDesign.gender;
-
-                    currentDesign = {
-                        ...currentDesign,
-                        gender: targetGender,
-                        baseColor: suggestion.baseColor || currentDesign.baseColor,
-                        accentColor: suggestion.accentColor || currentDesign.accentColor,
-                        tertiaryColor: suggestion.tertiaryColor || currentDesign.tertiaryColor,
-                        pattern: suggestion.pattern || currentDesign.pattern || 'none',
-                        logo: suggestion.logo || currentDesign.logo || 'none',
-                        font: suggestion.font || currentDesign.font || 'athletic',
-                        finish: suggestion.finish || currentDesign.finish || 'matte',
-                        showroom: suggestion.showroom || currentDesign.showroom || 'cyber',
-                        frontText: finalTeamName,
-                        backName: currentDesign.backName || 'PLAYER',
-                        number: suggestion.number || currentDesign.number || '23',
-                        sponsorText: (suggestion.sponsorText !== undefined && suggestion.sponsorText !== null) ? suggestion.sponsorText : currentDesign.sponsorText,
-                        shortsBaseColor: suggestion.baseColor || currentDesign.baseColor,
-                        shortsAccentColor: suggestion.accentColor || currentDesign.accentColor,
-                        showFrontText: true,
-                        showFrontNumber: true,
-                        showBackText: true,
-                        showBackNumber: true,
-                        showSponsor: !!(suggestion.sponsorText || currentDesign.sponsorText),
-                        customFont: ''
-                    };
-                    Object.assign(currentDesign, DEFAULT_COORDS);
-                    if (genderChanged) {
-                        loadJerseyModel(currentDesign.jerseyType, targetGender);
-                    }
-                    syncUI(currentDesign);
-                    applyDesign(currentDesign);
-                    changeEnvironment(currentDesign.showroom);
-                    showReasoning(suggestion.reasoning);
-
-                    // Smooth 3D showcase turntable spin
-                    if (typeof triggerShowcaseSpin === 'function') {
-                        triggerShowcaseSpin(2800);
-                    }
-                } else {
-                    showReasoning('AI suggestion was unable to generate. Please try a different prompt.');
+                if (genderChanged) {
+                    loadJerseyModel(currentDesign.jerseyType, targetGender);
                 }
-            } catch (err) {
-                console.error(err);
-                showReasoning('Server error connecting to AI service.');
-            } finally {
-                clearInterval(statusTimer);
-                if (aiLiveStatus) {
-                    aiLiveStatus.style.display = 'none';
+                syncUI(currentDesign);
+                applyDesign(currentDesign);
+                changeEnvironment(currentDesign.showroom);
+
+                // Add to multi-turn memory
+                aiChatHistory.push({ role: 'user', content: promptText });
+                const replyText = suggestion.assistantReply || suggestion.reasoning || 'Design updated successfully!';
+                aiChatHistory.push({ role: 'assistant', content: replyText });
+
+                // Format delta badge
+                const appliedList = Array.isArray(suggestion.appliedChanges) && suggestion.appliedChanges.length > 0
+                    ? suggestion.appliedChanges.join(', ')
+                    : (suggestion.backName && suggestion.backName !== currentDesignContext.backName ? 'backName' : null);
+
+                appendAIChatBubble('assistant', replyText, appliedList);
+
+                // If back player name was updated or user requested back view, rotate camera to back!
+                const isBackRequested = /back|drew|name|player/i.test(promptText) || (appliedList && appliedList.includes('backName'));
+                if (isBackRequested) {
+                    setCameraAngle('back');
+                    const btnCamBack = document.getElementById('btnCamBack');
+                    if (btnCamBack && typeof setActiveCamBtn === 'function') setActiveCamBtn(btnCamBack);
+                } else if (typeof triggerShowcaseSpin === 'function') {
+                    triggerShowcaseSpin(2400);
                 }
+            } else {
+                appendAIChatBubble('assistant', 'Sorry, I had trouble formulating that change. Could you try rephrasing?');
+            }
+        } catch (err) {
+            console.error(err);
+            appendAIChatBubble('assistant', 'Network issue communicating with Co-Pilot.');
+        } finally {
+            clearInterval(statusTimer);
+            if (aiLiveStatus) aiLiveStatus.style.display = 'none';
+            if (aiBtn) {
                 aiBtn.disabled = false;
                 aiBtn.classList.remove('animate-pulse', 'opacity-80');
-                if (aiBtnText) aiBtnText.textContent = '🤖 Generate AI Design';
-                else aiBtn.textContent = '🤖 Generate AI Design';
             }
+            if (aiBtnText) aiBtnText.textContent = 'Send';
+        }
+    };
+
+    if (aiBtn) {
+        aiBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.submitAIChat();
         });
     }
 

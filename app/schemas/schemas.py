@@ -90,7 +90,9 @@ class OrderResponse(BaseModel):
 
 
 class AIRequest(BaseModel):
-    team_name: str
+    prompt: Optional[str] = None
+    team_name: Optional[str] = None
+    history: Optional[list] = None
     current_design: Optional[dict] = None
     
 class CancelOrderRequest(BaseModel):

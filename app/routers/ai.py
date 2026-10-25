@@ -6,7 +6,12 @@ router = APIRouter(prefix="/ai", tags=["AI"])
 
 @router.post("/suggest")
 async def suggest_design(payload: AIRequest):
-    result, error = await ai_service.get_jersey_suggestion(payload.team_name, payload.current_design)
+    prompt_text = payload.prompt or payload.team_name or ""
+    result, error = await ai_service.get_jersey_suggestion(
+        prompt_text,
+        payload.current_design,
+        payload.history
+    )
     if error:
         raise HTTPException(status_code=500, detail=error)
     return result

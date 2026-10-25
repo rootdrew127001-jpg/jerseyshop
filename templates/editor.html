@@ -82,6 +82,33 @@
             vertical-align: middle;
             margin-right: 6px;
         }
+
+        /* Sleek modern dark scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Pure hide scrollbar utility */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
     </style>
 </head>
 <body class="bg-slate-900 flex h-screen w-screen">
@@ -341,58 +368,89 @@
     </div>
 
     <!-- Left Panel -->
-    <div class="w-72 bg-slate-800 text-white flex flex-col z-10 shadow-2xl overflow-y-auto">
-        <div class="p-6 border-b border-slate-700">
-            <h1 class="text-xl font-black italic text-white">MODELYX.</h1>
+    <div id="leftSidebar" class="w-80 md:w-88 xl:w-96 bg-slate-800 text-white flex flex-col z-10 shadow-2xl overflow-y-auto shrink-0 transition-all duration-300">
+        <div class="p-4 sm:p-5 border-b border-slate-700">
+            <h1 class="text-xl font-black italic text-white tracking-wide">MODELYX.</h1>
             <p class="text-xs text-slate-400 mt-1">3D Jersey Studio</p>
         </div>
 
-        <div class="p-6 space-y-5 flex-1 font-sans">
+        <div class="p-4 sm:p-5 space-y-4 flex-1 font-sans">
 
             <!-- AI Generator Card -->
-            <div class="bg-slate-800/90 border border-violet-500/40 rounded-2xl p-4 space-y-3.5 shadow-lg shadow-violet-950/20">
+            <div class="bg-slate-800/90 border border-violet-500/40 rounded-2xl p-3 sm:p-3.5 space-y-2.5 shadow-lg shadow-violet-950/20">
                 <div class="flex items-center justify-between">
                     <span class="text-[10px] font-black text-violet-300 uppercase tracking-widest flex items-center gap-1.5">
                         <span>✨ AI Jersey Co-Pilot</span>
                     </span>
-                    <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Interactive
-                    </span>
-                </div>
-                
-                <div class="space-y-1.5">
-                    <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wide">Team Name or Tweak Command</label>
-                    <input id="aiTeamInput" type="text" placeholder="e.g. Tokyo Vipers, or 'make stripes gold'..." 
-                           class="w-full bg-slate-900 border border-slate-700 focus:border-violet-500 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium">
+                    <div class="flex items-center gap-1">
+                        <button type="button" onclick="window.toggleAIChatStream && window.toggleAIChatStream()" id="btnToggleChatStream" title="Fold / Unfold chat history"
+                                class="text-[9px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded-md hover:bg-slate-700/60 transition cursor-pointer">
+                            − Fold
+                        </button>
+                        <button type="button" onclick="window.clearAIChat && window.clearAIChat()" title="Reset conversation"
+                                class="text-[9px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded-md hover:bg-slate-700/60 transition cursor-pointer">
+                            ↺ Clear
+                        </button>
+                        <span class="text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Stateful
+                        </span>
+                    </div>
                 </div>
 
+                <!-- Chat History Bubble Stream -->
+                <div id="aiChatStream" class="max-h-52 min-h-[90px] overflow-y-auto space-y-2 p-2 rounded-xl bg-slate-950/70 border border-slate-800/80 text-xs">
+                    <!-- Initial Welcome Greeting -->
+                    <div class="flex gap-2 items-start">
+                        <div class="w-5 h-5 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-[10px] shrink-0 font-bold">AI</div>
+                        <div class="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-sm p-2 text-slate-300 leading-relaxed text-[11px]">
+                            Hey! Tell me what to design, or request tweaks as we go (e.g. <em class="text-violet-300">"generate blue jersey"</em> then <em class="text-emerald-300">"rename player as drew"</em>).
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Live Multi-Stage Status Indicator -->
-                <div id="aiLiveStatus" style="display:none" class="bg-violet-950/50 border border-violet-500/40 rounded-xl p-2.5 flex items-center gap-2.5 shadow-inner transition-all">
-                    <span class="relative flex h-2.5 w-2.5">
+                <div id="aiLiveStatus" style="display:none" class="bg-violet-950/50 border border-violet-500/40 rounded-xl p-2 flex items-center gap-2 shadow-inner transition-all">
+                    <span class="relative flex h-2 w-2">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-violet-500"></span>
                     </span>
-                    <span id="aiLiveStatusText" class="text-[11px] font-semibold text-violet-200 tracking-wide">🧠 Analyzing design concept...</span>
+                    <span id="aiLiveStatusText" class="text-[10px] font-semibold text-violet-200 tracking-wide">🧠 Analyzing concept...</span>
                 </div>
 
-                <button id="aiBtn"
-                    class="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600 bg-[length:200%_auto] hover:bg-right hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2.5 px-4 rounded-xl transition-all duration-300 text-xs shadow-md shadow-violet-900/30 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]">
-                    <span id="aiBtnText">🤖 Generate AI Design</span>
-                </button>
-
-                <!-- AI Reasoning Display -->
-                <div id="aiReasoningWrapper" style="display:none" class="bg-slate-900/90 border border-violet-500/30 rounded-xl p-3 space-y-1.5 shadow-inner">
-                    <div class="flex items-center justify-between">
-                        <div class="text-[9px] font-bold text-violet-400 uppercase tracking-wider flex items-center gap-1.5">
-                            <span>💡 AI Concept Rationale</span>
-                        </div>
-                        <span class="text-[9px] text-slate-500 font-mono">3D Applied</span>
-                    </div>
-                    <p id="aiReasoning" class="text-xs text-slate-300 leading-relaxed italic">
-                    </p>
+                <!-- Quick Suggestion Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[11px] no-scrollbar">
+                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Rename the player as drew')"
+                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
+                        👤 "Rename player as Drew"
+                    </button>
+                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Generate a royal blue jersey with stripes')"
+                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
+                        🎨 "Royal Blue Stripes"
+                    </button>
+                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Change number to 77')"
+                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
+                        🔢 "Number 77"
+                    </button>
+                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Match shorts to jersey')"
+                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
+                        🩳 "Match Shorts"
+                    </button>
                 </div>
+
+                <!-- Input Form -->
+                <form id="aiChatForm" class="flex gap-2 items-center" onsubmit="event.preventDefault(); window.submitAIChat && window.submitAIChat();">
+                    <input id="aiTeamInput" type="text" placeholder="e.g. 'rename player as drew'..." 
+                           class="flex-1 min-w-0 bg-slate-900 border border-slate-700 focus:border-violet-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium">
+                    <button id="aiBtn" type="submit"
+                        class="bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2 px-3 rounded-xl transition-all duration-200 text-xs shadow-md shadow-violet-900/30 flex items-center justify-center gap-1 cursor-pointer shrink-0 active:scale-[0.98]">
+                        <span id="aiBtnText">Send</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                    </button>
+                </form>
+
+                <!-- Hidden legacy wrapper so any existing references don't throw -->
+                <div id="aiReasoningWrapper" style="display:none"><p id="aiReasoning"></p></div>
             </div>
 
             <!-- Random Button -->
@@ -817,7 +875,7 @@
         </div>
 
         <!-- Bottom buttons -->
-        <div class="p-6 border-t border-slate-700 space-y-3">
+        <div class="p-4 sm:p-5 border-t border-slate-700 space-y-2.5">
             <button onclick="openOrderModal()"
                 class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-2xl transition text-sm">
                 🛒 Submit Order
@@ -829,7 +887,7 @@
         </div>
     </div>
 
-    <div class="flex-1 relative flex flex-col justify-center items-center bg-slate-950">
+    <div class="flex-1 relative flex flex-col justify-center items-center bg-slate-950 overflow-hidden">
         <!-- View mode switcher: 2D vs 3D -->
         <div class="absolute top-4 right-4 z-20 flex bg-slate-800/90 backdrop-blur border border-slate-700 rounded-xl p-1 shadow-lg">
             <button id="btnView2D" class="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 text-white transition">2D Design</button>
@@ -924,7 +982,7 @@
     </div>
 
     <script type="module">
-    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20261019_shorts_drag';
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20261025_fixed_sidebar';
     initEditor();
      setTimeout(function() {
          const c = document.getElementById('canvasFront2D');

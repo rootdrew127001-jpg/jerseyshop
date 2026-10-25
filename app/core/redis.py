@@ -14,22 +14,38 @@ try:
         password=REDIS_PASSWORD,
         db=REDIS_DB,
         decode_responses=True,
-        socket_timeout=1,
-        socket_connect_timeout=1
+        socket_timeout=0.5,
+        socket_connect_timeout=0.3,
+        retry_on_timeout=False
     )
 except Exception as e:
     logger.error(f"Failed to initialize Redis client: {e}")
     redis_client = None
 
 
+import time
+
+_redis_last_check = 0.0
+_redis_last_state = False
+
 def is_redis_available() -> bool:
-    """Check if Redis connection is alive."""
+    """Check if Redis connection is alive with short cooldown cache."""
+    global _redis_last_check, _redis_last_state
     if not redis_client:
         return False
+    
+    now = time.time()
+    # If checked within last 15 seconds, return cached state
+    if now - _redis_last_check < 15.0:
+        return _redis_last_state
+    
+    _redis_last_check = now
     try:
-        return bool(redis_client.ping())
+        _redis_last_state = bool(redis_client.ping())
+        return _redis_last_state
     except Exception as e:
         logger.warning(f"Redis ping failed: {e}")
+        _redis_last_state = False
         return False
 
 
