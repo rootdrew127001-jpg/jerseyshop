@@ -254,16 +254,159 @@ function bindControls() {
         });
     }
 
-    // Dropdown selectors
-    document.getElementById('pattern').addEventListener('change', e => {
-        currentDesign.pattern = e.target.value;
-        applyDesign(currentDesign);
+    // Preset Styles Definition for Visual 1-Tap Apply
+    const PRESET_STYLES = {
+        cyber_volt: {
+            baseColor: '#0284C7',
+            accentColor: '#FACC15',
+            tertiaryColor: '#FFFFFF',
+            pattern: 'stripes',
+            logo: 'star',
+            finish: 'satin'
+        },
+        miami_heat: {
+            baseColor: '#18181B',
+            accentColor: '#DC2626',
+            tertiaryColor: '#EA580C',
+            pattern: 'gradient',
+            logo: 'flame',
+            finish: 'matte'
+        },
+        lakers_gold: {
+            baseColor: '#4C1D95',
+            accentColor: '#FACC15',
+            tertiaryColor: '#FFFFFF',
+            pattern: 'panel',
+            logo: 'shield',
+            finish: 'metallic'
+        },
+        stealth_black: {
+            baseColor: '#18181B',
+            accentColor: '#27272A',
+            tertiaryColor: '#71717A',
+            pattern: 'carbon_scratch',
+            logo: 'shield',
+            finish: 'carbon'
+        },
+        ocean_wave: {
+            baseColor: '#082F49',
+            accentColor: '#0284C7',
+            tertiaryColor: '#38BDF8',
+            pattern: 'tidal_wave',
+            logo: 'vortex',
+            finish: 'satin'
+        },
+        apex_predator: {
+            baseColor: '#020617',
+            accentColor: '#4F46E5',
+            tertiaryColor: '#EC4899',
+            pattern: 'apex_gamer',
+            logo: 'eagle',
+            finish: 'metallic'
+        }
+    };
+
+    // Helper to update pattern visual cards state
+    function updatePatternCardsUI(activePattern) {
+        const lblActive = document.getElementById('lblActivePattern');
+        if (lblActive) {
+            lblActive.textContent = `(${activePattern || 'Solid'})`;
+        }
+        const cards = document.querySelectorAll('.pattern-card');
+        cards.forEach(card => {
+            const pat = card.getAttribute('data-pattern');
+            if (pat === activePattern) {
+                card.className = 'pattern-card group flex flex-col items-center p-2 rounded-xl border border-indigo-500 bg-indigo-600/25 ring-2 ring-indigo-500 shadow-md shadow-indigo-950/40 text-white font-bold transition cursor-pointer';
+            } else {
+                card.className = 'pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer';
+            }
+        });
+    }
+
+    // Helper to update logo visual cards state
+    function updateLogoCardsUI(activeLogo) {
+        const lblActive = document.getElementById('lblActiveLogo');
+        if (lblActive) {
+            lblActive.textContent = `(${activeLogo === 'none' ? 'No Badge' : (activeLogo || 'None')})`;
+        }
+        const cards = document.querySelectorAll('.logo-card');
+        cards.forEach(card => {
+            const logo = card.getAttribute('data-logo');
+            if (logo === activeLogo) {
+                card.className = 'logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-indigo-500 bg-indigo-600/25 ring-2 ring-indigo-500 shadow-md shadow-indigo-950/40 text-white font-bold transition cursor-pointer';
+            } else {
+                card.className = 'logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer';
+            }
+        });
+    }
+
+    // Expose helpers globally for syncUI
+    window._updatePatternCardsUI = updatePatternCardsUI;
+    window._updateLogoCardsUI = updateLogoCardsUI;
+
+    // Wire up Visual Selectable Pattern Cards
+    document.querySelectorAll('.pattern-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const pat = card.getAttribute('data-pattern');
+            if (!pat) return;
+            currentDesign.pattern = pat;
+            const patSelect = document.getElementById('pattern');
+            if (patSelect) patSelect.value = pat;
+            updatePatternCardsUI(pat);
+            applyDesign(currentDesign);
+            sessionStorage.setItem('modelyx_editor_draft', JSON.stringify(currentDesign));
+        });
     });
 
-    document.getElementById('logo').addEventListener('change', e => {
-        currentDesign.logo = e.target.value;
-        applyDesign(currentDesign);
+    // Wire up Visual Selectable Logo Cards
+    document.querySelectorAll('.logo-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const logo = card.getAttribute('data-logo');
+            if (!logo) return;
+            currentDesign.logo = logo;
+            const logoSelect = document.getElementById('logo');
+            if (logoSelect) logoSelect.value = logo;
+            updateLogoCardsUI(logo);
+            applyDesign(currentDesign);
+            sessionStorage.setItem('modelyx_editor_draft', JSON.stringify(currentDesign));
+        });
     });
+
+    // Wire up Quick Style Presets Cards
+    document.querySelectorAll('.preset-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const key = card.getAttribute('data-preset');
+            const preset = PRESET_STYLES[key];
+            if (!preset) return;
+            Object.assign(currentDesign, preset);
+            if (currentDesign.matchJerseyColors !== false) {
+                currentDesign.shortsBaseColor = currentDesign.baseColor;
+                currentDesign.shortsAccentColor = currentDesign.accentColor;
+            }
+            syncUI(currentDesign);
+            applyDesign(currentDesign);
+            sessionStorage.setItem('modelyx_editor_draft', JSON.stringify(currentDesign));
+        });
+    });
+
+    // Dropdown selectors fallback
+    const patternSelect = document.getElementById('pattern');
+    if (patternSelect) {
+        patternSelect.addEventListener('change', e => {
+            currentDesign.pattern = e.target.value;
+            updatePatternCardsUI(e.target.value);
+            applyDesign(currentDesign);
+        });
+    }
+
+    const logoSelect = document.getElementById('logo');
+    if (logoSelect) {
+        logoSelect.addEventListener('change', e => {
+            currentDesign.logo = e.target.value;
+            updateLogoCardsUI(e.target.value);
+            applyDesign(currentDesign);
+        });
+    }
 
     const logoUpload = document.getElementById('logoUpload');
     const logoUploadError = document.getElementById('logoUploadError');
@@ -298,6 +441,16 @@ function bindControls() {
                     const optCustom = document.getElementById('optCustomLogo');
                     if (optCustom) optCustom.style.display = 'block';
 
+                    const cardCustom = document.getElementById('cardCustomLogo');
+                    const customBadgeThumb = document.getElementById('customBadgeThumb');
+                    const customBadgePlaceholder = document.getElementById('customBadgePlaceholder');
+                    if (cardCustom) cardCustom.classList.remove('hidden');
+                    if (customBadgeThumb) {
+                        customBadgeThumb.src = event.target.result;
+                        customBadgeThumb.classList.remove('hidden');
+                    }
+                    if (customBadgePlaceholder) customBadgePlaceholder.classList.add('hidden');
+
                     const logoSelect = document.getElementById('logo');
                     if (logoSelect) logoSelect.value = 'custom';
 
@@ -307,6 +460,7 @@ function bindControls() {
                     const lblLogoSize = document.getElementById('lblLogoSize');
                     if (lblLogoSize) lblLogoSize.textContent = '20px';
 
+                    updateLogoCardsUI('custom');
                     applyDesign(currentDesign);
                 };
                 img.src = event.target.result;
@@ -1253,9 +1407,29 @@ function syncUI(design) {
     setVal('pattern', design.pattern);
     setVal('logo', design.logo || 'none');
 
+    if (window._updatePatternCardsUI) {
+        window._updatePatternCardsUI(design.pattern);
+    }
+    if (window._updateLogoCardsUI) {
+        window._updateLogoCardsUI(design.logo || 'none');
+    }
+
     const optCustom = document.getElementById('optCustomLogo');
     if (optCustom) {
         optCustom.style.display = design.customLogoImage ? 'block' : 'none';
+    }
+    const cardCustom = document.getElementById('cardCustomLogo');
+    if (cardCustom) {
+        if (design.customLogoImage) {
+            cardCustom.classList.remove('hidden');
+            const customBadgeThumb = document.getElementById('customBadgeThumb');
+            const customBadgePlaceholder = document.getElementById('customBadgePlaceholder');
+            if (customBadgeThumb && design.customLogoImage.src) {
+                customBadgeThumb.src = design.customLogoImage.src;
+                customBadgeThumb.classList.remove('hidden');
+                if (customBadgePlaceholder) customBadgePlaceholder.classList.add('hidden');
+            }
+        }
     }
 
     const logoSizeVal = design.logoSize !== undefined ? design.logoSize : 60;

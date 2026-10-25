@@ -84,12 +84,16 @@
         }
 
         /* Sleek modern dark scrollbar */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 #0f172a;
+        }
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.6);
+            background: #0f172a;
         }
         ::-webkit-scrollbar-thumb {
             background: #334155;
@@ -97,6 +101,11 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #475569;
+        }
+
+        #leftSidebar {
+            scrollbar-width: thin;
+            scrollbar-color: #334155 #0f172a;
         }
 
         /* Pure hide scrollbar utility */
@@ -455,9 +464,61 @@
 
             <!-- Random Button -->
             <button id="randomBtn"
-                class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-4 rounded-xl transition text-xs border border-slate-600/50 flex items-center justify-center gap-2 cursor-pointer">
+                class="w-full bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-4 rounded-xl transition text-xs border border-slate-600/50 flex items-center justify-center gap-2 cursor-pointer shadow-sm">
                 🎲 Generate Random Design
             </button>
+
+            <!-- Quick Visual Style Presets (1-Tap Selectable Picture Cards) -->
+            <div class="space-y-2 pb-3 border-b border-slate-700/40">
+                <div class="flex justify-between items-center">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">🎨 Quick Style Presets</p>
+                    <span class="text-[9px] text-violet-400 font-bold">1-Tap Select</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2" id="presetCardsContainer">
+                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="cyber_volt" title="Cyber Volt: Royal & Volt">
+                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#0f172a;">
+                            <div class="w-1/2 h-full bg-[#0284C7] flex items-center justify-center text-[11px]">⚡</div>
+                            <div class="w-1/2 h-full bg-[#FACC15]"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Cyber Volt</span>
+                    </button>
+                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="miami_heat" title="Miami Heat: Crimson & Flame">
+                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#18181b;">
+                            <div class="w-1/2 h-full bg-[#DC2626] flex items-center justify-center text-[11px]">🔥</div>
+                            <div class="w-1/2 h-full bg-[#EA580C]"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Miami Heat</span>
+                    </button>
+                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="lakers_gold" title="Royal Gold: Purple & Gold">
+                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#4C1D95;">
+                            <div class="w-1/2 h-full bg-[#7C3AED] flex items-center justify-center text-[11px]">🏆</div>
+                            <div class="w-1/2 h-full bg-[#FACC15]"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Royal Gold</span>
+                    </button>
+                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="stealth_black" title="Stealth Black: Matte & Carbon">
+                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#09090b;">
+                            <div class="w-1/2 h-full bg-[#18181b] flex items-center justify-center text-[11px]">🖤</div>
+                            <div class="w-1/2 h-full bg-[#3F3F46]"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Stealth</span>
+                    </button>
+                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="ocean_wave" title="Ocean Wave: Navy & Aqua">
+                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#082f49;">
+                            <div class="w-1/2 h-full bg-[#0284C7] flex items-center justify-center text-[11px]">🌊</div>
+                            <div class="w-1/2 h-full bg-[#38BDF8]"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Ocean</span>
+                    </button>
+                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="apex_predator" title="Apex Predator: Slate & Cyber Neon">
+                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#020617;">
+                            <div class="w-1/2 h-full bg-[#4F46E5] flex items-center justify-center text-[11px]">🦅</div>
+                            <div class="w-1/2 h-full bg-[#EC4899]"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Apex</span>
+                    </button>
+                </div>
+            </div>
 
             <!-- Model Fit & Gender Selector -->
             <div class="space-y-2 pb-3 border-b border-slate-700/40">
@@ -467,43 +528,76 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <button id="genderMale" type="button" class="flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
-                        <span class="text-sm">👨</span>
+                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2a5 5 0 105 5 5 5 0 00-5-5zm0 12c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
+                        </svg>
                         <span>Men's Fit</span>
                     </button>
                     <button id="genderFemale" type="button" class="flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer">
-                        <span class="text-sm">👩</span>
+                        <svg class="w-4 h-4 text-pink-300" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2a5 5 0 105 5 5 5 0 00-5-5zm0 12c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
+                        </svg>
                         <span>Women's Fit</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Jersey Silhouette Style Selector -->
+            <!-- Jersey Silhouette Style Selector (Picture Selectable) -->
             <div class="space-y-2 pb-3 border-b border-slate-700/40">
                 <div class="flex justify-between items-center">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jersey Silhouette Style</p>
                     <span id="lblJerseyType" class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Sleeveless</span>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
-                    <button id="typeSleeveless" class="flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
-                        <span class="text-base mb-1">🏀</span>
+                    <button id="typeSleeveless" class="group flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
+                        <svg class="w-8 h-8 mb-1.5 drop-shadow transition-transform group-hover:scale-105" viewBox="0 0 64 64" fill="none">
+                            <path d="M22 6 L27 6 C27 12 37 12 37 6 L42 6 L47 16 C42 19 41 27 43 34 L42 58 L22 58 L21 34 C23 27 22 19 17 16 Z" fill="currentColor" fill-opacity="0.35" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                            <path d="M27 6 C27 12 37 12 37 6" stroke="currentColor" stroke-width="2"/>
+                            <path d="M22 58 L42 58" stroke="currentColor" stroke-width="2"/>
+                        </svg>
                         <span>Sleeveless Tank</span>
                         <span class="text-[9px] text-indigo-200 font-normal mt-0.5">Basketball Jersey</span>
                     </button>
-                    <button id="typeTshirt" class="flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer">
-                        <span class="text-base mb-1">👕</span>
+                    <button id="typeTshirt" class="group flex flex-col items-center justify-center p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer">
+                        <svg class="w-8 h-8 mb-1.5 drop-shadow transition-transform group-hover:scale-105" viewBox="0 0 64 64" fill="none">
+                            <path d="M22 6 L27 6 C27 12 37 12 37 6 L42 6 L55 17 L49 26 L44 23 L44 58 L20 58 L20 23 L15 26 L9 17 Z" fill="currentColor" fill-opacity="0.35" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                            <path d="M27 6 C27 12 37 12 37 6" stroke="currentColor" stroke-width="2"/>
+                            <path d="M20 58 L44 58" stroke="currentColor" stroke-width="2"/>
+                        </svg>
                         <span>T-Shirt Jersey</span>
                         <span class="text-[9px] text-slate-400 font-normal mt-0.5">With Sleeves</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Showrooms Selector -->
+            <!-- Showrooms Selector (Picture Selectable) -->
             <div class="space-y-2 pb-2 border-b border-slate-700/40">
                 <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">3D Showroom Environment</p>
                 <div class="grid grid-cols-3 gap-1.5">
-                    <button id="envCyber" class="bg-indigo-600 text-white font-bold py-2 rounded-xl text-xs transition border border-indigo-400/30">Cyber</button>
-                    <button id="envLocker" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-xl text-xs transition">Locker</button>
-                    <button id="envStadium" class="bg-slate-700 hover:bg-slate-650 text-slate-300 font-bold py-2 rounded-xl text-xs transition">Stadium</button>
+                    <button id="envCyber" class="group flex flex-col items-center p-2 bg-indigo-600 text-white font-bold rounded-xl text-xs transition border border-indigo-400/40 shadow-sm cursor-pointer">
+                        <svg class="w-5 h-5 mb-1 text-cyan-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+                            <path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
+                        </svg>
+                        <span>Cyber</span>
+                    </button>
+                    <button id="envLocker" class="group flex flex-col items-center p-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition border border-slate-600/50 cursor-pointer">
+                        <svg class="w-5 h-5 mb-1 text-amber-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="2" width="16" height="20" rx="1"/>
+                            <line x1="12" y1="2" x2="12" y2="22"/>
+                            <circle cx="10" cy="12" r="1" fill="currentColor"/>
+                            <circle cx="14" cy="12" r="1" fill="currentColor"/>
+                        </svg>
+                        <span>Locker</span>
+                    </button>
+                    <button id="envStadium" class="group flex flex-col items-center p-2 bg-slate-700/80 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs transition border border-slate-600/50 cursor-pointer">
+                        <svg class="w-5 h-5 mb-1 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <ellipse cx="12" cy="12" rx="9" ry="6"/>
+                            <line x1="12" y1="6" x2="12" y2="18"/>
+                            <circle cx="12" cy="12" r="2"/>
+                        </svg>
+                        <span>Stadium</span>
+                    </button>
                 </div>
             </div>
 
@@ -572,30 +666,214 @@
                 </div>
             </details>
 
-            <!-- Pattern Selector Accordion -->
+            <!-- Pattern Selector Accordion (Visual Selectable Picture Cards) -->
             <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
                 <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
-                    <span>Jersey Pattern</span>
+                    <span class="flex items-center gap-1.5">
+                        <span>🎨 Jersey Pattern</span>
+                        <span id="lblActivePattern" class="text-[9px] font-bold text-indigo-400 normal-case">(Solid)</span>
+                    </span>
                     <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
                 </summary>
-                <div class="pt-3">
-                    <select id="pattern"
-                        class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
-                        <option value="none">Solid (No Pattern)</option>
-                        <option value="stripes">Classic Stripes</option>
-                        <option value="diagonal">Diagonal Stripes</option>
-                        <option value="panel">Side Panels</option>
-                        <option value="gradient">Vertical Gradient</option>
-                        <option value="thunderstorm">⚡ Thunderstorm (Geometric)</option>
-                        <option value="paint_splatter">🎨 Paint Splatter (Grunge)</option>
-                        <option value="apex_gamer">🎮 Apex Gamer (E-Sports)</option>
-                        <option value="vortex_swoosh">🌀 Vortex Swoosh (Curved)</option>
-                        <option value="carbon_scratch">🏎️ Carbon Scratch (Motorsport)</option>
-                        <option value="digi_camo">🎖️ Digital Camo (Tactical)</option>
-                        <option value="retro_halftone">🏁 Retro Halftone (Comic)</option>
-                        <option value="cyber_grid">🌐 Cyber Grid (High-Tech)</option>
-                        <option value="tidal_wave">🌊 Tidal Wave (Fluid Waves)</option>
-                    </select>
+                
+                <div class="pt-2 space-y-2.5">
+                    <!-- Visual Selectable Pattern Gallery Grid -->
+                    <div class="grid grid-cols-2 gap-2" id="patternCardsContainer">
+                        <!-- Solid (No Pattern) -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-indigo-500 bg-indigo-600/25 ring-2 ring-indigo-500 shadow-md shadow-indigo-950/40 text-white font-bold transition cursor-pointer" data-pattern="none" title="Solid: Clean Monochrome">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" rx="4" fill="#4F46E5" />
+                                <path d="M21 0 C21 6 33 6 33 0" stroke="#818CF8" stroke-width="2" fill="none" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">Solid</span>
+                        </button>
+
+                        <!-- Classic Stripes -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="stripes" title="Classic Stripes: Vertical">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#4F46E5" />
+                                <rect x="9" width="6" height="36" fill="#FFFFFF" opacity="0.9" />
+                                <rect x="24" width="6" height="36" fill="#FFFFFF" opacity="0.9" />
+                                <rect x="39" width="6" height="36" fill="#FFFFFF" opacity="0.9" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">Stripes</span>
+                        </button>
+
+                        <!-- Diagonal Stripes -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="diagonal" title="Diagonal Stripes: Speed Slashes">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#4F46E5" />
+                                <line x1="-8" y1="36" x2="28" y2="0" stroke="#FFFFFF" stroke-width="7" opacity="0.9" />
+                                <line x1="12" y1="36" x2="48" y2="0" stroke="#FFFFFF" stroke-width="7" opacity="0.9" />
+                                <line x1="32" y1="36" x2="68" y2="0" stroke="#FFFFFF" stroke-width="7" opacity="0.9" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">Diagonal</span>
+                        </button>
+
+                        <!-- Side Panels -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="panel" title="Side Panels: Athletic Cutouts">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#4F46E5" />
+                                <rect x="0" width="10" height="36" fill="#7C3AED" />
+                                <rect x="44" width="10" height="36" fill="#7C3AED" />
+                                <line x1="10" y1="0" x2="10" y2="36" stroke="#FFFFFF" stroke-width="1.5" />
+                                <line x1="44" y1="0" x2="44" y2="36" stroke="#FFFFFF" stroke-width="1.5" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">Side Panels</span>
+                        </button>
+
+                        <!-- Vertical Gradient -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="gradient" title="Vertical Gradient: Smooth Fade">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <defs>
+                                    <linearGradient id="pGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#4F46E5" />
+                                        <stop offset="100%" stop-color="#EC4899" />
+                                    </linearGradient>
+                                </defs>
+                                <rect width="54" height="36" fill="url(#pGrad)" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">Gradient</span>
+                        </button>
+
+                        <!-- Thunderstorm -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="thunderstorm" title="Thunderstorm: Lightning Energy">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#1E1B4B" />
+                                <polygon points="30,2 18,18 27,18 22,34 36,16 27,16" fill="#38BDF8" />
+                                <polygon points="14,6 9,16 15,16 12,26 20,14 15,14" fill="#FACC15" opacity="0.85" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">⚡ Thunder</span>
+                        </button>
+
+                        <!-- Paint Splatter -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="paint_splatter" title="Paint Splatter: Grunge Drops">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#18181B" />
+                                <circle cx="27" cy="18" r="6" fill="#F43F5E" />
+                                <circle cx="16" cy="12" r="3" fill="#F43F5E" />
+                                <circle cx="39" cy="14" r="2.5" fill="#F43F5E" />
+                                <circle cx="34" cy="26" r="3.5" fill="#06B6D4" />
+                                <circle cx="18" cy="24" r="2" fill="#06B6D4" />
+                                <circle cx="23" cy="8" r="1.5" fill="#FACC15" />
+                                <circle cx="41" cy="22" r="1.5" fill="#FACC15" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🎨 Splatter</span>
+                        </button>
+
+                        <!-- Apex Gamer -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="apex_gamer" title="Apex Gamer: High-Tech E-Sports">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#09090B" />
+                                <polygon points="27,4 45,28 36,32 27,18 18,32 9,28" fill="#A855F7" />
+                                <polygon points="27,10 36,24 27,20 18,24" fill="#06B6D4" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🎮 Apex</span>
+                        </button>
+
+                        <!-- Vortex Swoosh -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="vortex_swoosh" title="Vortex Swoosh: Dynamic Curves">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#0F172A" />
+                                <path d="M5 32 C 16 30, 27 10, 49 6 C 34 18, 20 22, 11 34 Z" fill="#38BDF8" />
+                                <path d="M3 18 C 14 16, 23 6, 40 2 C 27 10, 18 12, 9 20 Z" fill="#6366F1" opacity="0.8" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🌀 Vortex</span>
+                        </button>
+
+                        <!-- Carbon Scratch -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="carbon_scratch" title="Carbon Scratch: Motorsport Weave">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#18181B" />
+                                <pattern id="pCarb" width="6" height="6" patternUnits="userSpaceOnUse">
+                                    <rect width="3" height="3" fill="#27272A" />
+                                    <rect x="3" y="3" width="3" height="3" fill="#27272A" />
+                                    <rect x="3" width="3" height="3" fill="#3F3F46" />
+                                    <rect y="3" width="3" height="3" fill="#3F3F46" />
+                                </pattern>
+                                <rect width="54" height="36" fill="url(#pCarb)" />
+                                <line x1="9" y1="2" x2="45" y2="34" stroke="#EF4444" stroke-width="2.5" opacity="0.8" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🏎️ Carbon</span>
+                        </button>
+
+                        <!-- Digi Camo -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="digi_camo" title="Digi Camo: Tactical Pixel">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#1C1917" />
+                                <rect x="5" y="4" width="8" height="8" fill="#44403C" />
+                                <rect x="13" y="8" width="8" height="8" fill="#78716C" />
+                                <rect x="27" y="4" width="8" height="8" fill="#15803D" />
+                                <rect x="31" y="12" width="8" height="8" fill="#166534" />
+                                <rect x="18" y="20" width="8" height="8" fill="#84CC16" opacity="0.9" />
+                                <rect x="41" y="20" width="8" height="8" fill="#44403C" />
+                                <rect x="5" y="24" width="8" height="8" fill="#166534" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🎖️ Camo</span>
+                        </button>
+
+                        <!-- Retro Halftone -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="retro_halftone" title="Retro Halftone: Comic Dots">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#312E81" />
+                                <pattern id="pHalf" width="9" height="9" patternUnits="userSpaceOnUse">
+                                    <circle cx="4.5" cy="4.5" r="2.8" fill="#FACC15" />
+                                </pattern>
+                                <rect width="54" height="36" fill="url(#pHalf)" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🏁 Halftone</span>
+                        </button>
+
+                        <!-- Cyber Grid -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="cyber_grid" title="Cyber Grid: Wireframe Matrix">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#020617" />
+                                <pattern id="pGrid" width="9" height="9" patternUnits="userSpaceOnUse">
+                                    <path d="M 9 0 L 0 0 0 9" fill="none" stroke="#06B6D4" stroke-width="0.8" />
+                                </pattern>
+                                <rect width="54" height="36" fill="url(#pGrid)" />
+                                <line x1="0" y1="18" x2="54" y2="18" stroke="#EC4899" stroke-width="1.5" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🌐 Grid</span>
+                        </button>
+
+                        <!-- Tidal Wave -->
+                        <button type="button" class="pattern-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-pattern="tidal_wave" title="Tidal Wave: Fluid Oceanic Swells">
+                            <svg viewBox="0 0 54 36" class="w-full h-10 rounded-lg bg-slate-950 border border-white/10 mb-1.5 overflow-hidden transition-transform group-hover:scale-[1.02]">
+                                <rect width="54" height="36" fill="#082F49" />
+                                <path d="M0 16 Q 14 8, 27 16 T 54 16 L 54 36 L 0 36 Z" fill="#0284C7" />
+                                <path d="M0 24 Q 14 18, 27 24 T 54 24 L 54 36 L 0 36 Z" fill="#38BDF8" />
+                            </svg>
+                            <span class="text-[10px] truncate w-full text-center">🌊 Tidal Wave</span>
+                        </button>
+                    </div>
+
+                    <!-- Parametric Patterns Dropdown Accordion -->
+                    <details class="text-[10px] text-slate-400 bg-slate-900/50 p-2 rounded-xl border border-slate-800/80">
+                        <summary class="font-bold text-slate-300 cursor-pointer select-none flex items-center justify-between">
+                            <span>⚙️ Advanced: All Patterns (220+)</span>
+                            <span class="text-[9px] text-slate-500">Dropdown ▼</span>
+                        </summary>
+                        <div class="mt-2">
+                            <select id="pattern"
+                                class="w-full bg-slate-800 text-white text-xs rounded-xl px-3 py-2 border border-slate-700 outline-none cursor-pointer">
+                                <option value="none">Solid (No Pattern)</option>
+                                <option value="stripes">Classic Stripes</option>
+                                <option value="diagonal">Diagonal Stripes</option>
+                                <option value="panel">Side Panels</option>
+                                <option value="gradient">Vertical Gradient</option>
+                                <option value="thunderstorm">⚡ Thunderstorm (Geometric)</option>
+                                <option value="paint_splatter">🎨 Paint Splatter (Grunge)</option>
+                                <option value="apex_gamer">🎮 Apex Gamer (E-Sports)</option>
+                                <option value="vortex_swoosh">🌀 Vortex Swoosh (Curved)</option>
+                                <option value="carbon_scratch">🏎️ Carbon Scratch (Motorsport)</option>
+                                <option value="digi_camo">🎖️ Digital Camo (Tactical)</option>
+                                <option value="retro_halftone">🏁 Retro Halftone (Comic)</option>
+                                <option value="cyber_grid">🌐 Cyber Grid (High-Tech)</option>
+                                <option value="tidal_wave">🌊 Tidal Wave (Fluid Waves)</option>
+                            </select>
+                        </div>
+                    </details>
                 </div>
             </details>
 
@@ -716,17 +994,94 @@
                 </div>
             </details>
 
-            <!-- Badges & Graphics Accordion -->
+            <!-- Badges & Graphics Accordion (Visual Selectable Picture Cards) -->
             <details class="group space-y-3 pb-3 border-b border-slate-700/40" open>
                 <summary class="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-widest cursor-pointer list-none select-none">
-                    <span>Badges & Graphics</span>
+                    <span class="flex items-center gap-1.5">
+                        <span>🛡️ Badges & Graphics</span>
+                        <span id="lblActiveLogo" class="text-[9px] font-bold text-indigo-400 normal-case">(No Badge)</span>
+                    </span>
                     <span class="transition group-open:rotate-180 text-xs text-slate-500">▼</span>
                 </summary>
-                <div class="space-y-3 pt-3">
+                <div class="space-y-3 pt-2">
                     <div>
-                        <label class="text-[11px] text-slate-300 mb-1 block">Team Crest Badge</label>
-                        <select id="logo"
-                            class="w-full bg-slate-700 text-white text-xs rounded-xl px-3 py-2.5 border-0 outline-none cursor-pointer">
+                        <label class="text-[11px] text-slate-300 mb-2 block font-medium">Select Team Crest / Badge</label>
+                        
+                        <!-- Visual Selectable Badge Grid -->
+                        <div class="grid grid-cols-3 gap-2" id="logoCardsContainer">
+                            <!-- None -->
+                            <button type="button" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-indigo-500 bg-indigo-600/25 ring-2 ring-indigo-500 shadow-md shadow-indigo-950/40 text-white font-bold transition cursor-pointer" data-logo="none" title="No Crest Badge">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 transition-transform group-hover:scale-110">
+                                    <svg class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="9" />
+                                        <line x1="5.5" y1="5.5" x2="18.5" y2="18.5" />
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] truncate">No Badge</span>
+                            </button>
+
+                            <!-- Shield -->
+                            <button type="button" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-logo="shield" title="Shield Crest">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 text-indigo-400" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 4a2 2 0 110 4 2 2 0 010-4zm4 11.2c-1.16.85-2.53 1.45-4 1.74-1.47-.29-2.84-.89-4-1.74V14c0-1.33 2.67-2 4-2s4 .67 4 2v3.2z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] truncate">Shield</span>
+                            </button>
+
+                            <!-- Star -->
+                            <button type="button" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-logo="star" title="Championship Star">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] truncate">Star</span>
+                            </button>
+
+                            <!-- Flame -->
+                            <button type="button" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-logo="flame" title="Flame Crest">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] truncate">Flame</span>
+                            </button>
+
+                            <!-- Eagle -->
+                            <button type="button" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-logo="eagle" title="E-Sports Eagle">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 text-sky-400" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M22 6c-2 0-3.5 1-4.5 2.5C16.5 7 14.5 6 12 6s-4.5 1-5.5 2.5C5.5 7 4 6 2 6c0 5 3.5 10 10 14 6.5-4 10-9 10-14zm-10 11.5C7.5 14.5 5 11 4.5 8c1 0 2.5.5 3.5 2 1-1.5 2.5-2 4-2s3 .5 4 2c1-1.5 2.5-2 3.5-2-.5 3-3 6.5-7.5 9.5z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] truncate">Eagle</span>
+                            </button>
+
+                            <!-- Vortex -->
+                            <button type="button" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer" data-logo="vortex" title="Spiral Vortex">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 transition-transform group-hover:scale-110">
+                                    <svg class="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                                    </svg>
+                                </div>
+                                <span class="text-[10px] truncate">Vortex</span>
+                            </button>
+
+                            <!-- Custom Badge Card (shown when uploaded or selectable) -->
+                            <button type="button" id="cardCustomLogo" class="logo-card group flex flex-col items-center justify-center p-2 rounded-xl border border-slate-700/80 bg-slate-900/80 hover:border-indigo-500/70 hover:bg-slate-800 text-slate-300 font-medium transition cursor-pointer hidden" data-logo="custom" title="Custom Uploaded Badge">
+                                <div class="w-8 h-8 rounded-lg bg-slate-950/80 border border-white/10 flex items-center justify-center mb-1 overflow-hidden transition-transform group-hover:scale-110">
+                                    <img id="customBadgeThumb" src="" alt="Custom Badge" class="w-full h-full object-contain hidden" />
+                                    <span id="customBadgePlaceholder" class="text-xs">🖼️</span>
+                                </div>
+                                <span class="text-[10px] truncate">Custom</span>
+                            </button>
+                        </div>
+
+                        <!-- Underlying synced select -->
+                        <select id="logo" style="display:none;">
                             <option value="none">No Badge</option>
                             <option value="shield">🛡️ Shield Badge</option>
                             <option value="star">⭐ Championship Star</option>
@@ -736,6 +1091,7 @@
                             <option value="custom" id="optCustomLogo" style="display:none;">🖼️ Custom Badge</option>
                         </select>
                     </div>
+
                     <div id="logoUploadContainer" class="mt-2.5">
                         <label class="text-[11px] text-slate-300 mb-1 block">Upload Custom Badge (PNG only)</label>
                         <input type="file" id="logoUpload" accept="image/png"
@@ -982,7 +1338,7 @@
     </div>
 
     <script type="module">
-    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20261025_fixed_sidebar';
+    import { initEditor, getCurrentDesign } from '/static/js/editor/editor.js?v=20261025_selectable_cards';
     initEditor();
      setTimeout(function() {
          const c = document.getElementById('canvasFront2D');
