@@ -3,7 +3,7 @@ import json
 import random
 import re
 from typing import Optional, Tuple
-from app.core.config import GEMINI_API_KEY, CLAUDE_API_KEY
+from app.core.config import GEMINI_API_KEY, CLAUDE_API_KEY, OPENAI_API_BASE, OPENAI_API_KEY, OPENAI_MODEL, GROQ_API_KEY
 from app.core.redis import redis_client, is_redis_available
 
 ALLOWED_PATTERNS = [
@@ -585,12 +585,72 @@ async def call_claude(user_prompt: str, api_key: str, current_design: Optional[d
         return None, f"Claude error: {ex}"
 
 
+async def call_openai_compatible(
+    user_prompt: str,
+    base_url: str,
+    api_key: str,
+    model: str = "auto",
+    current_design: Optional[dict] = None,
+    history: Optional[list] = None
+) -> Tuple[Optional[dict], Optional[str]]:
+    """
+    Calls FreeLLMAPI gateway or any OpenAI-compatible provider (Groq, Cerebras, OpenRouter, Ollama).
+    Uses standard OpenAI Chat Completions payload with json_object response format.
+    """
+    system_prompt = f"{SYSTEM_DESIGN_PROMPT}\n\nStrictly return ONLY a valid JSON object matching the design schema."
+    messages = [{"role": "system", "content": system_prompt}]
+    
+    # Include recent conversational history
+    if history:
+        for turn in history[-6:]:
+            role = turn.get("role", "user")
+            content = turn.get("content", "")
+            if role in ["user", "assistant"] and content:
+                messages.append({"role": role, "content": content})
+                
+    user_content = f"CURRENT UNIFORM CONFIGURATION: {json.dumps(current_design or {})}\nUSER REQUEST / COMMAND: \"{user_prompt}\""
+    messages.append({"role": "user", "content": user_content})
+
+    headers = {
+        "Content-Type": "application/json"
+    }
+    if api_key and api_key.strip():
+        headers["Authorization"] = f"Bearer {api_key.strip()}"
+
+    payload = {
+        "model": model or "auto",
+        "messages": messages,
+        "temperature": 0.2,
+        "max_tokens": 400,
+        "response_format": {"type": "json_object"}
+    }
+
+    url = f"{base_url.rstrip('/')}/chat/completions"
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, headers=headers, json=payload, timeout=6.0)
+            if response.status_code == 200:
+                data = response.json()
+                raw_text = data["choices"][0]["message"]["content"]
+                parsed = clean_json_response(raw_text)
+                return sanitize_design(parsed, user_prompt, current_design), None
+            else:
+                return None, f"OpenAI/FreeLLMAPI error ({response.status_code}): {response.text[:120]}"
+    except (httpx.ConnectError, httpx.ConnectTimeout, httpx.NetworkError) as net_err:
+        return None, f"Network connection unavailable to {base_url}: {net_err}"
+    except Exception as ex:
+        return None, f"OpenAI-compatible request error: {ex}"
+
+
 async def get_jersey_suggestion(user_prompt: str, current_design: Optional[dict] = None, history: Optional[list] = None):
     """
-    High-Speed Generator Endpoint:
-    1. Checks Redis cache for fresh sessions.
-    2. Calls Gemini Flash with structured schema & conversational memory.
-    3. Seamless fallback to Claude Haiku or smart context-aware rules engine.
+    High-Speed Multi-Provider Generator Endpoint:
+    1. Checks Redis cache for fresh exact prompt queries.
+    2. FreeLLMAPI Gateway / OpenAI-Compatible endpoint (Groq, Cerebras, OpenRouter, Llama 3.3).
+    3. Direct Groq Free Tier (Llama 3.3 70B ultra fast).
+    4. Google Gemini Flash (structured outputs).
+    5. Claude Haiku.
+    6. Instant Context-Aware Smart Rules Engine (sub-millisecond local fallback).
     """
     cleaned_prompt = (user_prompt or "WARRIORS").strip()
     
@@ -606,6 +666,51 @@ async def get_jersey_suggestion(user_prompt: str, current_design: Optional[dict]
         except Exception:
             pass
 
+    # 1. Check FreeLLMAPI Gateway or configured OpenAI-Compatible endpoint
+    if OPENAI_API_KEY and OPENAI_API_KEY.strip() and not OPENAI_API_KEY.startswith("your_"):
+        try:
+            result, err = await call_openai_compatible(
+                cleaned_prompt,
+                base_url=OPENAI_API_BASE,
+                api_key=OPENAI_API_KEY.strip(),
+                model=OPENAI_MODEL,
+                current_design=current_design,
+                history=history
+            )
+            if result:
+                if use_cache and is_redis_available():
+                    try:
+                        redis_client.setex(cache_key, 3600, json.dumps(result))
+                    except Exception:
+                        pass
+                return result, None
+            print(f"[AI Service Info] OpenAI/FreeLLMAPI fallback: {err}")
+        except Exception as ex:
+            print(f"[AI Service Info] OpenAI/FreeLLMAPI exception: {ex}")
+
+    # 2. Check Direct Groq Free Tier (Llama 3.3 70B)
+    if GROQ_API_KEY and GROQ_API_KEY.strip() and not GROQ_API_KEY.startswith("your_"):
+        try:
+            result, err = await call_openai_compatible(
+                cleaned_prompt,
+                base_url="https://api.groq.com/openai/v1",
+                api_key=GROQ_API_KEY.strip(),
+                model="llama-3.3-70b-versatile",
+                current_design=current_design,
+                history=history
+            )
+            if result:
+                if use_cache and is_redis_available():
+                    try:
+                        redis_client.setex(cache_key, 3600, json.dumps(result))
+                    except Exception:
+                        pass
+                return result, None
+            print(f"[AI Service Info] Groq fallback: {err}")
+        except Exception as ex:
+            print(f"[AI Service Info] Groq exception: {ex}")
+
+    # 3. Check Google Gemini Flash
     if GEMINI_API_KEY and GEMINI_API_KEY.startswith("AIzaSy"):
         try:
             result, err = await call_gemini(cleaned_prompt, GEMINI_API_KEY.strip(), current_design, history)
@@ -620,6 +725,7 @@ async def get_jersey_suggestion(user_prompt: str, current_design: Optional[dict]
         except Exception as e:
             print(f"[AI Service Info] Gemini exception fallback: {e}")
 
+    # 4. Check Claude Haiku
     if CLAUDE_API_KEY and CLAUDE_API_KEY.strip() and not CLAUDE_API_KEY.startswith("your_"):
         try:
             result, err = await call_claude(cleaned_prompt, CLAUDE_API_KEY.strip(), current_design, history)
@@ -628,6 +734,7 @@ async def get_jersey_suggestion(user_prompt: str, current_design: Optional[dict]
         except Exception:
             pass
 
+    # 5. Local instant Smart Fallback Engine
     fallback = generate_smart_fallback(cleaned_prompt, current_design)
     if use_cache and is_redis_available():
         try:

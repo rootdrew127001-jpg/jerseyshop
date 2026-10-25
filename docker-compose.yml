@@ -44,6 +44,7 @@ services:
     environment:
       DB_HOST: db
       REDIS_HOST: redis
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-http://freellmapi:3001/v1}
     volumes:
       - ./app:/app/app
       - ./static:/app/static
@@ -54,6 +55,19 @@ services:
       redis:
         condition: service_healthy
 
+  freellmapi:
+    image: ghcr.io/tashfeenahmed/freellmapi:latest
+    container_name: jerseyshop-freellmapi
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - ENCRYPTION_KEY=${FREELLMAPI_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    volumes:
+      - freellmapi_data:/app/data
+
 volumes:
   mysql_data:
+  freellmapi_data:
 
