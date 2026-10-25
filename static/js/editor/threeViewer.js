@@ -601,10 +601,11 @@ function applyShortsConformalUVs(geometry, isBack = false, customBBox = null, cu
     const rx = rangeX / 2;
     const rz = rangeZ / 2;
 
-    // Waistband top is mapped to V = 0.96, bottom leg hem is mapped to V = 0.08
-    const vWaistband = 0.96;
-    const vHem = 0.08;
-    const uHalf = 0.38;
+    // Calibrated to 2D shorts polygon: waist Y = 72..84 -> V = 0.86, hem Y = 460..470 -> V = 0.09
+    const vWaistband = 0.86;
+    const vHem = 0.09;
+    // Calibrated to 2D shorts outer contour: X = 102..410 -> uHalf = 0.30
+    const uHalf = 0.30;
 
     const uvs = new Float32Array(posAttr.count * 2);
 

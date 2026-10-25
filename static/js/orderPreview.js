@@ -553,11 +553,11 @@ window.OrderPreview = (function () {
             }
         } else if (pat === 'panel') {
             ctx.fillStyle = accentColor;
-            ctx.fillRect(0, 0, 110, 512);
-            ctx.fillRect(402, 0, 110, 512);
+            ctx.fillRect(0, 0, 146, 512);
+            ctx.fillRect(366, 0, 146, 512);
             ctx.fillStyle = tertiaryColor;
-            ctx.fillRect(110, 0, 12, 512);
-            ctx.fillRect(390, 0, 12, 512);
+            ctx.fillRect(146, 0, 12, 512);
+            ctx.fillRect(354, 0, 12, 512);
         } else if (pat === 'gradient') {
             const grad = ctx.createLinearGradient(0, 0, 0, 512);
             grad.addColorStop(0, baseColor);
@@ -778,43 +778,43 @@ window.OrderPreview = (function () {
         // Pattern
         if (pattern === 'panel') {
             ctx.fillStyle = accentColor;
-            ctx.fillRect(0, 0, 110, 512);
-            ctx.fillRect(402, 0, 110, 512);
+            ctx.fillRect(0, 0, 146, 512);
+            ctx.fillRect(366, 0, 146, 512);
             ctx.fillStyle = tertiaryColor;
-            ctx.fillRect(110, 0, 12, 512);
-            ctx.fillRect(390, 0, 12, 512);
+            ctx.fillRect(146, 0, 12, 512);
+            ctx.fillRect(354, 0, 12, 512);
         } else {
             drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
         }
 
-        // Elastic Waistband
+        // Elastic Waistband (Y = 0..108, matching 2D waist contour & 3D top rim)
         ctx.fillStyle = accentColor;
-        ctx.fillRect(0, 0, 512, 48);
+        ctx.fillRect(0, 0, 512, 108);
         ctx.fillStyle = tertiaryColor;
-        ctx.fillRect(0, 20, 512, 8);
+        ctx.fillRect(0, 96, 512, 8);
 
         ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
         for (let x = 0; x < 512; x += 8) {
-            ctx.fillRect(x, 0, 1.5, 48);
+            ctx.fillRect(x, 0, 1.5, 108);
         }
 
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
         ctx.lineWidth = 2.0;
         ctx.beginPath();
-        ctx.moveTo(0, 48);
-        ctx.lineTo(512, 48);
+        ctx.moveTo(0, 108);
+        ctx.lineTo(512, 108);
         ctx.stroke();
 
-        // Leg Opening Hem Trim
+        // Leg Opening Hem Trim (Y = 436..512, matching 2D hem contour & 3D bottom rim)
         ctx.fillStyle = accentColor;
-        ctx.fillRect(0, 472, 248, 40);
+        ctx.fillRect(0, 442, 248, 70);
         ctx.fillStyle = tertiaryColor;
-        ctx.fillRect(0, 466, 248, 6);
+        ctx.fillRect(0, 436, 248, 6);
 
         ctx.fillStyle = accentColor;
-        ctx.fillRect(264, 472, 248, 40);
+        ctx.fillRect(264, 442, 248, 70);
         ctx.fillStyle = tertiaryColor;
-        ctx.fillRect(264, 466, 248, 6);
+        ctx.fillRect(264, 436, 248, 6);
 
         // Leg details (Logo, Player Number, Wordmark)
         if (!isBack) {

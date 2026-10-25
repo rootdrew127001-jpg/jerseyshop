@@ -1,5 +1,5 @@
-import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyTextureToShortsFront, applyTextureToShortsBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, setCameraFocus, triggerShowcaseSpin, setMannequinSkin, getCurrentMannequinSkin, PRESET_SKINS } from './threeViewer.js?v=20261019_shorts_drag';
-import { buildTexture, buildBackTexture, buildShortsTexture, buildShortsBackTexture, renderJersey2D, renderJersey2DSide, renderShorts2D, renderShorts2DSide, renderUniform2D, renderUniform2DSide } from './textureBuilder.js?v=20261019_shorts_drag';
+import { initViewer, loadJerseyModel, setPartColor, setTrimColor, applyTextureToPanel, applyTextureToBack, applyTextureToShortsFront, applyTextureToShortsBack, applyMaterialFinish, changeEnvironment, playAnimation, getAvailableAnimations, getCurrentAnimation, fitCameraToObject, setCameraAngle, setCameraFocus, triggerShowcaseSpin, setMannequinSkin, getCurrentMannequinSkin, PRESET_SKINS } from './threeViewer.js?v=20261025_parity_fix';
+import { buildTexture, buildBackTexture, buildShortsTexture, buildShortsBackTexture, renderJersey2D, renderJersey2DSide, renderShorts2D, renderShorts2DSide, renderUniform2D, renderUniform2DSide } from './textureBuilder.js?v=20261025_parity_fix';
 import { generateRandomDesign } from './randomDesign.js';
 import { GOOGLE_FONTS } from './googleFontsList.js';
 import { generateParameterizedPatterns } from './patternsGenerator.js';
@@ -1049,30 +1049,6 @@ function bindControls() {
     }
     window._setActiveFocusBtn = setActiveFocusBtn;
 
-    if (btnFocusFull) {
-        btnFocusFull.addEventListener('click', () => {
-            setActiveFocusBtn('full');
-            setCameraFocus('full');
-        });
-    }
-    if (btnFocusJersey) {
-        btnFocusJersey.addEventListener('click', () => {
-            setActiveFocusBtn('jersey');
-            setCameraFocus('jersey');
-        });
-    }
-    if (btnFocusShorts) {
-        btnFocusShorts.addEventListener('click', () => {
-            setActiveFocusBtn('shorts');
-            setCameraFocus('shorts');
-        });
-    }
-
-    // 2D Outfit Piece Switcher (Full Kit / Jersey Only / Shorts Only)
-    const btnPieceFull = document.getElementById('btnPieceFull');
-    const btnPieceJersey = document.getElementById('btnPieceJersey');
-    const btnPieceShorts = document.getElementById('btnPieceShorts');
-
     function updatePieceUI(piece) {
         currentDesign.viewPiece = piece;
         [
@@ -1088,9 +1064,27 @@ function bindControls() {
                 }
             }
         });
+        setActiveFocusBtn(piece);
+        setCameraFocus(piece);
         applyDesign(currentDesign);
     }
     window._updatePieceUI = updatePieceUI;
+
+    if (btnFocusFull) {
+        btnFocusFull.addEventListener('click', () => {
+            updatePieceUI('full');
+        });
+    }
+    if (btnFocusJersey) {
+        btnFocusJersey.addEventListener('click', () => {
+            updatePieceUI('jersey');
+        });
+    }
+    if (btnFocusShorts) {
+        btnFocusShorts.addEventListener('click', () => {
+            updatePieceUI('shorts');
+        });
+    }
 
     if (btnPieceFull) btnPieceFull.addEventListener('click', () => updatePieceUI('full'));
     if (btnPieceJersey) btnPieceJersey.addEventListener('click', () => updatePieceUI('jersey'));

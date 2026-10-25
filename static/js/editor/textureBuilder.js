@@ -132,50 +132,50 @@ export function drawRawShortsDesign(ctx, options, isBack = false) {
 
     // 2. Coordinated pattern matching jersey
     if (pattern === 'panel') {
-        // Lateral outer side panels
+        // Lateral outer side panels calibrated to outer leg contour (X: 0..146 and 366..512)
         ctx.fillStyle = accentColor;
-        ctx.fillRect(0, 0, 110, 512);
-        ctx.fillRect(402, 0, 110, 512);
+        ctx.fillRect(0, 0, 146, 512);
+        ctx.fillRect(366, 0, 146, 512);
         ctx.fillStyle = tertiaryColor;
-        ctx.fillRect(110, 0, 12, 512);
-        ctx.fillRect(390, 0, 12, 512);
+        ctx.fillRect(146, 0, 12, 512);
+        ctx.fillRect(354, 0, 12, 512);
     } else {
         drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor);
     }
 
-    // 3. Elastic Waistband at top (Y = 0..48)
+    // 3. Elastic Waistband at top (Y = 0..108, matching 2D waist contour & 3D top rim)
     ctx.fillStyle = accentColor;
-    ctx.fillRect(0, 0, 512, 48);
+    ctx.fillRect(0, 0, 512, 108);
 
     ctx.fillStyle = tertiaryColor;
-    ctx.fillRect(0, 20, 512, 8);
+    ctx.fillRect(0, 96, 512, 8);
 
     // Fine elastic waistband ribbing
     ctx.fillStyle = 'rgba(0, 0, 0, 0.16)';
     for (let x = 0; x < 512; x += 8) {
-        ctx.fillRect(x, 0, 1.5, 48);
+        ctx.fillRect(x, 0, 1.5, 108);
     }
 
     // Waistband bottom seam shadow
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
     ctx.lineWidth = 2.0;
     ctx.beginPath();
-    ctx.moveTo(0, 48);
-    ctx.lineTo(512, 48);
+    ctx.moveTo(0, 108);
+    ctx.lineTo(512, 108);
     ctx.stroke();
 
-    // 4. Leg Bottom Opening Hem Trim (Y = 466..512)
+    // 4. Leg Bottom Opening Hem Trim (Y = 436..512, matching 2D hem contour & 3D bottom rim)
     // Left leg opening (X: 0..248)
     ctx.fillStyle = accentColor;
-    ctx.fillRect(0, 472, 248, 40);
+    ctx.fillRect(0, 442, 248, 70);
     ctx.fillStyle = tertiaryColor;
-    ctx.fillRect(0, 466, 248, 6);
+    ctx.fillRect(0, 436, 248, 6);
 
     // Right leg opening (X: 264..512)
     ctx.fillStyle = accentColor;
-    ctx.fillRect(264, 472, 248, 40);
+    ctx.fillRect(264, 442, 248, 70);
     ctx.fillStyle = tertiaryColor;
-    ctx.fillRect(264, 466, 248, 6);
+    ctx.fillRect(264, 436, 248, 6);
 
     // 5. Front-only leg details (Logo, Player Number, Custom Shorts Wordmark)
     if (!isBack) {
@@ -2150,12 +2150,13 @@ function drawPattern(ctx, pattern, baseColor, accentColor, tertiaryColor) {
         }
     }
     else if (pattern === 'panel') {
+        // Lateral outer side panels matching jersey flanks, sleeves, and shorts seam
         ctx.fillStyle = accentColor;
-        ctx.fillRect(0, 0, 110, 512);
-        ctx.fillRect(402, 0, 110, 512);
+        ctx.fillRect(0, 0, 146, 512);
+        ctx.fillRect(366, 0, 146, 512);
         ctx.fillStyle = tertiaryColor;
-        ctx.fillRect(110, 0, 12, 512);
-        ctx.fillRect(390, 0, 12, 512);
+        ctx.fillRect(146, 0, 12, 512);
+        ctx.fillRect(354, 0, 12, 512);
     }
     else if (pattern === 'gradient') {
         const grad = ctx.createLinearGradient(0, 0, 0, 512);
