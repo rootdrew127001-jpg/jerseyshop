@@ -30,8 +30,8 @@
                     <span>Live Camera</span>
                 </button>
                 <button id="btnModeTestCard" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
-                    <span>🧪</span>
-                    <span>Interactive Test Card</span>
+                    <span>🎨</span>
+                    <span>Color Spectrum & Wheel</span>
                 </button>
                 <button id="btnModeUpload" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
                     <span>📁</span>
@@ -58,49 +58,15 @@
                     <canvas id="sampleCanvas" class="w-full h-full object-contain bg-slate-950 hidden"></canvas>
 
                     <!-- Interactive Reticle Box (Centered by default, moves on click/drag) -->
-                    <div id="reticle" class="absolute w-20 h-20 border-2 border-white/90 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)] pointer-events-none transition-all duration-100 flex items-center justify-center ring-1 ring-black/40" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                    <div id="reticle" class="absolute w-20 h-20 border-2 border-white/90 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)] pointer-events-none transition-all duration-75 flex items-center justify-center ring-1 ring-black/40" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
                         <div class="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-black/60 shadow"></div>
-                        <div class="absolute -top-6 text-[10px] font-mono font-bold bg-black/75 px-1.5 py-0.5 rounded text-white shadow pointer-events-none">25x25 DNA</div>
+                        <div id="reticleBadge" class="absolute -top-6 text-[10px] font-mono font-bold bg-black/75 px-1.5 py-0.5 rounded text-white shadow pointer-events-none">COLOR DNA</div>
                     </div>
 
                     <!-- Reticle Help Hint Overlay -->
                     <div class="absolute bottom-3 left-3 bg-slate-950/70 backdrop-blur-sm border border-white/10 px-3 py-1 rounded-xl text-[10px] text-slate-300 pointer-events-none flex items-center gap-1.5 shadow">
                         <span>🎯</span>
-                        <span>Click anywhere inside the frame to move target reticle</span>
-                    </div>
-                </div>
-
-                <!-- Quick Test Preset Chips -->
-                <div class="bg-slate-900/60 border border-slate-800/70 p-3 rounded-2xl space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Test Jersey Palettes</span>
-                        <span class="text-[10px] text-slate-500">Click to instantly sample</span>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#FDB927" data-name="Lakers Gold">
-                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#FDB927"></span>
-                            <span>Gold (#FDB927)</span>
-                        </button>
-                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#CE1141" data-name="Bulls Red">
-                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#CE1141"></span>
-                            <span>Red (#CE1141)</span>
-                        </button>
-                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#007A33" data-name="Celtics Green">
-                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#007A33"></span>
-                            <span>Green (#007A33)</span>
-                        </button>
-                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#06B6D4" data-name="Cyber Cyan">
-                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#06B6D4"></span>
-                            <span>Cyan (#06B6D4)</span>
-                        </button>
-                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#7C3AED" data-name="Royal Purple">
-                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#7C3AED"></span>
-                            <span>Purple (#7C3AED)</span>
-                        </button>
-                        <button type="button" class="presetBtn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700/60 transition cursor-pointer" data-hex="#F97316" data-name="Neon Orange">
-                            <span class="w-3 h-3 rounded-full border border-black/30" style="background:#F97316"></span>
-                            <span>Orange (#F97316)</span>
-                        </button>
+                        <span>Click or drag anywhere to sample color DNA</span>
                     </div>
                 </div>
             </div>
@@ -133,17 +99,6 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Status Feedback Box -->
-                <div id="statusBox" class="bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl space-y-1.5">
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <span id="statusIcon">ℹ️</span>
-                        <span>Scanner Status</span>
-                    </p>
-                    <p id="statusText" class="text-xs text-slate-300 leading-relaxed">
-                        Initializing color scanner...
-                    </p>
-                </div>
             </aside>
         </section>
     </main>
@@ -174,76 +129,213 @@
         };
 
         const updateStatus = (text, icon = 'ℹ️', isWarning = false) => {
-            $('statusText').innerText = text;
-            $('statusIcon').innerText = icon;
-            const box = $('statusBox');
-            if (isWarning) {
-                box.className = 'bg-amber-950/30 border border-amber-600/40 p-3.5 rounded-2xl space-y-1.5 text-amber-200';
-            } else {
-                box.className = 'bg-slate-950/70 border border-slate-800 p-3.5 rounded-2xl space-y-1.5 text-slate-300';
-            }
+            // Status feedback box removed
         };
 
-        // Draw Interactive Multi-Zone Jersey Test Card
+        function hsvToRgb(h, s, v) {
+            let r, g, b;
+            const i = Math.floor(h * 6);
+            const f = h * 6 - i;
+            const p = v * (1 - s);
+            const q = v * (1 - f * s);
+            const t = v * (1 - (1 - f) * s);
+            switch (i % 6) {
+                case 0: r = v, g = t, b = p; break;
+                case 1: r = q, g = v, b = p; break;
+                case 2: r = p, g = v, b = t; break;
+                case 3: r = p, g = q, b = v; break;
+                case 4: r = t, g = p, b = v; break;
+                case 5: r = v, g = p, b = q; break;
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+
+        // Draw Interactive Chromatic Spectrum & Color Wheel
         const drawTestCard = () => {
             sampleCanvas.width = 800;
             sampleCanvas.height = 450;
             const ctx = sampleCanvas.getContext('2d');
 
-            // Dark textured canvas background
+            // 1. Dark textured canvas background
             const bgGrad = ctx.createLinearGradient(0, 0, 800, 450);
-            bgGrad.addColorStop(0, '#0b0f19');
-            bgGrad.addColorStop(1, '#1e293b');
+            bgGrad.addColorStop(0, '#090d16');
+            bgGrad.addColorStop(1, '#0f172a');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, 800, 450);
 
-            // Subdued grid pattern
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            // 2. Subdued cyber grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
             ctx.lineWidth = 1;
             for (let x = 0; x < 800; x += 40) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, 450);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 450); ctx.stroke();
             }
             for (let y = 0; y < 450; y += 40) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(800, y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(800, y); ctx.stroke();
             }
 
-            // Header text on canvas
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = 'bold 13px Inter, sans-serif';
-            ctx.fillText('MODELYX INTERACTIVE TEST CARD — CLICK ANY COLOR ZONE TO SAMPLE', 30, 32);
+            // 3. Pixel Buffer for smooth Chromatic Wheel and Spectrum
+            const imgData = ctx.getImageData(0, 0, 800, 450);
+            const data = imgData.data;
 
-            // 6 Distinct Jersey Palette Zones
-            const zones = [
-                { name: "Lakers Gold", hex: "#FDB927", x: 30, y: 50, w: 226, h: 170 },
-                { name: "Bulls Red", hex: "#CE1141", x: 286, y: 50, w: 228, h: 170 },
-                { name: "Celtics Green", hex: "#007A33", x: 544, y: 50, w: 226, h: 170 },
-                { name: "Cyber Cyan", hex: "#06B6D4", x: 30, y: 245, w: 226, h: 175 },
-                { name: "Royal Purple", hex: "#7C3AED", x: 286, y: 245, w: 228, h: 175 },
-                { name: "Electric Orange", hex: "#F97316", x: 544, y: 245, w: 226, h: 175 }
+            // Geometry
+            const wheelCx = 210, wheelCy = 245, wheelR = 150;
+            const specX = 425, specY = 65, specW = 345, specH = 175;
+            const grayX = 425, grayY = 270, grayW = 345, grayH = 36;
+
+            // A. Draw 360° Chromatic HSV Color Wheel (Center: White, Edge: Saturated Hue)
+            for (let y = wheelCy - wheelR; y <= wheelCy + wheelR; y++) {
+                if (y < 0 || y >= 450) continue;
+                for (let x = wheelCx - wheelR; x <= wheelCx + wheelR; x++) {
+                    if (x < 0 || x >= 800) continue;
+                    const dx = x - wheelCx;
+                    const dy = y - wheelCy;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist <= wheelR) {
+                        const angle = Math.atan2(dy, dx);
+                        const hue = ((angle * 180 / Math.PI) + 360) % 360;
+                        const sat = Math.min(1.0, dist / wheelR);
+                        const [r, g, b] = hsvToRgb(hue / 360, sat, 1.0);
+                        const idx = (y * 800 + x) * 4;
+
+                        // Smooth anti-aliased edge
+                        const edgeAlpha = dist > wheelR - 1.5 ? Math.max(0, Math.min(1, (wheelR - dist) / 1.5)) : 1.0;
+                        data[idx] = Math.round(r * edgeAlpha + data[idx] * (1 - edgeAlpha));
+                        data[idx + 1] = Math.round(g * edgeAlpha + data[idx + 1] * (1 - edgeAlpha));
+                        data[idx + 2] = Math.round(b * edgeAlpha + data[idx + 2] * (1 - edgeAlpha));
+                        data[idx + 3] = 255;
+                    }
+                }
+            }
+
+            // B. Draw Continuous 2D Spectrum (Hue on X, Tints & Shades on Y)
+            for (let y = specY; y < specY + specH; y++) {
+                const relY = (y - specY) / specH;
+                let sat, val;
+                if (relY <= 0.5) {
+                    sat = relY * 2;
+                    val = 1.0;
+                } else {
+                    sat = 1.0;
+                    val = 1.0 - (relY - 0.5) * 2;
+                }
+                for (let x = specX; x < specX + specW; x++) {
+                    const relX = (x - specX) / specW;
+                    const hue = relX * 360;
+                    const [r, g, b] = hsvToRgb(hue / 360, sat, val);
+                    const idx = (y * 800 + x) * 4;
+                    data[idx] = r;
+                    data[idx + 1] = g;
+                    data[idx + 2] = b;
+                    data[idx + 3] = 255;
+                }
+            }
+
+            // C. Draw Monochromatic Grayscale Strip (White to Black)
+            for (let y = grayY; y < grayY + grayH; y++) {
+                for (let x = grayX; x < grayX + grayW; x++) {
+                    const relX = (x - grayX) / grayW;
+                    const val = Math.round(255 * (1.0 - relX));
+                    const idx = (y * 800 + x) * 4;
+                    data[idx] = val;
+                    data[idx + 1] = val;
+                    data[idx + 2] = val;
+                    data[idx + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(imgData, 0, 0);
+
+            // 4. Overlays & Annotations
+            // Top Header
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 12px Inter, system-ui, sans-serif';
+            ctx.fillText('🎨 CHROMATIC COLOR WHEEL & CONTINUOUS SPECTRUM', 25, 30);
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'normal 11px Inter, system-ui, sans-serif';
+            ctx.fillText('CLICK OR DRAG THE RETICLE ANYWHERE TO SAMPLE ACCURATE COLOR DNA', 360, 30);
+
+            // Wheel Ring Glow & Border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(wheelCx, wheelCy, wheelR, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Wheel Cardinal Direction Markers & Tick lines
+            const markers = [
+                { text: 'RED 0°', angle: 0, align: 'left', baseline: 'middle', ox: 10, oy: 0 },
+                { text: 'YELLOW 60°', angle: Math.PI / 3, align: 'left', baseline: 'top', ox: 8, oy: 6 },
+                { text: 'GREEN 120°', angle: (2 * Math.PI) / 3, align: 'right', baseline: 'top', ox: -8, oy: 6 },
+                { text: 'CYAN 180°', angle: Math.PI, align: 'right', baseline: 'middle', ox: -10, oy: 0 },
+                { text: 'BLUE 240°', angle: (4 * Math.PI) / 3, align: 'right', baseline: 'bottom', ox: -8, oy: -6 },
+                { text: 'MAGENTA 300°', angle: (5 * Math.PI) / 3, align: 'left', baseline: 'bottom', ox: 8, oy: -6 }
             ];
 
-            zones.forEach(z => {
-                // Color swatch box
-                ctx.fillStyle = z.hex;
+            markers.forEach(m => {
+                const r1 = wheelR + 2;
+                const r2 = wheelR + 8;
+                const x1 = wheelCx + Math.cos(m.angle) * r1;
+                const y1 = wheelCy + Math.sin(m.angle) * r1;
+                const x2 = wheelCx + Math.cos(m.angle) * r2;
+                const y2 = wheelCy + Math.sin(m.angle) * r2;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.roundRect(z.x, z.y, z.w, z.h, 16);
-                ctx.fill();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
 
-                // Bottom badge
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = 'bold 9px monospace';
+                ctx.textAlign = m.align;
+                ctx.textBaseline = m.baseline;
+                ctx.fillText(m.text, x2 + m.ox, y2 + m.oy);
+            });
+
+            // Spectrum Box Border & Label
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'alphabetic';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(specX, specY, specW, specH);
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = 'bold 10px Inter, system-ui, sans-serif';
+            ctx.fillText('HUE & BRIGHTNESS SPECTRUM', specX, specY - 8);
+
+            // Grayscale Box Border & Label
+            ctx.strokeRect(grayX, grayY, grayW, grayH);
+            ctx.fillText('WHITE TO BLACK GRADIENT', grayX, grayY - 8);
+
+            // D. Popular Core Team Swatches
+            const swatches = [
+                { name: 'Gold', hex: '#FACC15' },
+                { name: 'Red', hex: '#DC143C' },
+                { name: 'Green', hex: '#16A34A' },
+                { name: 'Cyan', hex: '#00BCD4' },
+                { name: 'Royal', hex: '#2563EB' },
+                { name: 'Purple', hex: '#7C3AED' },
+                { name: 'Orange', hex: '#F97316' },
+                { name: 'Stealth', hex: '#000000' }
+            ];
+            const swY = 345, swH = 55;
+            const gap = 6;
+            const swW = (specW - (swatches.length - 1) * gap) / swatches.length;
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('CHAMPIONSHIP PRESET SWATCHES', specX, swY - 8);
+
+            swatches.forEach((sw, i) => {
+                const sx = specX + i * (swW + gap);
+                ctx.fillStyle = sw.hex;
                 ctx.beginPath();
-                ctx.roundRect(z.x + 12, z.y + z.h - 42, z.w - 24, 30, 8);
+                ctx.roundRect(sx, swY, swW, swH, 8);
                 ctx.fill();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.stroke();
 
-                ctx.fillStyle = '#ffffff';
-                ctx.font = 'bold 12px Inter, sans-serif';
-                ctx.fillText(z.name + ' ' + z.hex, z.x + 22, z.y + z.h - 22);
+                ctx.fillStyle = sw.hex === '#000000' ? '#ffffff' : '#000000';
+                ctx.font = 'bold 9px Inter, system-ui, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(sw.name, sx + swW / 2, swY + swH - 10);
             });
         };
 
@@ -265,8 +357,9 @@
         };
 
         // Sample 25x25 average around (normX, normY)
-        const sampleAreaHex = (normX, normY, size = 25) => {
+        const sampleAreaHex = (normX, normY, size = null) => {
             let ctx, w, h;
+            const actualSize = size !== null ? size : (activeMode === 'camera' ? 25 : 5);
             if (activeMode === 'camera' && video.videoWidth > 0) {
                 tempCanvas.width = video.videoWidth;
                 tempCanvas.height = video.videoHeight;
@@ -285,11 +378,11 @@
 
             const centerX = Math.floor(normX * w);
             const centerY = Math.floor(normY * h);
-            const half = Math.floor(size / 2);
-            const startX = Math.max(0, Math.min(w - size, centerX - half));
-            const startY = Math.max(0, Math.min(h - size, centerY - half));
-            const actualW = Math.min(size, w - startX);
-            const actualH = Math.min(size, h - startY);
+            const half = Math.floor(actualSize / 2);
+            const startX = Math.max(0, Math.min(w - actualSize, centerX - half));
+            const startY = Math.max(0, Math.min(h - actualSize, centerY - half));
+            const actualW = Math.min(actualSize, w - startX);
+            const actualH = Math.min(actualSize, h - startY);
 
             if (actualW <= 0 || actualH <= 0) return currentHex;
 
@@ -311,14 +404,17 @@
         };
 
         const updateReticlePosition = (normX, normY, sampleNow = true) => {
-            reticleNormX = Math.max(0.05, Math.min(0.95, normX));
-            reticleNormY = Math.max(0.05, Math.min(0.95, normY));
+            reticleNormX = Math.max(0.02, Math.min(0.98, normX));
+            reticleNormY = Math.max(0.02, Math.min(0.98, normY));
             reticle.style.left = `${(reticleNormX * 100).toFixed(1)}%`;
             reticle.style.top = `${(reticleNormY * 100).toFixed(1)}%`;
 
             if (sampleNow) {
-                const hex = sampleAreaHex(reticleNormX, reticleNormY, 25);
-                setPreview(hex, `Target (${Math.round(reticleNormX * 100)}%, ${Math.round(reticleNormY * 100)}%)`);
+                const hex = sampleAreaHex(reticleNormX, reticleNormY);
+                const desc = activeMode === 'camera'
+                    ? `Camera Target (${Math.round(reticleNormX * 100)}%, ${Math.round(reticleNormY * 100)}%)`
+                    : `Color Target (${Math.round(reticleNormX * 100)}%, ${Math.round(reticleNormY * 100)}%)`;
+                setPreview(hex, desc);
             }
         };
 
@@ -347,19 +443,22 @@
                 ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer'
                 : 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer';
 
+            const badge = $('reticleBadge');
             if (mode === 'camera') {
                 video.classList.remove('hidden');
                 sampleCanvas.classList.add('hidden');
                 $('modeBadge').innerText = 'Camera Mode Active';
+                if (badge) badge.innerText = '25x25 DNA';
             } else {
                 video.classList.add('hidden');
                 sampleCanvas.classList.remove('hidden');
                 stopCamera();
+                if (badge) badge.innerText = 'COLOR DNA';
                 if (mode === 'testcard') {
-                    $('modeBadge').innerText = 'Test Card Mode Active';
+                    $('modeBadge').innerText = 'Color Spectrum & Wheel Active';
                     drawTestCard();
-                    reticleNormX = 0.50;
-                    reticleNormY = 0.30;
+                    reticleNormX = 0.26;
+                    reticleNormY = 0.54;
                     updateReticlePosition(reticleNormX, reticleNormY, true);
                 } else if (mode === 'upload') {
                     $('modeBadge').innerText = 'Image Upload Mode Active';
@@ -375,54 +474,55 @@
                 }
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
-                updateStatus('Camera ready. Point reticle at your target color or click anywhere in frame to sample.', '✅');
             } catch (err) {
                 // Graceful fallback when no camera is connected or permission denied
                 switchMode('testcard');
-                updateStatus('Camera not detected on this device. Switched to Interactive Test Mode — click any color on the card or upload an image to test color capture!', '🧪', true);
             }
         };
 
-        // Reticle click-to-point on the viewfinder
-        $('viewfinderWrapper').addEventListener('click', (e) => {
+        // Smooth real-time pointer drag or click
+        let isPointerDown = false;
+        const processPointerEvent = (e) => {
             const rect = $('viewfinderWrapper').getBoundingClientRect();
-            const normX = (e.clientX - rect.left) / rect.width;
-            const normY = (e.clientY - rect.top) / rect.height;
+            const normX = Math.max(0.02, Math.min(0.98, (e.clientX - rect.left) / rect.width));
+            const normY = Math.max(0.02, Math.min(0.98, (e.clientY - rect.top) / rect.height));
             updateReticlePosition(normX, normY, true);
-            updateStatus(`Sampled target at (${Math.round(normX * 100)}%, ${Math.round(normY * 100)}%). Ready to capture.`, '🎯');
-        });
-
-        // Quick Preset Palettes
-        const PRESET_COORDS = {
-            "#FDB927": { x: 0.18, y: 0.30 }, // Lakers Gold
-            "#CE1141": { x: 0.50, y: 0.30 }, // Bulls Red
-            "#007A33": { x: 0.82, y: 0.30 }, // Celtics Green
-            "#06B6D4": { x: 0.18, y: 0.74 }, // Cyber Cyan
-            "#7C3AED": { x: 0.50, y: 0.74 }, // Royal Purple
-            "#F97316": { x: 0.82, y: 0.74 }  // Neon Orange
         };
 
-        document.querySelectorAll('.presetBtn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const hex = btn.getAttribute('data-hex');
-                const name = btn.getAttribute('data-name');
-                if (activeMode !== 'testcard') {
-                    switchMode('testcard');
-                }
-                const coords = PRESET_COORDS[hex];
-                if (coords) {
-                    updateReticlePosition(coords.x, coords.y, false);
-                }
-                setPreview(hex, `${name} Preset`);
-                updateStatus(`Targeted ${name} (${hex}). Click "Capture DNA" or "Save & Return"!`, '✨');
-            });
+        $('viewfinderWrapper').addEventListener('pointerdown', (e) => {
+            isPointerDown = true;
+            $('viewfinderWrapper').setPointerCapture?.(e.pointerId);
+            processPointerEvent(e);
         });
 
-        // Capture DNA button
+        $('viewfinderWrapper').addEventListener('pointermove', (e) => {
+            if (isPointerDown) {
+                processPointerEvent(e);
+            }
+        });
+
+        const releasePointer = (e) => {
+            if (isPointerDown) {
+                isPointerDown = false;
+                $('viewfinderWrapper').releasePointerCapture?.(e.pointerId);
+            }
+        };
+        $('viewfinderWrapper').addEventListener('pointerup', releasePointer);
+        $('viewfinderWrapper').addEventListener('pointercancel', releasePointer);
+
+        // Capture DNA button with instant tactile feedback
         $('captureBtn').addEventListener('click', () => {
-            const hex = sampleAreaHex(reticleNormX, reticleNormY, 25);
-            setPreview(hex, 'DNA Captured (25x25)');
-            updateStatus(`Color DNA ${hex} captured! Click "Save & Return to Editor" to apply it to your jersey.`, '✨');
+            const hex = sampleAreaHex(reticleNormX, reticleNormY);
+            setPreview(hex, 'Color DNA Captured & Locked');
+            const originalHTML = $('captureBtn').innerHTML;
+            $('captureBtn').innerHTML = '<span>✨</span><span>DNA Captured!</span>';
+            $('captureBtn').classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+            $('captureBtn').classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            setTimeout(() => {
+                $('captureBtn').innerHTML = originalHTML;
+                $('captureBtn').classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                $('captureBtn').classList.add('bg-indigo-600', 'hover:bg-indigo-500');
+            }, 1200);
         });
 
         // Save & Return
@@ -433,10 +533,13 @@
 
         $('saveBtn').addEventListener('click', saveAndReturn);
 
-        // Reset Reticle to Center
+        // Reset Reticle to Center (Wheel Center in testcard mode, Screen Center in camera mode)
         $('retryBtn').addEventListener('click', () => {
-            updateReticlePosition(0.5, 0.5, true);
-            updateStatus('Reticle reset to center. Ready to capture.', '🎯');
+            if (activeMode === 'testcard') {
+                updateReticlePosition(0.26, 0.54, true);
+            } else {
+                updateReticlePosition(0.5, 0.5, true);
+            }
         });
 
         // Mode switch buttons
@@ -446,7 +549,6 @@
 
         $('btnModeTestCard').addEventListener('click', () => {
             switchMode('testcard');
-            updateStatus('Interactive Test Card loaded. Click anywhere on the colors to sample.', '🧪');
         });
 
         $('btnModeUpload').addEventListener('click', () => {
