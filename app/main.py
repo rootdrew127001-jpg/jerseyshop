@@ -10,8 +10,11 @@ from app.core.config import ALLOWED_ORIGINS, ENV
 import os
 from fastapi import Response
 
-Base.metadata.create_all(bind=engine)
-ensure_order_shipping_columns()
+try:
+    Base.metadata.create_all(bind=engine)
+    ensure_order_shipping_columns()
+except Exception as e:
+    print(f"Table sync delayed: {e}", flush=True)
 
 app = FastAPI(
     title="Modelyx API",

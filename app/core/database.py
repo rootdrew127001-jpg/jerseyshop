@@ -1,22 +1,34 @@
+import time
+import logging
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from app.core.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
-def create_database_if_not_exists():
-    engine_root = create_engine(
-        f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}",
-        echo=False
-    )
-    with engine_root.connect() as conn:
-        conn.execute(text(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}`"))
-    engine_root.dispose()
+logger = logging.getLogger(__name__)
 
+def create_database_if_not_exists(max_retries: int = 15, delay: float = 1.0):
+    for attempt in range(1, max_retries + 1):
+        try:
+            engine_root = create_engine(
+                f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}",
+                echo=False,
+                pool_pre_ping=True
+            )
+            with engine_root.connect() as conn:
+                conn.execute(text(f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}`"))
+            engine_root.dispose()
+            return
+        except Exception as ex:
+            if attempt < max_retries:
+                time.sleep(delay)
+            else:
+                logger.error(f"Could not connect to MySQL after {max_retries} attempts: {ex}")
 
 create_database_if_not_exists()
 
 DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
