@@ -1,4 +1,10 @@
 (function () {
+    if (!window.ModelyxTheme && !document.querySelector('script[src*="theme.js"]')) {
+        const script = document.createElement('script');
+        script.src = '/static/js/theme.js';
+        document.head.appendChild(script);
+    }
+
     const links = [
         { href: '/dashboard.html', label: 'Dashboard', icon: 'M4 6h16M4 12h16M4 18h16' },
         { href: '/editor.html', label: '3D Designer', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
@@ -45,6 +51,16 @@
                 }).join('')}
             </nav>
             <div class="customer-nav-bottom">
+                <div class="relative mb-2">
+                    <button id="customerNavThemeBtn" type="button" class="customer-link w-full flex items-center justify-between cursor-pointer" title="Switch Theme">
+                        <div class="flex items-center gap-2">
+                            <span id="customerNavThemeIcon" class="text-base shrink-0">☀️</span>
+                            <span id="customerNavThemeName" class="customer-label text-xs font-bold">Theme</span>
+                        </div>
+                        <span class="customer-label text-[10px] opacity-60">▾</span>
+                    </button>
+                    <div id="customerNavThemeMenu" class="hidden absolute left-0 bottom-12 w-60 rounded-2xl p-2 shadow-2xl border z-50"></div>
+                </div>
                 <button id="customerNavLogout" class="customer-link customer-logout" title="Sign Out">
                     ${icon('M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1')}
                     <span class="customer-label">Sign Out</span>
@@ -69,6 +85,41 @@
             localStorage.clear();
             location.href = '/index.html';
         });
+
+        // Theme Toggle Controller
+        const themeBtn = document.getElementById('customerNavThemeBtn');
+        const themeMenu = document.getElementById('customerNavThemeMenu');
+        if (themeBtn && themeMenu) {
+            const syncThemeLabels = () => {
+                if (!window.ModelyxTheme) return;
+                const active = window.ModelyxTheme.getActiveThemeObj();
+                const cur = window.ModelyxTheme.getTheme();
+                const iconEl = document.getElementById('customerNavThemeIcon');
+                const nameEl = document.getElementById('customerNavThemeName');
+                if (iconEl) iconEl.innerText = cur === 'system' ? '🖥️' : (active?.icon || '☀️');
+                if (nameEl) nameEl.innerText = cur === 'system' ? 'System Auto' : (active?.name || 'Theme');
+            };
+
+            themeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                themeMenu.classList.toggle('hidden');
+                if (!themeMenu.classList.contains('hidden') && window.ModelyxTheme) {
+                    window.ModelyxTheme.renderThemeList(themeMenu, () => {
+                        themeMenu.classList.add('hidden');
+                        syncThemeLabels();
+                    });
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!themeBtn.contains(e.target) && !themeMenu.contains(e.target)) {
+                    themeMenu.classList.add('hidden');
+                }
+            });
+
+            window.addEventListener('modelyx:theme:change', syncThemeLabels);
+            syncThemeLabels();
+        }
 
         document.body.classList.toggle('customer-nav-collapsed', collapsed);
         document.body.classList.toggle('customer-nav-open', !collapsed);

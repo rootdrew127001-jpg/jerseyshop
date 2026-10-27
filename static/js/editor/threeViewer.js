@@ -111,7 +111,10 @@ export function initViewer(canvasId) {
 
     // 2. Scene
     scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0a071b');
+    const isDarkInitial = document.documentElement.classList.contains('dark') || 
+                         localStorage.getItem('modelyx_theme') === 'dark' || 
+                         (localStorage.getItem('modelyx_theme') === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    scene.background = new THREE.Color(isDarkInitial ? '#0a071b' : '#f1f5f9');
 
     // 3. Camera
     camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
@@ -1427,6 +1430,17 @@ export function changeEnvironment(envName) {
 export function playAnimation(name, duration = 0.5) { /* no-op */ }
 export function getAvailableAnimations() { return []; }
 export function getCurrentAnimation() { return 't-pose'; }
+
+export function setThreeStudioTheme(val) {
+    if (!scene) return;
+    if (typeof val === 'string' && val.startsWith('#')) {
+        scene.background = new THREE.Color(val);
+    } else {
+        const isDark = typeof val === 'boolean' ? val : (val !== 'light');
+        scene.background = new THREE.Color(isDark ? '#0a071b' : '#f1f5f9');
+    }
+}
+window.setThreeStudioTheme = setThreeStudioTheme;
 
 function animate() {
     requestAnimationFrame(animate);

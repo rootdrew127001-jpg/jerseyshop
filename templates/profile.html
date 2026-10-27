@@ -5,78 +5,94 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Profile</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="/static/js/theme.js"></script>
     <script src="/static/js/customerNav.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
     <main class="max-w-6xl mx-auto px-6 py-8 lg:py-10">
         <header class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
                 <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Customer Account</p>
-                <h1 class="text-3xl font-black tracking-tight text-slate-900">Profile</h1>
-                <p class="text-sm text-slate-500 mt-2">Manage your account identity and default checkout details.</p>
+                <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">Profile</h1>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Manage your account identity, theme preferences, and default checkout details.</p>
             </div>
-            <div class="flex flex-wrap gap-3">
-                <button onclick="location.href='settings.html'" class="rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-100">Edit Settings</button>
-                <button onclick="location.href='dashboard.html'" class="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">Dashboard</button>
+            <div class="flex flex-wrap gap-3 items-center">
+                <div class="relative">
+                    <button id="profileThemeBtn" onclick="toggleProfileThemeDropdown(event)"
+                        class="flex items-center gap-2 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm font-bold text-slate-900 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800 shadow-sm cursor-pointer"
+                        title="Choose Modelyx Theme">
+                        <span id="themeToggleIcon">☀️</span>
+                        <span id="themeToggleText" class="hidden sm:inline">Theme</span>
+                        <span class="text-[10px] opacity-60">▾</span>
+                    </button>
+                    <div id="profileThemeMenu" class="hidden absolute right-0 top-14 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
+                </div>
+                <button onclick="location.href='settings.html'" class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3 text-sm font-bold text-slate-900 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800">Edit Settings</button>
+                <button onclick="location.href='dashboard.html'" class="rounded-2xl bg-slate-900 dark:bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 dark:hover:bg-indigo-500">Dashboard</button>
             </div>
         </header>
-        <div id="saveNotice" class="hidden mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-sm font-bold text-green-700">
+        <div id="saveNotice" class="hidden mb-6 rounded-2xl border border-green-200 dark:border-green-900/60 bg-green-50 dark:bg-green-950/40 px-5 py-4 text-sm font-bold text-green-700 dark:text-green-400">
             Profile changes saved successfully.
         </div>
 
         <section class="grid gap-6 lg:grid-cols-[1fr_1.2fr]">
-            <div class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
-                <div id="avatarContainer" class="h-28 w-28 rounded-3xl bg-slate-100 flex items-center justify-center text-slate-400 border border-slate-200 overflow-hidden">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm transition-colors duration-200">
+                <div id="avatarContainer" class="h-28 w-28 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 overflow-hidden">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
                 </div>
                 <div class="mt-6">
-                    <h2 id="welcomeName" class="text-3xl font-black text-slate-900">Designer</h2>
-                    <p id="userEmail" class="text-sm text-slate-500 mt-1">user@example.com</p>
-                    <p id="memberDate" class="text-sm text-slate-500 mt-3">Modelyx Member Since April 2021</p>
-                    <div class="mt-5 rounded-2xl bg-indigo-50 px-4 py-3">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500">Role</p>
-                        <p class="text-sm font-bold text-slate-900 mt-1">Customer Studio</p>
+                    <h2 id="welcomeName" class="text-3xl font-black text-slate-900 dark:text-white">Designer</h2>
+                    <p id="userEmail" class="text-sm text-slate-500 dark:text-slate-400 mt-1">user@example.com</p>
+                    <p id="memberDate" class="text-sm text-slate-500 dark:text-slate-400 mt-3">Modelyx Member Since April 2021</p>
+                    <div class="mt-5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 px-4 py-3">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-indigo-500 dark:text-indigo-400">Role</p>
+                        <p class="text-sm font-bold text-slate-900 dark:text-white mt-1">Customer Studio</p>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-6">
-                <div class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm transition-colors duration-200">
                     <div class="flex items-center justify-between gap-4">
                         <div>
                             <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Account Overview</p>
-                            <h2 class="mt-1 text-xl font-black text-slate-900">Basic Information</h2>
+                            <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white">Basic Information</h2>
                         </div>
-                        <button onclick="location.href='settings.html'" class="rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-100 transition hover:bg-indigo-700">Update</button>
+                        <button onclick="location.href='settings.html'" class="rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-lg shadow-indigo-100 dark:shadow-none transition hover:bg-indigo-700">Update</button>
                     </div>
                     <div class="mt-5 grid gap-3 sm:grid-cols-2">
-                        <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/80 p-4 border border-slate-100 dark:border-slate-700/60">
                             <p class="text-xs text-slate-400">Name</p>
-                            <p id="overviewName" class="font-bold text-slate-900 mt-1 break-words">Designer</p>
+                            <p id="overviewName" class="font-bold text-slate-900 dark:text-white mt-1 break-words">Designer</p>
                         </div>
-                        <div class="rounded-2xl bg-slate-50 p-4">
+                        <div class="rounded-2xl bg-slate-50 dark:bg-slate-800/80 p-4 border border-slate-100 dark:border-slate-700/60">
                             <p class="text-xs text-slate-400">Email</p>
-                            <p id="overviewEmail" class="font-bold text-slate-900 mt-1 break-words">user@example.com</p>
+                            <p id="overviewEmail" class="font-bold text-slate-900 dark:text-white mt-1 break-words">user@example.com</p>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white border border-slate-200 rounded-[2rem] p-6 shadow-sm">
+                <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm transition-colors duration-200">
                     <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Default Checkout</p>
-                    <h2 class="mt-1 text-xl font-black text-slate-900">Shipping Setup</h2>
-                    <p class="mt-2 text-sm text-slate-500">Your saved shipping address and map pin are used to speed up checkout. Each order still saves its own shipping snapshot.</p>
-                    <div class="mt-5 rounded-2xl bg-slate-50 p-4">
+                    <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white">Shipping Setup</h2>
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Your saved shipping address and map pin are used to speed up checkout. Each order still saves its own shipping snapshot.</p>
+                    <div class="mt-5 rounded-2xl bg-slate-50 dark:bg-slate-800/80 p-4 border border-slate-100 dark:border-slate-700/60">
                         <p class="text-xs text-slate-400">Saved Address</p>
-                        <p id="shippingPreview" class="mt-1 text-sm font-bold text-slate-900">No default shipping address yet.</p>
-                        <a id="pinPreview" href="#" target="_blank" rel="noopener" class="hidden mt-2 text-xs font-bold text-indigo-600 hover:underline">View saved pin</a>
+                        <p id="shippingPreview" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">No default shipping address yet.</p>
+                        <a id="pinPreview" href="#" target="_blank" rel="noopener" class="hidden mt-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline">View saved pin</a>
                     </div>
-                    <button onclick="location.href='settings.html'" class="mt-5 w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-100">
-                        Manage Shipping Defaults
+                    <button onclick="location.href='settings.html'" class="mt-5 w-full rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 text-sm font-bold text-slate-900 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800">
+                        Manage Shipping Defaults & Themes
                     </button>
                 </div>
             </div>
@@ -86,6 +102,28 @@
     <script>
         const $ = id => document.getElementById(id);
         const logout = () => { localStorage.clear(); location.href='index.html'; };
+
+        // Theme dropdown controller
+        window.toggleProfileThemeDropdown = function(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('profileThemeMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+                if (!menu.classList.contains('hidden') && window.ModelyxTheme) {
+                    window.ModelyxTheme.renderThemeList(menu, () => {
+                        menu.classList.add('hidden');
+                    });
+                }
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('profileThemeBtn');
+            const menu = document.getElementById('profileThemeMenu');
+            if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
 
         window.onload = () => {
             if (sessionStorage.getItem('modelyx_profile_saved') === '1') {

@@ -597,25 +597,27 @@ function bindControls() {
         const stream = document.getElementById('aiChatStream');
         if (!stream) return;
 
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light' || (!document.documentElement.classList.contains('dark') && document.documentElement.getAttribute('data-theme') !== 'cyber' && document.documentElement.getAttribute('data-theme') !== 'emerald' && document.documentElement.getAttribute('data-theme') !== 'cobalt' && document.documentElement.getAttribute('data-theme') !== 'gold' && document.documentElement.getAttribute('data-theme') !== 'crimson');
+
         const bubbleWrap = document.createElement('div');
         if (role === 'user') {
             bubbleWrap.className = 'flex justify-end';
             bubbleWrap.innerHTML = `
                 <div class="bg-violet-600 text-white rounded-xl rounded-tr-sm p-2 max-w-[85%] shadow text-[11px] leading-relaxed">
-                    <p>${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                    <p class="user-bubble-p" style="color:#ffffff !important;">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
                 </div>
             `;
         } else {
             bubbleWrap.className = 'flex gap-1.5 items-start';
             bubbleWrap.innerHTML = `
-                <div class="w-5 h-5 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-[10px] shrink-0 font-bold">AI</div>
-                <div class="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-sm p-2 text-slate-300 max-w-[88%] shadow-sm space-y-1 text-[11px] leading-relaxed">
+                <div class="w-5 h-5 rounded-full ${isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-600/30 text-violet-300'} flex items-center justify-center text-[10px] shrink-0 font-bold ai-avatar">AI</div>
+                <div class="${isLight ? 'bg-slate-100 border border-slate-200 text-slate-900' : 'bg-slate-900 border border-slate-800 text-slate-100'} rounded-xl rounded-tl-sm p-2 max-w-[88%] shadow-sm space-y-1 text-[11px] leading-relaxed ai-bubble-card">
                     ${deltaTag ? `
                     <div class="flex items-center gap-1">
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Delta Updated</span>
-                        <span class="text-[9px] text-emerald-400 font-mono">${deltaTag}</span>
+                        <span class="px-1.5 py-0.5 rounded text-[9px] font-bold ${isLight ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'} delta-badge">Delta Updated</span>
+                        <span class="text-[9px] ${isLight ? 'text-emerald-700 font-bold' : 'text-emerald-400 font-medium'} font-mono delta-field">${deltaTag}</span>
                     </div>` : ''}
-                    <p class="text-white">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+                    <p class="ai-reply-text ${isLight ? 'text-slate-900' : 'text-white'}" style="${isLight ? 'color:#0f172a !important; font-weight:500;' : 'color:#ffffff !important;'}">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
                 </div>
             `;
         }
@@ -632,16 +634,16 @@ function bindControls() {
         if (btn) btn.textContent = isHidden ? '− Fold' : '+ Chat';
     };
 
-
     window.clearAIChat = function() {
         aiChatHistory = [];
         const stream = document.getElementById('aiChatStream');
         if (stream) {
+            const isLight = document.documentElement.getAttribute('data-theme') === 'light' || (!document.documentElement.classList.contains('dark') && document.documentElement.getAttribute('data-theme') !== 'cyber' && document.documentElement.getAttribute('data-theme') !== 'emerald' && document.documentElement.getAttribute('data-theme') !== 'cobalt' && document.documentElement.getAttribute('data-theme') !== 'gold' && document.documentElement.getAttribute('data-theme') !== 'crimson');
             stream.innerHTML = `
                 <div class="flex gap-2 items-start">
-                    <div class="w-5 h-5 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-[10px] shrink-0 font-bold">AI</div>
-                    <div class="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-sm p-2 text-slate-300 leading-relaxed text-[11px]">
-                        Chat reset! Tell me what to design, or request tweaks as we go (e.g. <em class="text-violet-300">"generate blue jersey"</em> then <em class="text-emerald-300">"rename player as drew"</em>).
+                    <div class="w-5 h-5 rounded-full ${isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-600/30 text-violet-300'} flex items-center justify-center text-[10px] shrink-0 font-bold ai-avatar">AI</div>
+                    <div class="${isLight ? 'bg-slate-100 border border-slate-200 text-slate-900' : 'bg-slate-900 border border-slate-800 text-slate-300'} rounded-xl rounded-tl-sm p-2 leading-relaxed text-[11px] ai-bubble-card">
+                        Chat reset! Tell me what to design, or request tweaks as we go (e.g. <em class="${isLight ? 'text-violet-700 font-semibold' : 'text-violet-300'}">"generate blue jersey"</em> then <em class="${isLight ? 'text-emerald-700 font-semibold' : 'text-emerald-300'}">"rename player as drew"</em>).
                     </div>
                 </div>
             `;

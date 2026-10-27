@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx Admin | Cancelled Orders</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="/static/js/theme.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
@@ -22,6 +28,11 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round"/></svg>
                 <span>Cancelled Orders</span>
             </a>
+            <button onclick="window.ModelyxTheme && window.ModelyxTheme.openThemeModal()"
+                class="w-full flex items-center space-x-3 p-3 hover:bg-white/10 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-300">
+                <span class="text-base">🎨</span>
+                <span>Theme & Settings</span>
+            </button>
         </nav>
         <button onclick="logout()" class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
     </aside>
@@ -36,6 +47,18 @@
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
                     <button onclick="exportCancelledCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
+                    <!-- Admin Theme Switcher Dropdown -->
+                    <div class="relative">
+                        <button id="adminThemeBtn" onclick="toggleAdminThemeDropdown(event)"
+                            class="flex items-center gap-2 bg-white border px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition shadow-sm cursor-pointer"
+                            title="Choose Modelyx Theme">
+                            <span id="adminThemeIcon">☀️</span>
+                            <span id="adminThemeName" class="hidden sm:inline">Theme</span>
+                            <span class="text-[10px] opacity-60">▾</span>
+                        </button>
+                        <div id="adminThemeMenu"
+                            class="hidden absolute right-0 top-11 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
+                    </div>
                     <button onclick="render()" class="bg-red-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-red-700 transition">Refresh</button>
                 </div>
             </div>
@@ -276,6 +299,31 @@
         };
 
         const logout = () => { localStorage.clear(); location.href = '/index.html'; };
+
+        window.toggleAdminThemeDropdown = function(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('adminThemeMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+                if (!menu.classList.contains('hidden') && window.ModelyxTheme) {
+                    window.ModelyxTheme.renderThemeList(menu, () => {
+                        menu.classList.add('hidden');
+                    });
+                }
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('adminThemeBtn');
+            const menu = document.getElementById('adminThemeMenu');
+            if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        window.addEventListener('modelyx:theme:change', () => {
+            if (window.cachedCancelled) renderCharts(window.cachedCancelled);
+        });
 
         window.onload = () => {
             render();

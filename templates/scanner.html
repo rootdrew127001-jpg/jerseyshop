@@ -5,35 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Color Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="/static/js/theme.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200">
     <main class="max-w-5xl mx-auto p-6 md:p-10 space-y-6">
         <!-- Header -->
         <header class="flex flex-wrap items-center justify-between gap-3">
             <div>
-                <p class="text-[10px] uppercase tracking-widest text-indigo-400 font-black">MODELYX Scanner</p>
-                <h1 class="text-3xl font-black">Color DNA Capture</h1>
+                <p class="text-[10px] uppercase tracking-widest text-indigo-500 font-black">MODELYX Scanner</p>
+                <h1 class="text-3xl font-black text-slate-900 dark:text-white">Color DNA Capture</h1>
             </div>
             <div class="flex items-center gap-2">
-                <button id="backBtn" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-sm transition cursor-pointer">Back</button>
+                <!-- Theme Switcher Dropdown -->
+                <div class="relative">
+                    <button id="scannerThemeBtn" onclick="toggleScannerThemeDropdown(event)"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-sm text-slate-800 dark:text-slate-200 transition cursor-pointer"
+                        title="Choose Modelyx Theme">
+                        <span id="themeToggleIcon">☀️</span>
+                        <span id="themeToggleText" class="hidden sm:inline">Theme</span>
+                        <span class="text-[10px] opacity-60">▾</span>
+                    </button>
+                    <div id="scannerThemeMenu" class="hidden absolute right-0 top-12 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
+                </div>
+                <button id="backBtn" class="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold text-sm text-slate-800 dark:text-slate-200 transition cursor-pointer">Back</button>
             </div>
         </header>
 
         <!-- Source Mode Switcher Bar -->
-        <div class="flex flex-wrap items-center justify-between gap-3 bg-slate-900 border border-slate-800 p-3 rounded-2xl">
+        <div class="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-2xl shadow-sm">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider pl-1">Input Source:</span>
+                <span class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider pl-1">Input Source:</span>
                 <button id="btnModeCamera" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer">
                     <span>📷</span>
                     <span>Live Camera</span>
                 </button>
-                <button id="btnModeTestCard" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
+                <button id="btnModeTestCard" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer">
                     <span>🎨</span>
                     <span>Color Spectrum & Wheel</span>
                 </button>
-                <button id="btnModeUpload" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
+                <button id="btnModeUpload" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer">
                     <span>📁</span>
                     <span>Upload Image</span>
                 </button>
@@ -41,7 +58,7 @@
             </div>
 
             <!-- Drag & Drop / Upload hint -->
-            <p id="modeBadge" class="text-[11px] font-mono text-indigo-400 bg-indigo-950/40 border border-indigo-800/40 px-2.5 py-1 rounded-lg">
+            <p id="modeBadge" class="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 px-2.5 py-1 rounded-lg">
                 Camera Mode Active
             </p>
         </div>
@@ -50,7 +67,7 @@
         <section class="grid lg:grid-cols-[2fr_1fr] gap-6">
             <!-- Left Viewfinder Column -->
             <div class="space-y-3">
-                <div id="viewfinderWrapper" class="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden relative aspect-video flex items-center justify-center cursor-crosshair select-none group shadow-2xl">
+                <div id="viewfinderWrapper" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden relative aspect-video flex items-center justify-center cursor-crosshair select-none group shadow-xl">
                     <!-- Video for live camera -->
                     <video id="video" autoplay playsinline class="w-full h-full object-cover bg-black"></video>
 
@@ -72,15 +89,15 @@
             </div>
 
             <!-- Right Sidebar Panel -->
-            <aside class="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between">
+            <aside class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm">
                 <div class="space-y-5">
                     <div>
                         <p class="text-[10px] uppercase tracking-widest text-slate-400 font-black">Sampled Color DNA</p>
-                        <div class="mt-3 flex items-center gap-4 bg-slate-950/50 p-3 rounded-2xl border border-slate-800/80">
-                            <div id="previewSwatch" class="w-16 h-16 rounded-2xl border border-slate-700 bg-indigo-600 shadow-md transition-all duration-150"></div>
+                        <div class="mt-3 flex items-center gap-4 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/80">
+                            <div id="previewSwatch" class="w-16 h-16 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-md transition-all duration-150" style="background-color: #4F46E5;"></div>
                             <div>
-                                <p id="previewHex" class="text-2xl font-black font-mono tracking-tight">#4F46E5</p>
-                                <p id="sampleInfo" class="text-[11px] text-slate-400">Center-area average (25x25)</p>
+                                <p id="previewHex" class="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">#4F46E5</p>
+                                <p id="sampleInfo" class="text-[11px] text-slate-500 dark:text-slate-400">Center-area average (25x25)</p>
                             </div>
                         </div>
                     </div>
@@ -94,7 +111,7 @@
                             <span>💾</span>
                             <span>Save & Return to Editor</span>
                         </button>
-                        <button id="retryBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-4 py-3 rounded-xl font-bold transition cursor-pointer">
+                        <button id="retryBtn" class="w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-4 py-3 rounded-xl font-bold transition cursor-pointer">
                             Center Reticle
                         </button>
                     </div>
@@ -571,6 +588,28 @@
                 img.src = event.target.result;
             };
             reader.readAsDataURL(file);
+        });
+
+        // Theme dropdown controller
+        window.toggleScannerThemeDropdown = function(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('scannerThemeMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+                if (!menu.classList.contains('hidden') && window.ModelyxTheme) {
+                    window.ModelyxTheme.renderThemeList(menu, () => {
+                        menu.classList.add('hidden');
+                    });
+                }
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('scannerThemeBtn');
+            const menu = document.getElementById('scannerThemeMenu');
+            if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
         });
 
         // Back button

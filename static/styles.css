@@ -1,12 +1,351 @@
 body{font-family:'Inter',sans-serif}
-.glass{background:rgba(255,255,255,.95);backdrop-filter:blur(10px)}
-.role-card{border:2px solid #f3f4f6;transition:.3s;cursor:pointer}
-input[type=radio]:checked+.role-card{border-color:#4f46e5;background:#f5f3ff}
-.glass-row:hover{background:rgba(79,70,229,.02)}
-.card-h:hover{transform:translateY(-4px);border-color:#6366f1;box-shadow:0 20px 25px -5px rgba(0,0,0,.05)}
-.filter-active{border-color:#4f46e5!important;background:#eef2ff!important;color:#4f46e5!important}
+.glass{background:var(--theme-surface,#ffffff);backdrop-filter:blur(16px);border-color:var(--theme-border,#e2e8f0);color:var(--theme-text,#0f172a)}
+.role-card{border:2px solid var(--theme-border,#f3f4f6);transition:.3s;cursor:pointer}
+input[type=radio]:checked+.role-card{border-color:var(--theme-accent,#4f46e5);background:var(--theme-surface-sub,#f5f3ff)}
+.glass-row:hover{background:rgba(79,70,229,.05)}
+.card-h:hover{transform:translateY(-4px);border-color:var(--theme-accent,#6366f1);box-shadow:0 20px 25px -5px rgba(0,0,0,.1)}
+.filter-active{border-color:var(--theme-accent,#4f46e5)!important;background:var(--theme-accent,#4f46e5)!important;color:#ffffff!important}
 .canvas-area{background-image:radial-gradient(#e5e7eb 1px,transparent 1px);background-size:20px 20px}
-.tool-card:hover{border-color:#6366f1;transform:translateY(-2px)}
+.tool-card:hover{border-color:var(--theme-accent,#6366f1);transform:translateY(-2px)}
 #jerseyBody{transition:fill .4s ease}
 #jerseyContainer{ transition:.5s cubic-bezier(0.4,0,0.2,1); -webkit-transition:.5s cubic-bezier(0.4,0,0.2,1); -moz-transition:.5s cubic-bezier(0.4,0,0.2,1); -ms-transition:.5s cubic-bezier(0.4,0,0.2,1); -o-transition:.5s cubic-bezier(0.4,0,0.2,1); }
 @keyframes fadeOut{from{opacity:1}to{opacity:0}}
+
+/* ==========================================================================
+   MODELYX MULTI-THEME ENGINE VARIABLES
+   ========================================================================== */
+:root, [data-theme="light"] {
+    --theme-bg: #f8fafc;
+    --theme-surface: #ffffff;
+    --theme-surface-sub: #f1f5f9;
+    --theme-border: #e2e8f0;
+    --theme-accent: #4f46e5;
+    --theme-accent-hover: #4338ca;
+    --theme-text: #0f172a;
+    --theme-text-muted: #64748b;
+    --theme-canvas-inner: #f1f5f9;
+}
+
+[data-theme="dark"] {
+    --theme-bg: #020617;
+    --theme-surface: #0f172a;
+    --theme-surface-sub: #1e293b;
+    --theme-border: #1e293b;
+    --theme-accent: #6366f1;
+    --theme-accent-hover: #4f46e5;
+    --theme-text: #f8fafc;
+    --theme-text-muted: #94a3b8;
+    --theme-canvas-inner: #0b0e17;
+}
+
+[data-theme="cyber"] {
+    --theme-bg: #090314;
+    --theme-surface: #14092b;
+    --theme-surface-sub: #1e0e3d;
+    --theme-border: #3b1464;
+    --theme-accent: #06b6d4;
+    --theme-accent-hover: #0891b2;
+    --theme-text: #fdf4ff;
+    --theme-text-muted: #c084fc;
+    --theme-canvas-inner: #0d051c;
+}
+
+[data-theme="emerald"] {
+    --theme-bg: #03140c;
+    --theme-surface: #092316;
+    --theme-surface-sub: #0f3622;
+    --theme-border: #164e32;
+    --theme-accent: #10b981;
+    --theme-accent-hover: #059669;
+    --theme-text: #f0fdf4;
+    --theme-text-muted: #86efac;
+    --theme-canvas-inner: #041a10;
+}
+
+[data-theme="cobalt"] {
+    --theme-bg: #030d1a;
+    --theme-surface: #081d36;
+    --theme-surface-sub: #0e2d54;
+    --theme-border: #143e6d;
+    --theme-accent: #38bdf8;
+    --theme-accent-hover: #0284c7;
+    --theme-text: #f0f9ff;
+    --theme-text-muted: #7dd3fc;
+    --theme-canvas-inner: #041326;
+}
+
+[data-theme="gold"] {
+    --theme-bg: #0c0a08;
+    --theme-surface: #1a1612;
+    --theme-surface-sub: #29221c;
+    --theme-border: #3d3326;
+    --theme-accent: #facc15;
+    --theme-accent-hover: #eab308;
+    --theme-text: #fefce8;
+    --theme-text-muted: #fde047;
+    --theme-canvas-inner: #120e0a;
+}
+
+[data-theme="crimson"] {
+    --theme-bg: #120406;
+    --theme-surface: #240a0e;
+    --theme-surface-sub: #381017;
+    --theme-border: #521520;
+    --theme-accent: #f43f5e;
+    --theme-accent-hover: #e11d48;
+    --theme-text: #fff1f2;
+    --theme-text-muted: #fda4af;
+    --theme-canvas-inner: #180509;
+}
+
+/* ==========================================================================
+   UNIVERSAL THEME ENGINE RULES (ACROSS ALL PAGES, ADMIN & PORTALS)
+   ========================================================================== */
+
+/* 1. Global Document, HTML & Body */
+html[data-theme],
+html[data-theme] body,
+body[data-theme] {
+    background-color: var(--theme-bg) !important;
+    color: var(--theme-text) !important;
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+}
+
+/* 2. Main Surface Containers (Cards, Modals, Sections, Headers, Tables, Aside, Glass) */
+[data-theme] .glass,
+[data-theme] header.glass,
+[data-theme] div.glass,
+[data-theme] .bg-white,
+[data-theme] .bg-slate-50,
+[data-theme] .bg-gray-50,
+[data-theme].dark .dark\:bg-slate-900,
+[data-theme].dark .dark\:bg-slate-950,
+[data-theme].dark .dark\:bg-gray-900,
+[data-theme] aside.w-64,
+[data-theme] aside.bg-slate-900,
+[data-theme] #adminNotifDropdown,
+[data-theme] #adminThemeMenu,
+[data-theme] #customerNavThemeMenu,
+[data-theme] #viewfinderWrapper,
+[data-theme] .theme-option-card {
+    background-color: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+}
+
+/* 3. Sub-surfaces & Nested Cards (Inner stat boxes, table headers, secondary buttons) */
+[data-theme] .bg-slate-100,
+[data-theme] .bg-gray-100,
+[data-theme] .bg-slate-200,
+[data-theme].dark .dark\:bg-slate-800,
+[data-theme].dark .dark\:bg-slate-800\/40,
+[data-theme].dark .dark\:bg-slate-800\/60,
+[data-theme].dark .dark\:bg-slate-800\/80,
+[data-theme].dark .dark\:bg-slate-700,
+[data-theme].dark .dark\:bg-slate-950\/50,
+[data-theme] thead,
+[data-theme] thead.bg-slate-50,
+[data-theme] .bg-slate-50\/40,
+[data-theme].dark .dark\:bg-indigo-950\/40,
+[data-theme].dark .dark\:bg-indigo-950\/60 {
+    background-color: var(--theme-surface-sub) !important;
+    border-color: var(--theme-border) !important;
+}
+
+/* 4. Borders */
+[data-theme] .border,
+[data-theme] .border-slate-100,
+[data-theme] .border-slate-200,
+[data-theme] .border-slate-300,
+[data-theme] .border-slate-700,
+[data-theme] .border-slate-800,
+[data-theme] .border-gray-200,
+[data-theme] .border-gray-300,
+[data-theme].dark .dark\:border-slate-800,
+[data-theme].dark .dark\:border-slate-700,
+[data-theme].dark .dark\:border-slate-800\/40,
+[data-theme].dark .dark\:border-slate-800\/80,
+[data-theme] .divide-slate-50 > :not([hidden]) ~ :not([hidden]),
+[data-theme] .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme] .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+[data-theme] .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--theme-border) !important;
+}
+
+/* 5. Headings & Primary Text */
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] h4,
+[data-theme] .font-black.text-slate-900,
+[data-theme] .font-black.text-white,
+[data-theme] .text-slate-900,
+[data-theme] .text-gray-900,
+[data-theme].dark .dark\:text-white,
+[data-theme].dark .dark\:text-slate-100,
+[data-theme].dark .dark\:text-slate-200 {
+    color: var(--theme-text) !important;
+}
+
+/* 6. Muted / Secondary Text */
+[data-theme] .text-slate-400,
+[data-theme] .text-slate-500,
+[data-theme] .text-slate-600,
+[data-theme] .text-gray-500,
+[data-theme].dark .dark\:text-slate-400,
+[data-theme].dark .dark\:text-slate-500 {
+    color: var(--theme-text-muted) !important;
+}
+
+/* 7. Inputs, Selects, and Textareas */
+[data-theme] input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
+[data-theme] select,
+[data-theme] textarea {
+    background-color: var(--theme-surface-sub) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text) !important;
+}
+
+[data-theme] input::placeholder,
+[data-theme] textarea::placeholder {
+    color: var(--theme-text-muted) !important;
+    opacity: 0.65;
+}
+
+/* 8. Accent buttons & Links */
+[data-theme] .bg-indigo-600,
+[data-theme] button.bg-indigo-600 {
+    background-color: var(--theme-accent) !important;
+    color: #ffffff !important;
+}
+
+[data-theme] .hover\:bg-indigo-700:hover,
+[data-theme] .hover\:bg-indigo-500:hover {
+    background-color: var(--theme-accent-hover) !important;
+}
+
+[data-theme] .text-indigo-600,
+[data-theme] .text-indigo-500,
+[data-theme].dark .dark\:text-indigo-400 {
+    color: var(--theme-accent) !important;
+}
+
+[data-theme] .border-indigo-600,
+[data-theme] .border-indigo-500,
+[data-theme].dark .dark\:border-indigo-500 {
+    border-color: var(--theme-accent) !important;
+}
+
+[data-theme] .focus\:border-indigo-500:focus {
+    border-color: var(--theme-accent) !important;
+}
+
+/* 8b. Category & Cut Filter Buttons */
+[data-theme] #catFilter button,
+[data-theme] #cutFilter button {
+    background-color: var(--theme-surface-sub) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text) !important;
+}
+
+[data-theme] #catFilter button.filter-active,
+[data-theme] #cutFilter button.filter-active {
+    background-color: var(--theme-accent) !important;
+    border-color: var(--theme-accent) !important;
+    color: #ffffff !important;
+}
+
+/* 9. Preserve status badge colors (Do NOT override with theme text/bg) */
+[data-theme] .bg-red-500,
+[data-theme] .bg-red-600,
+[data-theme] .text-red-400,
+[data-theme] .text-red-500,
+[data-theme] .text-red-600,
+[data-theme] .bg-emerald-500,
+[data-theme] .bg-emerald-600,
+[data-theme] .text-emerald-500,
+[data-theme] .text-emerald-600,
+[data-theme] .bg-green-500,
+[data-theme] .bg-green-600,
+[data-theme] .text-green-600,
+[data-theme] .text-green-700,
+[data-theme] .bg-amber-500,
+[data-theme] .bg-amber-600,
+[data-theme] .text-amber-600,
+[data-theme] .text-amber-700,
+[data-theme] .bg-orange-600,
+[data-theme] .text-orange-400,
+[data-theme] .text-orange-600 {
+    /* Kept intentional */
+}
+
+/* Always keep white text on colored accent/action buttons */
+[data-theme] .bg-indigo-600,
+[data-theme] .bg-indigo-600 *,
+[data-theme] .bg-violet-600,
+[data-theme] .bg-violet-600 *,
+[data-theme] .bg-blue-600,
+[data-theme] .bg-blue-600 *,
+[data-theme] .bg-red-600,
+[data-theme] .bg-red-600 *,
+[data-theme] .bg-emerald-600,
+[data-theme] .bg-emerald-600 *,
+[data-theme] button.bg-indigo-600,
+[data-theme] button.bg-indigo-600 *,
+[data-theme] button.bg-emerald-600,
+[data-theme] button.bg-emerald-600 *,
+[data-theme] button.bg-red-600,
+[data-theme] button.bg-red-600 * {
+    color: #ffffff !important;
+}
+
+/* Light theme safety: ensure any stray text-white in light mode becomes readable theme text unless inside a colored button/badge */
+[data-theme="light"] p.text-white:not(.user-bubble-p),
+[data-theme="light"] span.text-white:not(.badge-white):not(.rounded-full),
+[data-theme="light"] div.text-white:not(.rounded-xl):not(.bg-indigo-600):not(.bg-violet-600) {
+    color: var(--theme-text) !important;
+}
+
+/* 10. Table row hover */
+[data-theme] tbody tr:hover {
+    background-color: var(--theme-surface-sub) !important;
+}
+
+/* 11. Customer Navigation component theme override */
+[data-theme] .customer-nav {
+    background: var(--theme-surface) !important;
+    border-color: var(--theme-border) !important;
+    color: var(--theme-text-muted) !important;
+}
+[data-theme] .customer-brand-name {
+    color: var(--theme-text) !important;
+}
+[data-theme] .customer-brand-sub {
+    color: var(--theme-accent) !important;
+}
+[data-theme] .customer-brand-mark {
+    background: var(--theme-accent) !important;
+    color: #ffffff !important;
+}
+[data-theme] .customer-link {
+    color: var(--theme-text-muted) !important;
+}
+[data-theme] .customer-link:hover {
+    background: var(--theme-surface-sub) !important;
+    color: var(--theme-text) !important;
+}
+[data-theme] .customer-link.is-active {
+    background: var(--theme-accent) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+[data-theme] .customer-nav-bottom {
+    border-color: var(--theme-border) !important;
+}
+
+/* 12. Protect Swatches and Color Pickers from being overridden */
+#previewSwatch,
+#pickMain,
+.swatch-color,
+.color-preview-box {
+    background-color: revert !important;
+}
