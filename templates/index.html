@@ -57,7 +57,7 @@
 
             <!-- Login -->
             <form id="lForm" class="space-y-4">
-                <input type="email" id="lEmail" placeholder="Email" class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                <input type="text" id="lEmail" placeholder="Email or Username" class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
                 <div id="lError" aria-live="polite" class="hidden text-xs text-red-300"></div>
                 <div class="relative">
                     <input type="password" id="lPass" placeholder="Password" class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
@@ -92,6 +92,28 @@
                     </svg>
                     Continue with Google
                 </a>
+
+                <!-- Developer Mode Quick Access (Visible when DEV_MODE is enabled) -->
+                <div id="devModePanel" class="mt-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
+                    <div class="flex items-center justify-between text-xs font-bold text-amber-400 mb-2.5">
+                        <span class="flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                            🚀 DEV MODE ACTIVE
+                        </span>
+                        <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30 font-semibold">Bypass Enabled</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" onclick="quickDevLogin('user', 'user')" class="flex items-center justify-center gap-1.5 bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/40 text-indigo-200 hover:text-white py-2 px-2.5 rounded-xl text-xs font-bold transition">
+                            <span>⚡ User</span>
+                            <span class="text-[10px] opacity-75">(user)</span>
+                        </button>
+                        <button type="button" onclick="quickDevLogin('admin', 'admin')" class="flex items-center justify-center gap-1.5 bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/40 text-purple-200 hover:text-white py-2 px-2.5 rounded-xl text-xs font-bold transition">
+                            <span>⚡ Admin</span>
+                            <span class="text-[10px] opacity-75">(admin)</span>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-2 text-center">Google Auth & OTP bypassed for evaluation / thesis demo</p>
+                </div>
             </form>
 
             
@@ -217,8 +239,10 @@
         const errId = mode === 'l' ? 'lError' : 'rError';
         setError(errId, '');
 
-        if (!/^\S+@\S+\.\S+$/.test(email)) return setError(errId, 'Enter a valid email');
-        if (pass.length < 6) return setError(errId, 'Password must be at least 6 characters');
+        const isDevAlias = mode === 'l' && (email === 'user' || email === 'admin');
+        if (!isDevAlias && !/^\S+@\S+\.\S+$/.test(email)) return setError(errId, 'Enter a valid email');
+        if (!isDevAlias && pass.length < 6) return setError(errId, 'Password must be at least 6 characters');
+        if (isDevAlias && !pass) return setError(errId, 'Password is required');
 
         if (mode === 'r') {
             const name = $('rName').value.trim();
@@ -233,6 +257,28 @@
             if (!/[0-9]/.test(pass)) return setError(errId, 'Password must have at least one number');
 
             try {
+                if (role === 'owner') {
+                    // Create and verify Admin account directly via Basic Auth / Admin Create API
+                    const basicCredentials = btoa(`${email}:${pass}`);
+                    const res = await fetch('/auth/admin/create', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Basic ${basicCredentials}`
+                        },
+                        body: JSON.stringify({
+                            name, email, password: pass,
+                            phone: $('rPhone').value.trim()
+                        })
+                    });
+                    const data = await res.json();
+                    if (!res.ok) return setError(errId, data.detail || 'Admin registration failed');
+
+                    toast('Admin account created successfully!');
+                    saveAndRedirect(data);
+                    return;
+                }
+
                 const res = await fetch('/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -407,6 +453,24 @@
     text.className = `text-xs mt-1 ${config.textColor}`;
     text.textContent = config.label;
 });
+
+    // Developer Mode Quick Login Helper
+    window.quickDevLogin = (username, password) => {
+        $('lEmail').value = username;
+        $('lPass').value = password;
+        handleAuth('l');
+    };
+
+    // Check server dev mode status to show/hide Dev Mode card
+    fetch('/auth/config')
+        .then(r => r.json())
+        .then(cfg => {
+            const devPanel = $('devModePanel');
+            if (devPanel) {
+                devPanel.style.display = cfg && cfg.dev_mode ? 'block' : 'none';
+            }
+        })
+        .catch(() => {});
 </script>
 </body>
 </html>

@@ -13,8 +13,13 @@ from fastapi import Response
 try:
     Base.metadata.create_all(bind=engine)
     ensure_order_shipping_columns()
+    from app.core.database import SessionLocal
+    from app.services.user_service import ensure_default_admin, ensure_dev_accounts
+    with SessionLocal() as db_session:
+        ensure_default_admin(db_session)
+        ensure_dev_accounts(db_session)
 except Exception as e:
-    print(f"Table sync delayed: {e}", flush=True)
+    print(f"Table sync / admin bootstrap delayed: {e}", flush=True)
 
 app = FastAPI(
     title="Modelyx API",

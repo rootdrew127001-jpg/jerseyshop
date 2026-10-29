@@ -34,6 +34,37 @@ PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")
 
 GMAIL_USER = os.getenv("GMAIL_USER", "")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
+GMAIL_ACCOUNTS_RAW = os.getenv("GMAIL_ACCOUNTS", "")
+
+def parse_gmail_accounts() -> list[dict[str, str]]:
+    accounts = []
+    if GMAIL_ACCOUNTS_RAW:
+        raw_entries = GMAIL_ACCOUNTS_RAW.replace("\n", ",").split(",")
+        for entry in raw_entries:
+            entry = entry.strip()
+            if not entry:
+                continue
+            if ":" in entry:
+                parts = entry.split(":", 1)
+                u = parts[0].strip()
+                p = parts[1].strip()
+                if u and p and not any(a["user"].lower() == u.lower() for a in accounts):
+                    accounts.append({"user": u, "password": p})
+
+    if GMAIL_USER and GMAIL_APP_PASSWORD:
+        if not any(a["user"].lower() == GMAIL_USER.lower() for a in accounts):
+            accounts.insert(0, {"user": GMAIL_USER, "password": GMAIL_APP_PASSWORD})
+
+    for i in range(2, 20):
+        u = os.getenv(f"GMAIL_USER_{i}", "").strip()
+        p = os.getenv(f"GMAIL_APP_PASSWORD_{i}", "").strip()
+        if u and p and not any(a["user"].lower() == u.lower() for a in accounts):
+            accounts.append({"user": u, "password": p})
+
+    return accounts
+
+GMAIL_ACCOUNTS = parse_gmail_accounts()
+DEV_MODE = os.getenv("DEV_MODE", "true").lower() in ("true", "1", "yes")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
 GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "http://127.0.0.1:9100/auth/google/callback")

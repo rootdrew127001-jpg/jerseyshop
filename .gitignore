@@ -10,3 +10,8 @@ scratch/
 *.db
 *.sqlite
 *.sqlite3
+
+# Agent & AI rules
+AGENTS.md
+GEMINI.md
+

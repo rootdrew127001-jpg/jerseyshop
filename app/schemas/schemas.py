@@ -15,8 +15,15 @@ class RegisterRequest(BaseModel):
     zip_code: Optional[str] = None
     country: Optional[str] = None
 
+class AdminRegisterRequest(BaseModel):
+    name: Optional[str] = "Admin"
+    email: Optional[str] = None
+    password: Optional[str] = None
+    phone: Optional[str] = None
+    admin_key: Optional[str] = None
+
 class LoginRequest(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 class TokenResponse(BaseModel):

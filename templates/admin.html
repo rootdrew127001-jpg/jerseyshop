@@ -206,9 +206,20 @@
 
     <script>
         const $ = id => document.getElementById(id);
+        // Sync cookies from OAuth / Dev bypass if token is not yet in localStorage
+        if (!localStorage.getItem('modelyx_token')) {
+            const cToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
+            if (cToken) {
+                localStorage.setItem('modelyx_token', cToken.split('=')[1]);
+                const cRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
+                if (cRole) localStorage.setItem('modelyx_user_role', cRole.split('=')[1]);
+                const cName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
+                if (cName) localStorage.setItem('modelyx_user_name', decodeURIComponent(cName.split('=')[1]));
+            }
+        }
         const token = localStorage.getItem('modelyx_token');
         const role = localStorage.getItem('modelyx_user_role');
-        if (!token || role !== 'owner') location.href = '/index.html';
+        if (!token || (role !== 'owner' && role !== 'admin')) location.href = '/index.html';
 
         let statusChartInst = null;
         let ordersChartInst = null;

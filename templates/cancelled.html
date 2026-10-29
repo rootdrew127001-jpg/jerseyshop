@@ -124,7 +124,7 @@
         const $ = id => document.getElementById(id);
         const token = localStorage.getItem('modelyx_token');
         const role = localStorage.getItem('modelyx_user_role');
-        if (!token || role !== 'owner') location.href = '/index.html';
+        if (!token || (role !== 'owner' && role !== 'admin')) location.href = '/index.html';
 
         let cancelledByChartInst = null;
         let cancelledTimeChartInst = null;
