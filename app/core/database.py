@@ -1,4 +1,5 @@
 import time
+import socket
 import logging
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -6,11 +7,37 @@ from app.core.config import DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME
 
 logger = logging.getLogger(__name__)
 
+def test_tcp_connection(host: str, port: int, timeout: float = 0.5) -> bool:
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
+def resolve_active_db_host() -> str:
+    candidates = []
+    if DB_HOST:
+        candidates.append(DB_HOST)
+    for h in ["db", "127.0.0.1", "localhost"]:
+        if h not in candidates:
+            candidates.append(h)
+
+    for host in candidates:
+        if test_tcp_connection(host, int(DB_PORT)):
+            logger.info(f"[DB RESILIENCE] Active MySQL server verified at {host}:{DB_PORT}")
+            return host
+
+    return DB_HOST or "db"
+
+ACTIVE_DB_HOST = resolve_active_db_host()
+
 def create_database_if_not_exists(max_retries: int = 15, delay: float = 1.0):
+    global ACTIVE_DB_HOST
     for attempt in range(1, max_retries + 1):
         try:
+            ACTIVE_DB_HOST = resolve_active_db_host()
             engine_root = create_engine(
-                f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}",
+                f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{ACTIVE_DB_HOST}:{DB_PORT}",
                 echo=False,
                 pool_pre_ping=True
             )
@@ -26,7 +53,7 @@ def create_database_if_not_exists(max_retries: int = 15, delay: float = 1.0):
 
 create_database_if_not_exists()
 
-DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{ACTIVE_DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

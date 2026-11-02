@@ -68,7 +68,7 @@
                         <input type="checkbox" id="remember" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                         Remember me
                     </label>
-                    <span>Secure sign-in</span>
+                    <button type="button" onclick="showForgotForm()" class="text-indigo-400 hover:text-indigo-300 font-semibold underline underline-offset-2">Forgot password?</button>
                 </div>
              
               <button type="button" onclick="handleAuth('l')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-lg uppercase text-xs tracking-widest">Enter Studio</button>
@@ -94,7 +94,7 @@
                 </a>
 
                 <!-- Developer Mode Quick Access (Visible when DEV_MODE is enabled) -->
-                <div id="devModePanel" class="mt-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
+                <div id="devModePanel" class="hidden mt-4 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl">
                     <div class="flex items-center justify-between text-xs font-bold text-amber-400 mb-2.5">
                         <span class="flex items-center gap-1.5">
                             <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
@@ -182,6 +182,54 @@
                     ← Back to Login
                 </button>
             </div>
+
+            <!-- Forgot / Reset Password Form -->
+            <div id="forgotForm" class="hidden space-y-4">
+                <div class="text-center">
+                    <div class="text-4xl mb-3">🔑</div>
+                    <h3 class="text-xl font-black text-white">Reset Password</h3>
+                    <p class="text-slate-400 text-sm mt-1" id="forgotSubtitle">Enter your email to receive a password reset code</p>
+                </div>
+
+                <!-- Step 1: Request OTP -->
+                <div id="forgotStep1" class="space-y-4">
+                    <input type="email" id="forgotEmail" placeholder="Enter your registered email"
+                        class="w-full p-4 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                    <div id="forgotError1" aria-live="polite" class="hidden text-xs text-red-300 text-center"></div>
+                    <button type="button" onclick="requestPasswordReset()"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest transition">
+                        Send Reset Code
+                    </button>
+                </div>
+
+                <!-- Step 2: Enter OTP & New Password -->
+                <div id="forgotStep2" class="hidden space-y-4">
+                    <div>
+                        <label class="text-xs text-slate-400 font-bold block mb-1">6-Digit Code</label>
+                        <input type="text" id="forgotOTP" maxlength="6" placeholder="000000"
+                            class="w-full p-3.5 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 text-center text-xl font-black tracking-widest outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="forgotNewPass" placeholder="New Password (min 6 chars)"
+                            class="w-full p-3.5 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <button type="button" onclick="togglePassword('forgotNewPass','fToggle1')" id="fToggle1" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">Show</button>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="forgotConfirmPass" placeholder="Confirm New Password"
+                            class="w-full p-3.5 rounded-2xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-indigo-500" required>
+                        <button type="button" onclick="togglePassword('forgotConfirmPass','fToggle2')" id="fToggle2" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">Show</button>
+                    </div>
+                    <div id="forgotError2" aria-live="polite" class="hidden text-xs text-red-300 text-center"></div>
+                    <button type="button" onclick="submitPasswordReset()"
+                        class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest transition">
+                        Change Password & Login
+                    </button>
+                </div>
+
+                <button type="button" onclick="toggle('l')" class="w-full text-slate-500 text-xs hover:text-slate-300 transition mt-2">
+                    ← Back to Login
+                </button>
+            </div>
         </div>
     </div>
 
@@ -223,6 +271,7 @@
         $('lForm').classList.toggle('hidden', !l);
         $('rForm').classList.toggle('hidden', l);
         $('otpForm').classList.add('hidden');
+        $('forgotForm')?.classList.add('hidden');
         setError('lError', '');
         setError('rError', '');
         const active = 'flex-1 py-2 rounded-xl font-bold text-xs bg-white shadow text-indigo-600';
@@ -380,6 +429,71 @@
         }
     };
 
+    const showForgotForm = () => {
+        $('lForm').classList.add('hidden');
+        $('rForm').classList.add('hidden');
+        $('otpForm').classList.add('hidden');
+        $('forgotForm').classList.remove('hidden');
+        $('forgotStep1').classList.remove('hidden');
+        $('forgotStep2').classList.add('hidden');
+        setError('forgotError1', '');
+        setError('forgotError2', '');
+        const prefill = $('lEmail').value.trim();
+        if (prefill && prefill.includes('@')) {
+            $('forgotEmail').value = prefill;
+        }
+    };
+
+    const requestPasswordReset = async () => {
+        const email = $('forgotEmail').value.trim().toLowerCase();
+        setError('forgotError1', '');
+        if (!/^\S+@\S+\.\S+$/.test(email)) return setError('forgotError1', 'Enter a valid email address');
+
+        try {
+            const res = await fetch('/auth/forgot-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (!res.ok) return setError('forgotError1', data.detail || 'Failed to send reset code');
+
+            toast('Reset code sent! Check your email.');
+            $('forgotStep1').classList.add('hidden');
+            $('forgotStep2').classList.remove('hidden');
+            $('forgotSubtitle').textContent = `Enter the 6-digit code sent to ${email}`;
+        } catch (err) {
+            setError('forgotError1', 'Server error. Is the server running?');
+        }
+    };
+
+    const submitPasswordReset = async () => {
+        const email = $('forgotEmail').value.trim().toLowerCase();
+        const otp = $('forgotOTP').value.trim();
+        const pass = $('forgotNewPass').value;
+        const confirm = $('forgotConfirmPass').value;
+        setError('forgotError2', '');
+
+        if (otp.length !== 6) return setError('forgotError2', 'Enter the 6-digit OTP code');
+        if (pass.length < 6) return setError('forgotError2', 'Password must be at least 6 characters');
+        if (pass !== confirm) return setError('forgotError2', 'Passwords do not match');
+
+        try {
+            const res = await fetch('/auth/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, otp, new_password: pass })
+            });
+            const data = await res.json();
+            if (!res.ok) return setError('forgotError2', data.detail || 'Password reset failed');
+
+            toast('Password changed successfully! Redirecting...');
+            saveAndRedirect(data);
+        } catch (err) {
+            setError('forgotError2', 'Server error. Try again.');
+        }
+    };
+
     const saveAndRedirect = (data) => {
         const remember = $('remember')?.checked;
 
@@ -394,7 +508,8 @@
             localStorage.removeItem('modelyx_remembered_email');
         }
 
-        const nextPage = data.role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        const isManager = data.role === 'owner' || data.role === 'admin';
+        const nextPage = isManager ? 'admin.html' : (redirectTarget || 'dashboard.html');
         setTimeout(() => location.href = nextPage, 800);
     };
 
@@ -412,13 +527,15 @@
         document.cookie = 'modelyx_token=; Max-Age=0';
         document.cookie = 'modelyx_role=; Max-Age=0';
         document.cookie = 'modelyx_name=; Max-Age=0';
-        location.href = role === 'owner' ? 'admin.html' : 'dashboard.html';
+        const isManager = role === 'owner' || role === 'admin';
+        location.href = isManager ? 'admin.html' : 'dashboard.html';
     }
 
     const token = localStorage.getItem('modelyx_token');
     const role = localStorage.getItem('modelyx_user_role');
     if (token && role) {
-        location.href = role === 'owner' ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        const isManager = role === 'owner' || role === 'admin';
+        location.href = isManager ? 'admin.html' : (redirectTarget || 'dashboard.html');
     }
 
     const rememberedEmail = localStorage.getItem('modelyx_remembered_email');
@@ -467,10 +584,22 @@
         .then(cfg => {
             const devPanel = $('devModePanel');
             if (devPanel) {
-                devPanel.style.display = cfg && cfg.dev_mode ? 'block' : 'none';
+                if (cfg && cfg.dev_mode) {
+                    devPanel.classList.remove('hidden');
+                    devPanel.style.display = 'block';
+                } else {
+                    devPanel.classList.add('hidden');
+                    devPanel.style.display = 'none';
+                }
             }
         })
-        .catch(() => {});
+        .catch(() => {
+            const devPanel = $('devModePanel');
+            if (devPanel) {
+                devPanel.classList.add('hidden');
+                devPanel.style.display = 'none';
+            }
+        });
 </script>
 </body>
 </html>

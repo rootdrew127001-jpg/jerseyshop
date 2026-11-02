@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBasic, HTTPBasicCredentials, OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
-from app.core.config import SECRET_KEY, ALGORITHM, DEV_MODE
+from app.core.config import SECRET_KEY, ALGORITHM, DEV_MODE, is_admin_email, get_all_admin_accounts
 from app.core.database import get_db
 from app.models.models import User
 from app.services.user_service import verify_password
@@ -35,12 +35,19 @@ def get_current_user(
                         status_code=status.HTTP_401_UNAUTHORIZED,
                         detail="Session expired or logged out"
                     )
+                if is_admin_email(session.get("email")):
+                    session["role"] = "owner"
                 return session
+
+            user_role = payload.get("role")
+            user_email = payload.get("email")
+            if is_admin_email(user_email):
+                user_role = "owner"
 
             return {
                 "id": int(payload.get("sub")),
-                "email": payload.get("email"),
-                "role": payload.get("role")
+                "email": user_email,
+                "role": user_role
             }
         except JWTError:
             raise HTTPException(
@@ -70,14 +77,27 @@ def get_current_user(
                     "name": dev_a.name
                 }
 
+        admin_accounts = get_all_admin_accounts()
+        matched_admin = next((a for a in admin_accounts if a["email"] == username_clean), None)
+        if matched_admin and any(password_clean == p for p in matched_admin.get("passwords", [])):
+            from app.services.user_service import create_admin_account
+            admin_user, _ = create_admin_account(db, email=username_clean, password=password_clean, name=matched_admin.get("name", "Admin"))
+            return {
+                "id": admin_user.id,
+                "email": admin_user.email,
+                "role": "owner",
+                "name": admin_user.name
+            }
+
         user = db.query(User).filter(
             (User.email == credentials.username) | (User.email == f"{username_clean}@modelyx.dev")
         ).first()
         if user and verify_password(credentials.password, user.password):
+            role = "owner" if is_admin_email(user.email) else user.role
             return {
                 "id": user.id,
                 "email": user.email,
-                "role": user.role,
+                "role": role,
                 "name": user.name
             }
         raise HTTPException(
@@ -93,6 +113,11 @@ def get_current_user(
     )
 
 def require_admin(current_user: dict = Depends(get_current_user)):
+    user_email = (current_user.get("email") or "").strip().lower()
+    if is_admin_email(user_email):
+        current_user["role"] = "owner"
+        return current_user
+
     if current_user.get("role") not in ("owner", "admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -118,6 +143,18 @@ def require_admin_basic_auth(
                 "role": dev_a.role,
                 "name": dev_a.name
             }
+
+    admin_accounts = get_all_admin_accounts()
+    matched_admin = next((a for a in admin_accounts if a["email"] == username_clean), None)
+    if matched_admin and any(password_clean == p for p in matched_admin.get("passwords", [])):
+        from app.services.user_service import create_admin_account
+        admin_user, _ = create_admin_account(db, email=username_clean, password=password_clean, name=matched_admin.get("name", "Admin"))
+        return {
+            "id": admin_user.id,
+            "email": admin_user.email,
+            "role": "owner",
+            "name": admin_user.name
+        }
 
     user = db.query(User).filter(
         (User.email == credentials.username) | (User.email == f"{username_clean}@modelyx.dev")

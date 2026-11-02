@@ -15,3 +15,12 @@ scratch/
 AGENTS.md
 GEMINI.md
 
+# Documentation / Internal UAT Specs
+docs/
+
+# Tests & Test Scripts
+tests/test_auth.py
+tests/
+
+
+

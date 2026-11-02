@@ -1,4 +1,5 @@
 import json
+import socket
 import logging
 import redis
 from typing import Optional, Dict, Any
@@ -6,10 +7,31 @@ from app.core.config import REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB
 
 logger = logging.getLogger("redis_service")
 
+def test_tcp_connection(host: str, port: int, timeout: float = 0.4) -> bool:
+    try:
+        with socket.create_connection((host, int(port)), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
+def resolve_active_redis_host() -> str:
+    candidates = []
+    if REDIS_HOST:
+        candidates.append(REDIS_HOST)
+    for h in ["redis", "127.0.0.1", "localhost"]:
+        if h not in candidates:
+            candidates.append(h)
+    for host in candidates:
+        if test_tcp_connection(host, int(REDIS_PORT)):
+            return host
+    return REDIS_HOST or "redis"
+
+ACTIVE_REDIS_HOST = resolve_active_redis_host()
+
 # Initialize Redis client
 try:
     redis_client = redis.Redis(
-        host=REDIS_HOST,
+        host=ACTIVE_REDIS_HOST,
         port=REDIS_PORT,
         password=REDIS_PASSWORD,
         db=REDIS_DB,

@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.schemas.schemas import RegisterRequest, LoginRequest, TokenResponse, AdminRegisterRequest
 from app.services import user_service
 from app.services.google_auth_service import get_google_auth_url, exchange_code_for_token, get_google_user_info
-from app.routers.deps import basic_auth_scheme, require_admin
+from app.routers.deps import basic_auth_scheme, require_admin, get_current_user
 from app.models.models import User
 from app.core.config import SECRET_KEY, DEV_MODE
 from pydantic import BaseModel
@@ -21,6 +21,39 @@ class OTPRequest(BaseModel):
 
 class ResendOTPRequest(BaseModel):
     email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    otp: str
+    new_password: str
+
+@router.post("/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    email_clean = payload.email.strip().lower()
+    user, error = await user_service.send_password_reset_otp(db, email_clean)
+    if error:
+        raise HTTPException(status_code=404, detail=error)
+    return {
+        "message": "Password reset code sent to your email",
+        "email": email_clean
+    }
+
+@router.post("/reset-password")
+def reset_password(response: Response, payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+    email_clean = payload.email.strip().lower()
+    result, error = user_service.reset_password_with_otp(
+        db, email_clean, payload.otp.strip(), payload.new_password
+    )
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+
+    response.set_cookie(key="modelyx_token", value=result["access_token"], httponly=False, max_age=86400 * 7)
+    response.set_cookie(key="modelyx_role", value=result["role"], httponly=False, max_age=86400 * 7)
+    response.set_cookie(key="modelyx_name", value=result["name"], httponly=False, max_age=86400 * 7)
+    return result
 
 @router.post("/register")
 async def register(payload: RegisterRequest, db: Session = Depends(get_db)):
@@ -69,7 +102,6 @@ def login(response: Response, payload: LoginRequest, db: Session = Depends(get_d
     if error:
         raise HTTPException(status_code=401, detail=error)
 
-    # Set cookies for seamless navigation
     response.set_cookie(key="modelyx_token", value=result["access_token"], httponly=False, max_age=86400 * 7)
     response.set_cookie(key="modelyx_role", value=result["role"], httponly=False, max_age=86400 * 7)
     response.set_cookie(key="modelyx_name", value=result["name"], httponly=False, max_age=86400 * 7)
@@ -81,7 +113,7 @@ def get_auth_config():
     Returns public runtime auth settings (e.g. dev_mode enabled)
     """
     return {
-        "dev_mode": DEV_MODE
+        "dev_mode": bool(DEV_MODE)
     }
 
 @router.get("/google")
@@ -292,22 +324,37 @@ def login_admin(
     if DEV_MODE and email_clean in ("admin", "admin@modelyx.dev") and password_clean == "admin":
         user = user_service.get_or_create_dev_user(db, is_admin=True)
     else:
-        user = db.query(User).filter(
-            (User.email == email) | (User.email == email_clean) | (User.email == f"{email_clean}@modelyx.dev")
-        ).first()
-        if not user:
-            raise HTTPException(
-                status_code=401,
-                detail="Admin user not found",
-                headers={"WWW-Authenticate": "Basic realm=\"Modelyx Admin\""}
-            )
+        from app.core.config import get_all_admin_accounts, is_admin_email
+        admin_accounts = get_all_admin_accounts()
+        matched_admin = next((a for a in admin_accounts if a["email"] == email_clean), None)
 
-        if not user_service.verify_password(password, user.password):
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid credentials",
-                headers={"WWW-Authenticate": "Basic realm=\"Modelyx Admin\""}
+        if matched_admin and any(password_clean == p for p in matched_admin.get("passwords", [])):
+            user, _ = user_service.create_admin_account(
+                db, email=email_clean, password=password_clean, name=matched_admin.get("name", "Admin")
             )
+        else:
+            user = db.query(User).filter(
+                (User.email == email) | (User.email == email_clean) | (User.email == f"{email_clean}@modelyx.dev")
+            ).first()
+            if not user:
+                raise HTTPException(
+                    status_code=401,
+                    detail="Admin user not found",
+                    headers={"WWW-Authenticate": "Basic realm=\"Modelyx Admin\""}
+                )
+
+            if not user_service.verify_password(password, user.password):
+                raise HTTPException(
+                    status_code=401,
+                    detail="Invalid credentials",
+                    headers={"WWW-Authenticate": "Basic realm=\"Modelyx Admin\""}
+                )
+
+    from app.core.config import is_admin_email
+    if is_admin_email(user.email) and user.role != "owner":
+        user.role = "owner"
+        user.is_verified = 1
+        db.commit()
 
     if user.role not in ("owner", "admin"):
         raise HTTPException(
@@ -331,6 +378,13 @@ def login_admin(
         "token_type": "bearer",
         "role": user.role,
         "name": user.name
+    }
+
+@router.get("/me")
+def get_current_user_profile(current_user: dict = Depends(get_current_user)):
+    return {
+        "authenticated": True,
+        "user": current_user
     }
 
 @router.get("/admin/me")

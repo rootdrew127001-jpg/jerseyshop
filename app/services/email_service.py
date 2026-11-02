@@ -4,7 +4,7 @@ import string
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from app.core.config import GMAIL_ACCOUNTS, GMAIL_USER, GMAIL_APP_PASSWORD, DEV_MODE
+from app.core.config import parse_gmail_accounts, GMAIL_USER, GMAIL_APP_PASSWORD, DEV_MODE
 
 logger = logging.getLogger(__name__)
 
@@ -13,10 +13,10 @@ _sender_cursor = 0
 def generate_otp() -> str:
     return ''.join(random.choices(string.digits, k=6))
 
-async def send_otp_email(to_email: str, otp: str, name: str = "User") -> bool:
+async def send_otp_email(to_email: str, otp: str, name: str = "User", subject: str = "Modelyx — Your Verification Code") -> bool:
     global _sender_cursor
 
-    accounts = list(GMAIL_ACCOUNTS)
+    accounts = parse_gmail_accounts()
     if not accounts and GMAIL_USER and GMAIL_APP_PASSWORD:
         accounts = [{"user": GMAIL_USER, "password": GMAIL_APP_PASSWORD}]
 
@@ -34,7 +34,7 @@ async def send_otp_email(to_email: str, otp: str, name: str = "User") -> bool:
 
             try:
                 message = MIMEMultipart("alternative")
-                message["Subject"] = "Modelyx — Your Verification Code"
+                message["Subject"] = subject
                 message["From"] = f"Modelyx <{sender_user}>"
                 message["To"] = to_email
 
