@@ -3,6 +3,8 @@ from passlib.context import CryptContext
 from jose import jwt
 from datetime import datetime, timedelta
 import os
+import re
+from typing import Optional
 from app.models.models import User
 from app.schemas.schemas import RegisterRequest, LoginRequest
 from app.core.config import (
@@ -17,6 +19,15 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(password: str) -> str:
     password_bytes = password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.hash(password_bytes)
+
+def validate_password_strength(password: str) -> Optional[str]:
+    if not password or len(password) < 8:
+        return "Password must be at least 8 characters long."
+    if not re.search(r"[A-Z]", password):
+        return "Password must contain at least one uppercase letter (A-Z)."
+    if not re.search(r"[0-9]", password):
+        return "Password must contain at least one number (0-9)."
+    return None
 
 def verify_password(plain: str, hashed: str) -> bool:
     password_bytes = plain.encode('utf-8')[:72].decode('utf-8', errors='ignore')
@@ -134,6 +145,9 @@ def login_user(db: Session, payload: LoginRequest):
     ).first()
 
     if existing_user:
+        if getattr(existing_user, "is_active", 1) == 0:
+            return None, "Account has been suspended by store owner"
+
         is_valid = verify_password(pass_clean, existing_user.password)
 
         if not is_valid:
@@ -396,3 +410,70 @@ def ensure_default_admin(db: Session):
             print(f"[BOOTSTRAP] Created test customer account: {cust_email}", flush=True)
     except Exception as e:
         print(f"[BOOTSTRAP] Error seeding test customer: {e}", flush=True)
+
+def get_staff_users(db: Session):
+    return db.query(User).filter(User.role.in_(["admin", "subadmin"])).order_by(User.created_at.desc()).all()
+
+def create_subadmin(db: Session, name: str, email: str, password: str, phone: Optional[str] = None):
+    email_clean = email.strip().lower()
+    existing = db.query(User).filter(User.email == email_clean).first()
+    if existing:
+        return None, "An account with this email already exists"
+
+    pwd_err = validate_password_strength(password)
+    if pwd_err:
+        return None, pwd_err
+
+    user = User(
+        name=name.strip(),
+        email=email_clean,
+        password=hash_password(password),
+        role="admin",
+        phone=phone.strip() if phone else None,
+        is_verified=1,
+        is_active=1
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user, None
+
+def update_subadmin_password(db: Session, user_id: int, new_password: str):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None, "Staff user not found"
+
+    pwd_err = validate_password_strength(new_password)
+    if pwd_err:
+        return None, pwd_err
+
+    user.password = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+    return user, None
+
+def toggle_subadmin_status(db: Session, user_id: int, is_active: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return None, "Staff user not found"
+    if user.role == "owner" or is_admin_email(user.email):
+        return None, "Cannot modify status of a Store Owner"
+
+    user.is_active = 1 if is_active else 0
+    db.commit()
+    db.refresh(user)
+    return user, None
+
+def delete_subadmin(db: Session, user_id: int):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        return False, "Staff user not found"
+    if user.role == "owner" or is_admin_email(user.email):
+        return False, "Cannot delete a Store Owner"
+
+    from app.models.models import Notification
+    db.query(Notification).filter(Notification.user_id == user_id).delete(synchronize_session=False)
+
+    db.delete(user)
+    db.commit()
+    return True, None

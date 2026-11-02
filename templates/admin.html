@@ -42,6 +42,14 @@
                 </svg>
                 <span>Cancelled Orders</span>
             </a>
+            <a id="navStaffLink" href="/staff.html"
+                class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Staff & Sub-Admins</span>
+            </a>
             <button onclick="window.ModelyxTheme && window.ModelyxTheme.openThemeModal()"
                 class="w-full flex items-center space-x-3 p-3 hover:bg-white/10 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-300">
                 <span class="text-base">🎨</span>
@@ -61,7 +69,7 @@
                     <p class="text-slate-500 text-sm">Showing paid orders ready for production.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="exportCSV()"
+                    <button id="exportCsvBtn" onclick="exportCSV()"
                         class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export
                         CSV</button>
                     <!-- Notification Bell -->
@@ -120,55 +128,58 @@
             </div>
         </header>
 
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Requests</p>
-                <h3 id="sNew" class="text-2xl font-black text-indigo-600 mt-1">0</h3>
+        <!-- Stats Cards & Analytics (Store Owner Only) -->
+        <div id="ownerAnalyticsSection">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Requests</p>
+                    <h3 id="sNew" class="text-2xl font-black text-indigo-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Revenue</p>
+                    <h3 id="sRev" class="text-2xl font-black text-emerald-600 mt-1">₱0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">In Production</p>
+                    <h3 id="sPro" class="text-2xl font-black mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Done</p>
+                    <h3 id="sDone" class="text-2xl font-black text-green-600 mt-1">0</h3>
+                </div>
             </div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Revenue</p>
-                <h3 id="sRev" class="text-2xl font-black text-emerald-600 mt-1">₱0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">In Production</p>
-                <h3 id="sPro" class="text-2xl font-black mt-1">0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Done</p>
-                <h3 id="sDone" class="text-2xl font-black text-green-600 mt-1">0</h3>
-            </div>
-        </div>
 
-        <!-- Analytics Charts -->
-        <div class="grid grid-cols-3 gap-6 mb-8">
-            <!-- Status Breakdown -->
-            <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status Breakdown</p>
-                <canvas id="statusChart" height="200"></canvas>
+            <!-- Analytics Charts -->
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <!-- Status Breakdown -->
+                <div class="bg-white border rounded-2xl p-6 shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status Breakdown</p>
+                    <canvas id="statusChart" height="200"></canvas>
+                </div>
+                <!-- Revenue Chart -->
+                <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Orders Over Time</p>
+                    <canvas id="ordersChart" height="100"></canvas>
+                </div>
             </div>
-            <!-- Revenue Chart -->
-            <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Orders Over Time</p>
-                <canvas id="ordersChart" height="100"></canvas>
-            </div>
-        </div>
 
-        <!-- Top Patterns -->
-        <div class="grid grid-cols-3 gap-6 mb-8">
-            <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Top Patterns</p>
-                <canvas id="patternChart" height="200"></canvas>
-            </div>
-            <!-- Recent Activity -->
-            <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</p>
-                <div id="recentActivity" class="space-y-3"></div>
+            <!-- Top Patterns -->
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="bg-white border rounded-2xl p-6 shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Top Patterns</p>
+                    <canvas id="patternChart" height="200"></canvas>
+                </div>
+                <!-- Recent Activity -->
+                <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</p>
+                    <div id="recentActivity" class="space-y-3"></div>
+                </div>
             </div>
         </div>
 
         <!-- Orders Table -->
-        <div class="bg-white border rounded-[2rem] shadow-sm overflow-hidden">
+        <div class="bg-white border rounded-[2rem] shadow-sm overflow-hidden mb-12">
             <table class="w-full text-left text-sm">
                 <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
                     <tr>
@@ -183,25 +194,6 @@
                 <tbody id="table" class="divide-y divide-slate-50"></tbody>
             </table>
         </div>
-
-        <!-- Gallery Section -->
-        <section class="mt-12">
-            <header class="mb-6">
-                <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Design Gallery</p>
-                <h2 class="text-2xl font-black">Previous Designs</h2>
-                <p class="text-slate-500 text-sm">Showcase past jersey designs for customers.</p>
-            </header>
-            <div class="flex gap-3 mb-6">
-                <input id="galleryTitle" type="text" placeholder="Design title..."
-                    class="w-64 p-3 border rounded-xl bg-white text-sm outline-none focus:border-indigo-500" />
-                <input id="galleryImageFile" type="file" accept="image/*"
-                    class="flex-1 p-2 border rounded-xl bg-white text-sm outline-none focus:border-indigo-500" />
-                <button onclick="addGallery()"
-                    class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition">Add
-                    Design</button>
-            </div>
-            <div id="gallery" class="grid grid-cols-2 md:grid-cols-4 gap-6"></div>
-        </section>
     </main>
 
     <script>
@@ -220,6 +212,16 @@
         const token = localStorage.getItem('modelyx_token');
         const role = localStorage.getItem('modelyx_user_role');
         if (!token || (role !== 'owner' && role !== 'admin')) location.href = '/index.html';
+        if (role !== 'owner') {
+            const staffLink = $('navStaffLink');
+            if (staffLink) staffLink.style.display = 'none';
+
+            const analyticsSec = $('ownerAnalyticsSection');
+            if (analyticsSec) analyticsSec.style.display = 'none';
+
+            const exportBtn = $('exportCsvBtn');
+            if (exportBtn) exportBtn.style.display = 'none';
+        }
 
         let statusChartInst = null;
         let ordersChartInst = null;
@@ -342,7 +344,9 @@
                     );
                 });
 
-                renderCharts(allData);
+                if (role === 'owner') {
+                    renderCharts(allData);
+                }
 
                 $('table').innerHTML = data.length ? data.map(o => {
                     const total = Number(o.price || 0);
@@ -436,18 +440,20 @@
                     setTimeout(() => OrderPreview.initAllCanvases(data, 'admin-ord'), 50);
                 }
 
-                const stats = allData.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
-                    a.new += o.status === 'Pending Review' ? 1 : 0;
-                    a.prod += o.status === 'In Production' ? 1 : 0;
-                    a.done += o.status === 'Completed' ? 1 : 0;
-                    a.rev += Number(o.price || 0);
-                    return a;
-                }, { new: 0, prod: 0, done: 0, rev: 0 });
+                if (role === 'owner') {
+                    const stats = allData.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
+                        a.new += o.status === 'Pending Review' ? 1 : 0;
+                        a.prod += o.status === 'In Production' ? 1 : 0;
+                        a.done += o.status === 'Completed' ? 1 : 0;
+                        a.rev += Number(o.price || 0);
+                        return a;
+                    }, { new: 0, prod: 0, done: 0, rev: 0 });
 
-                $('sNew').innerText = stats.new;
-                $('sPro').innerText = stats.prod;
-                $('sDone').innerText = stats.done;
-                $('sRev').innerText = `₱${stats.rev.toLocaleString()}`;
+                    if ($('sNew')) $('sNew').innerText = stats.new;
+                    if ($('sPro')) $('sPro').innerText = stats.prod;
+                    if ($('sDone')) $('sDone').innerText = stats.done;
+                    if ($('sRev')) $('sRev').innerText = `₱${stats.rev.toLocaleString()}`;
+                }
 
             } catch (err) {
                 console.error('Failed to load orders:', err);
@@ -492,59 +498,6 @@
                 });
         };
 
-        const galleryItems = () => JSON.parse(localStorage.getItem('modelyx_gallery') || '[]');
-        const saveGalleryItems = items => localStorage.setItem('modelyx_gallery', JSON.stringify(items));
-
-        const fileToDataUrl = file => new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-
-        const renderGallery = () => {
-            const items = galleryItems();
-            $('gallery').innerHTML = items.length
-                ? items.map((item, idx) => `
-                    <div class="bg-white border rounded-2xl overflow-hidden shadow-sm">
-                        <img src="${item.image}" alt="${item.title}" class="w-full h-32 object-cover">
-                        <div class="p-3">
-                            <p class="text-sm font-bold text-slate-900">${item.title}</p>
-                            <button onclick="removeGallery(${idx})"
-                                class="mt-2 text-xs text-red-500 font-bold hover:underline">Remove</button>
-                        </div>
-                    </div>
-                `).join('')
-                : '<p class="text-sm text-slate-500 col-span-full">No gallery designs yet.</p>';
-        };
-
-        const addGallery = async () => {
-            const title = $('galleryTitle').value.trim();
-            const file = $('galleryImageFile').files[0];
-            if (!title) return alert('Please enter a design title.');
-            if (!file) return alert('Please choose an image file.');
-            if (!file.type.startsWith('image/')) return alert('Only image files are allowed.');
-            if (file.size > 5 * 1024 * 1024) return alert('Image must be smaller than 5MB.');
-            try {
-                const imageDataUrl = await fileToDataUrl(file);
-                const items = galleryItems();
-                items.unshift({ title, image: imageDataUrl, createdAt: new Date().toISOString() });
-                saveGalleryItems(items);
-                $('galleryTitle').value = '';
-                $('galleryImageFile').value = '';
-                renderGallery();
-            } catch {
-                alert('Failed to read image.');
-            }
-        };
-
-        const removeGallery = (index) => {
-            const items = galleryItems();
-            items.splice(index, 1);
-            saveGalleryItems(items);
-            renderGallery();
-        };
-
         const logout = () => { localStorage.clear(); location.href = '/index.html'; };
 
         window.toggleAdminThemeDropdown = function(e) {
@@ -574,7 +527,6 @@
 
         window.onload = () => {
             render();
-            renderGallery();
             loadAdminNotifications();
             setInterval(loadAdminNotifications, 30000);
         };

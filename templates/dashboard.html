@@ -130,24 +130,8 @@
                 </div>
                 <button onclick="toggleModal('rosterModal', true)" class="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-bold shadow-xl cursor-pointer">Open Bulk Tool</button>
             </div>
-            <!-- Customer Gallery -->
-            <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm transition-colors duration-200">
-                <div class="mb-6">
-                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Design Gallery</p>
-                    <h3 class="text-2xl font-black text-slate-900 dark:text-white">Previous Designs</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">View attached design files from admin.</p>
-                </div>
-                <div id="customerGallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-            </section>
         </div>
     </main>
-    <!-- Full Image Viewer -->
-    <div id="imageViewerModal" class="fixed inset-0 bg-slate-950/90 hidden z-[120] p-4">
-        <div class="w-full h-full flex items-center justify-center">
-            <button onclick="closeImageViewer()" class="absolute top-5 right-6 text-white text-4xl leading-none" aria-label="Close image viewer">&times;</button>
-            <img id="imageViewerImg" src="" alt="Selected gallery image" class="max-w-[95vw] max-h-[90vh] object-contain rounded-2xl shadow-2xl">
-        </div>
-    </div>
     <!-- Roster Modal -->
     <div id="rosterModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden z-[100] flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-[3rem] p-10 overflow-y-auto max-h-[90vh]">
@@ -208,7 +192,6 @@
             $('rTable').appendChild(tr);
             updateRosterCount();
         };
-        const galleryItems = () => JSON.parse(localStorage.getItem('modelyx_gallery') || '[]');
         const escapeHtml = (value = '') =>
             String(value)
                 .replace(/&/g, '&amp;')
@@ -216,37 +199,7 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
-        const renderCustomerGallery = () => {
-            const items = galleryItems().filter((item) => item && item.image);
-            const container = $('customerGallery');
-            if (!container) return;
-            container.innerHTML = items.length
-                ? items.map((item, index) => `
-                    <article class="bg-white border rounded-2xl overflow-hidden shadow-sm">
-                        <button onclick="openImageViewer(${index})" class="w-full text-left block" aria-label="Open full image">
-                            <img src="${item.image}" alt="${escapeHtml(item.title || 'Design image')}" class="w-full h-44 object-cover">
-                        </button>
-                        <div class="p-3">
-                            <p class="text-sm font-bold text-slate-900 break-words">${escapeHtml(item.title || 'Untitled Design')}</p>
-                        </div>
-                    </article>
-                `).join('')
-                : '<p class="text-sm text-slate-500 col-span-full">No design files available yet.</p>';
-        };
-        const openImageViewer = (index) => {
-            const items = galleryItems().filter((item) => item && item.image);
-            const selected = items[index];
-            if (!selected) return;
-            $('imageViewerImg').src = selected.image;
-            $('imageViewerImg').alt = selected.title ? `${selected.title} full preview` : 'Selected gallery image';
-            $('imageViewerModal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        };
-        const closeImageViewer = () => {
-            $('imageViewerModal').classList.add('hidden');
-            $('imageViewerImg').src = '';
-            document.body.style.overflow = '';
-        };
+
         async function loadNotifications() {
         if (!token) return;
 
@@ -341,18 +294,9 @@
             $('pickMain').style.background = color;
             $('scanHexMain').innerText = color;
             updateRosterCount();
-            renderCustomerGallery();
             loadNotifications();
             setInterval(loadNotifications, 30000);
         };
-        $('imageViewerModal').addEventListener('click', (event) => {
-            if (event.target.id === 'imageViewerModal') closeImageViewer();
-        });
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && !$('imageViewerModal').classList.contains('hidden')) {
-                closeImageViewer();
-            }
-        });
     </script>
 </body>
 </html>

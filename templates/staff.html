@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelyx Admin | Staff & Sub-Admins</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="/static/js/theme.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+
+<body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shadow-2xl">
+        <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span
+                class="text-indigo-500">PORTAL</span></h1>
+        <nav class="flex-1 space-y-2">
+            <a href="/admin.html"
+                class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        stroke-width="2" />
+                </svg>
+                <span>Orders</span>
+            </a>
+            <a href="/cancelled.html"
+                class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2"
+                        stroke-linecap="round" />
+                </svg>
+                <span>Cancelled Orders</span>
+            </a>
+            <a href="/staff.html"
+                class="flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Staff & Sub-Admins</span>
+            </a>
+            <button onclick="window.ModelyxTheme && window.ModelyxTheme.openThemeModal()"
+                class="w-full flex items-center space-x-3 p-3 hover:bg-white/10 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-300">
+                <span class="text-base">🎨</span>
+                <span>Theme & Settings</span>
+            </button>
+        </nav>
+        <button onclick="logout()"
+            class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 overflow-y-auto p-8">
+        <header class="mb-8 space-y-6">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-100 text-indigo-700">Store Owner Only</span>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Access Control</p>
+                    </div>
+                    <h2 class="text-3xl font-black mt-1">Staff & Sub-Admins</h2>
+                    <p class="text-slate-500 text-sm">Create and govern staff operators who can accept pipeline orders and cancel orders.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button onclick="openAddModal()"
+                        class="bg-indigo-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition flex items-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span>Add Sub-Admin</span>
+                    </button>
+                    <!-- Admin Theme Switcher Dropdown -->
+                    <div class="relative">
+                        <button id="adminThemeBtn" onclick="toggleAdminThemeDropdown(event)"
+                            class="flex items-center gap-2 bg-white border px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition shadow-sm cursor-pointer"
+                            title="Choose Modelyx Theme">
+                            <span id="adminThemeIcon">☀️</span>
+                            <span id="adminThemeName" class="hidden sm:inline">Theme</span>
+                            <span class="text-[10px] opacity-60">▾</span>
+                        </button>
+                        <div id="adminThemeMenu"
+                            class="hidden absolute right-0 top-11 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
+                    </div>
+                    <button onclick="loadStaff()"
+                        class="bg-white border px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition shadow-sm">Refresh</button>
+                </div>
+            </div>
+
+            <!-- Privilege Policy Banner -->
+            <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-4 flex items-start gap-3">
+                <div class="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-sm font-black text-indigo-950">Sub-Admin Security & Permission Scope</h4>
+                    <p class="text-xs text-indigo-800/80 mt-0.5">Sub-admins can log in using their credentials to view the production pipeline, accept orders (<span class="font-bold">Pending &rarr; In Production &rarr; Shipped &rarr; Completed</span>), and cancel orders. They <span class="font-black underline">cannot</span> access this staff management drawer, delete orders permanently, or modify store owners.</p>
+                </div>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Sub-Admins</p>
+                    <h3 id="statTotalStaff" class="text-2xl font-black text-indigo-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Accounts</p>
+                    <h3 id="statActiveStaff" class="text-2xl font-black text-emerald-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Suspended Accounts</p>
+                    <h3 id="statSuspendedStaff" class="text-2xl font-black text-red-500 mt-1">0</h3>
+                </div>
+            </div>
+
+            <!-- Search and Controls -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="rounded-2xl bg-slate-50 px-5 py-3 border shadow-sm flex items-center gap-2">
+                    <span class="text-slate-400 text-sm">🔍</span>
+                    <input id="staffSearch" type="search" placeholder="Filter by name, email, or phone..." oninput="filterStaffTable()"
+                        class="w-full sm:w-80 bg-transparent text-sm outline-none placeholder-slate-400" />
+                </div>
+                <p id="staffCountLabel" class="text-xs font-bold text-slate-400"></p>
+            </div>
+        </header>
+
+        <!-- Staff Table -->
+        <div class="bg-white border rounded-[2rem] shadow-sm overflow-hidden mb-12">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
+                    <tr>
+                        <th class="p-5">Staff Member</th>
+                        <th class="p-5">Contact</th>
+                        <th class="p-5">Role</th>
+                        <th class="p-5">Status</th>
+                        <th class="p-5">Created</th>
+                        <th class="p-5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="staffTableBody" class="divide-y divide-slate-100">
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-slate-400 text-sm">Loading staff members...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Modal: Add Sub-Admin -->
+    <div id="addModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all animate-in fade-in duration-200">
+            <div class="px-6 py-5 border-b flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black text-sm">
+                        +
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-900 text-base">New Sub-Admin</h3>
+                        <p class="text-[11px] text-slate-500">Provide staff details and initial strong password.</p>
+                    </div>
+                </div>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">&times;</button>
+            </div>
+
+            <form id="addStaffForm" onsubmit="submitAddSubAdmin(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Full Name</label>
+                    <input id="addName" type="text" required placeholder="e.g. John Doe"
+                        class="w-full px-4 py-2.5 border rounded-xl bg-white text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Email Address</label>
+                    <input id="addEmail" type="email" required placeholder="e.g. staff1@modelyx.com"
+                        class="w-full px-4 py-2.5 border rounded-xl bg-white text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100" />
+                </div>
+
+                <div>
+                    <label class="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">Phone Number (Optional)</label>
+                    <input id="addPhone" type="text" placeholder="e.g. +63 912 345 6789"
+                        class="w-full px-4 py-2.5 border rounded-xl bg-white text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100" />
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-black uppercase tracking-wider text-slate-500">Password</label>
+                        <span id="addPwdStrengthLabel" class="text-[10px] font-black text-slate-400">Weak</span>
+                    </div>
+                    <input id="addPassword" type="password" required placeholder="••••••••" oninput="updatePasswordStrengthUI('addPassword', 'addPwdBar', 'addPwdStrengthLabel', 'addPwdReqs')"
+                        class="w-full px-4 py-2.5 border rounded-xl bg-white text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100" />
+
+                    <!-- Strength Bar -->
+                    <div class="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                        <div id="addPwdBar" class="h-full w-0 bg-red-500 transition-all duration-300"></div>
+                    </div>
+
+                    <!-- Strength Requirements Checklist -->
+                    <div id="addPwdReqs" class="mt-2.5 space-y-1 text-[11px] text-slate-500">
+                        <div id="req-len" class="flex items-center gap-1.5">
+                            <span class="text-slate-300">●</span> <span>At least 8 characters</span>
+                        </div>
+                        <div id="req-upper" class="flex items-center gap-1.5">
+                            <span class="text-slate-300">●</span> <span>At least 1 uppercase letter (A-Z)</span>
+                        </div>
+                        <div id="req-num" class="flex items-center gap-1.5">
+                            <span class="text-slate-300">●</span> <span>At least 1 number (0-9)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeAddModal()"
+                        class="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">Cancel</button>
+                    <button id="addSubmitBtn" type="submit"
+                        class="px-6 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-600/20 transition cursor-pointer">
+                        Create Sub-Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Change Password -->
+    <div id="pwdModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all">
+            <div class="px-6 py-5 border-b flex items-center justify-between bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center font-black text-sm">
+                        🔑
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-900 text-base">Change Staff Password</h3>
+                        <p id="pwdModalSubtitle" class="text-[11px] text-slate-500">Updating password for staff member.</p>
+                    </div>
+                </div>
+                <button onclick="closePwdModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">&times;</button>
+            </div>
+
+            <form id="changePwdForm" onsubmit="submitChangePassword(event)" class="p-6 space-y-4">
+                <input type="hidden" id="pwdUserId" />
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="block text-xs font-black uppercase tracking-wider text-slate-500">New Password</label>
+                        <span id="changePwdStrengthLabel" class="text-[10px] font-black text-slate-400">Weak</span>
+                    </div>
+                    <input id="newPassword" type="password" required placeholder="••••••••" oninput="updatePasswordStrengthUI('newPassword', 'changePwdBar', 'changePwdStrengthLabel', 'changePwdReqs')"
+                        class="w-full px-4 py-2.5 border rounded-xl bg-white text-sm outline-none focus:border-indigo-600 focus:ring-2 focus:ring-indigo-100" />
+
+                    <!-- Strength Bar -->
+                    <div class="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                        <div id="changePwdBar" class="h-full w-0 bg-red-500 transition-all duration-300"></div>
+                    </div>
+
+                    <!-- Strength Requirements Checklist -->
+                    <div id="changePwdReqs" class="mt-2.5 space-y-1 text-[11px] text-slate-500">
+                        <div id="creq-len" class="flex items-center gap-1.5">
+                            <span class="text-slate-300">●</span> <span>At least 8 characters</span>
+                        </div>
+                        <div id="creq-upper" class="flex items-center gap-1.5">
+                            <span class="text-slate-300">●</span> <span>At least 1 uppercase letter (A-Z)</span>
+                        </div>
+                        <div id="creq-num" class="flex items-center gap-1.5">
+                            <span class="text-slate-300">●</span> <span>At least 1 number (0-9)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closePwdModal()"
+                        class="px-5 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">Cancel</button>
+                    <button id="changePwdSubmitBtn" type="submit"
+                        class="px-6 py-2.5 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-lg shadow-amber-600/20 transition cursor-pointer">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        const $ = id => document.getElementById(id);
+
+        // Sync token and role from localStorage or cookies
+        if (!localStorage.getItem('modelyx_token')) {
+            const cToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
+            if (cToken) {
+                localStorage.setItem('modelyx_token', cToken.split('=')[1]);
+                const cRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
+                if (cRole) localStorage.setItem('modelyx_user_role', cRole.split('=')[1]);
+                const cName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
+                if (cName) localStorage.setItem('modelyx_user_name', decodeURIComponent(cName.split('=')[1]));
+            }
+        }
+
+        const token = localStorage.getItem('modelyx_token');
+        const role = localStorage.getItem('modelyx_user_role');
+
+        // Security Guard: Only store owners can access this staff management page!
+        if (!token) {
+            location.href = '/index.html';
+        } else if (role !== 'owner') {
+            alert('Access Denied: Only Store Owners have privilege to manage staff and sub-admins.');
+            location.href = '/admin.html';
+        }
+
+        let staffList = [];
+
+        async function loadStaff() {
+            try {
+                const res = await fetch('/admin/staff', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    if (res.status === 403) {
+                        alert('Only Store Owners can manage staff accounts.');
+                        location.href = '/admin.html';
+                        return;
+                    }
+                    throw new Error('Failed to load staff list');
+                }
+                staffList = await res.json();
+                renderStaffTable(staffList);
+                updateStats(staffList);
+            } catch (err) {
+                console.error(err);
+                $('staffTableBody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-red-500 font-bold text-sm">
+                            Error loading staff accounts: ${err.message}
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function updateStats(list) {
+            const total = list.length;
+            const active = list.filter(u => u.is_active === 1 || u.is_active === null).length;
+            const suspended = total - active;
+
+            $('statTotalStaff').innerText = total;
+            $('statActiveStaff').innerText = active;
+            $('statSuspendedStaff').innerText = suspended;
+            $('staffCountLabel').innerText = `${total} staff ${total === 1 ? 'member' : 'members'} registered`;
+        }
+
+        function renderStaffTable(list) {
+            const tbody = $('staffTableBody');
+            if (!list.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-16 text-slate-400">
+                            <div class="flex flex-col items-center justify-center">
+                                <span class="text-3xl mb-2">👥</span>
+                                <p class="font-bold text-slate-600">No sub-admin staff found</p>
+                                <p class="text-xs text-slate-400 mt-1">Click "+ Add Sub-Admin" above to create an operator account.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = list.map(u => {
+                const isActive = u.is_active === 1 || u.is_active === null;
+                const statusBadge = isActive
+                    ? `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-emerald-50 text-emerald-600 border border-emerald-200">
+                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-red-50 text-red-600 border border-red-200">
+                         <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> Suspended
+                       </span>`;
+
+                const createdDate = u.created_at
+                    ? new Date(u.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'System Default';
+
+                const toggleLabel = isActive ? 'Suspend' : 'Reactivate';
+                const toggleColor = isActive ? 'text-amber-600 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50';
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="p-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-sm">
+                                    ${(u.name || 'S').charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p class="font-black text-slate-900">${escapeHtml(u.name || 'Unnamed')}</p>
+                                    <p class="text-[11px] text-slate-400">ID: #${u.id}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-5">
+                            <p class="font-bold text-slate-700 text-xs">${escapeHtml(u.email)}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(u.phone || 'No phone set')}</p>
+                        </td>
+                        <td class="p-5">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-xl text-xs font-black bg-slate-100 text-slate-700">
+                                ${u.role === 'admin' ? 'Sub-Admin (Staff)' : escapeHtml(u.role)}
+                            </span>
+                        </td>
+                        <td class="p-5">
+                            ${statusBadge}
+                        </td>
+                        <td class="p-5 text-xs text-slate-500 font-medium">
+                            ${createdDate}
+                        </td>
+                        <td class="p-5 text-right">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button onclick="openChangePasswordModal(${u.id}, '${escapeHtml(u.name)}', '${escapeHtml(u.email)}')"
+                                    title="Reset or change password"
+                                    class="px-3 py-1.5 rounded-xl border text-xs font-bold text-slate-700 hover:bg-slate-100 transition shadow-sm">
+                                    Change Password
+                                </button>
+                                <button onclick="toggleStaffStatus(${u.id}, ${isActive ? 0 : 1}, '${escapeHtml(u.name)}')"
+                                    class="px-3 py-1.5 rounded-xl border text-xs font-bold ${toggleColor} transition shadow-sm">
+                                    ${toggleLabel}
+                                </button>
+                                <button onclick="deleteStaff(${u.id}, '${escapeHtml(u.name)}')"
+                                    title="Delete account"
+                                    class="p-1.5 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterStaffTable() {
+            const q = $('staffSearch').value.toLowerCase().trim();
+            if (!q) {
+                renderStaffTable(staffList);
+                return;
+            }
+            const filtered = staffList.filter(u =>
+                (u.name && u.name.toLowerCase().includes(q)) ||
+                (u.email && u.email.toLowerCase().includes(q)) ||
+                (u.phone && u.phone.toLowerCase().includes(q))
+            );
+            renderStaffTable(filtered);
+        }
+
+        // Realtime Password Strength Validator
+        function checkPasswordCriteria(pwd) {
+            const len = pwd.length >= 8;
+            const upper = /[A-Z]/.test(pwd);
+            const num = /[0-9]/.test(pwd);
+            return { len, upper, num, valid: len && upper && num };
+        }
+
+        function updatePasswordStrengthUI(inputId, barId, labelId, reqsContainerId) {
+            const val = $(inputId).value || '';
+            const { len, upper, num, valid } = checkPasswordCriteria(val);
+
+            // Update requirements text
+            const prefix = reqsContainerId === 'addPwdReqs' ? 'req' : 'creq';
+            updateReqItem(`${prefix}-len`, len);
+            updateReqItem(`${prefix}-upper`, upper);
+            updateReqItem(`${prefix}-num`, num);
+
+            // Calculate strength score
+            let score = 0;
+            if (len) score++;
+            if (upper) score++;
+            if (num) score++;
+
+            const bar = $(barId);
+            const label = $(labelId);
+
+            if (!val) {
+                bar.style.width = '0%';
+                bar.className = 'h-full bg-slate-200 transition-all duration-300';
+                label.innerText = 'Empty';
+                label.className = 'text-[10px] font-black text-slate-400';
+            } else if (score === 1) {
+                bar.style.width = '33%';
+                bar.className = 'h-full bg-red-500 transition-all duration-300';
+                label.innerText = 'Weak';
+                label.className = 'text-[10px] font-black text-red-500';
+            } else if (score === 2) {
+                bar.style.width = '66%';
+                bar.className = 'h-full bg-amber-500 transition-all duration-300';
+                label.innerText = 'Medium';
+                label.className = 'text-[10px] font-black text-amber-500';
+            } else if (score === 3) {
+                bar.style.width = '100%';
+                bar.className = 'h-full bg-emerald-500 transition-all duration-300';
+                label.innerText = 'Strong';
+                label.className = 'text-[10px] font-black text-emerald-600';
+            }
+        }
+
+        function updateReqItem(id, satisfied) {
+            const el = $(id);
+            if (!el) return;
+            if (satisfied) {
+                el.className = 'flex items-center gap-1.5 text-emerald-600 font-bold';
+                el.firstElementChild.className = 'text-emerald-500';
+                el.firstElementChild.innerText = '✓';
+            } else {
+                el.className = 'flex items-center gap-1.5 text-slate-500';
+                el.firstElementChild.className = 'text-slate-300';
+                el.firstElementChild.innerText = '●';
+            }
+        }
+
+        // Add Modal
+        function openAddModal() {
+            $('addName').value = '';
+            $('addEmail').value = '';
+            $('addPhone').value = '';
+            $('addPassword').value = '';
+            updatePasswordStrengthUI('addPassword', 'addPwdBar', 'addPwdStrengthLabel', 'addPwdReqs');
+            $('addModal').classList.remove('hidden');
+        }
+
+        function closeAddModal() {
+            $('addModal').classList.add('hidden');
+        }
+
+        async function submitAddSubAdmin(e) {
+            e.preventDefault();
+            const name = $('addName').value.trim();
+            const email = $('addEmail').value.trim();
+            const phone = $('addPhone').value.trim();
+            const password = $('addPassword').value;
+
+            const check = checkPasswordCriteria(password);
+            if (!check.valid) {
+                alert('Password is too weak. It must be at least 8 characters long, contain at least 1 uppercase letter (A-Z), and at least 1 number (0-9).');
+                return;
+            }
+
+            const btn = $('addSubmitBtn');
+            btn.disabled = true;
+            btn.innerText = 'Creating...';
+
+            try {
+                const res = await fetch('/admin/staff', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, email, phone: phone || null, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.detail || 'Failed to create sub-admin');
+                    return;
+                }
+
+                alert(`Sub-Admin "${name}" created successfully! They can now log into /admin.html.`);
+                closeAddModal();
+                loadStaff();
+            } catch (err) {
+                alert('Server error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Create Sub-Admin';
+            }
+        }
+
+        // Change Password Modal
+        function openChangePasswordModal(userId, name, email) {
+            $('pwdUserId').value = userId;
+            $('pwdModalSubtitle').innerText = `Updating credentials for ${name} (${email})`;
+            $('newPassword').value = '';
+            updatePasswordStrengthUI('newPassword', 'changePwdBar', 'changePwdStrengthLabel', 'changePwdReqs');
+            $('pwdModal').classList.remove('hidden');
+        }
+
+        function closePwdModal() {
+            $('pwdModal').classList.add('hidden');
+        }
+
+        async function submitChangePassword(e) {
+            e.preventDefault();
+            const userId = $('pwdUserId').value;
+            const password = $('newPassword').value;
+
+            const check = checkPasswordCriteria(password);
+            if (!check.valid) {
+                alert('Password must be at least 8 characters long, contain at least 1 uppercase letter (A-Z), and at least 1 number (0-9).');
+                return;
+            }
+
+            const btn = $('changePwdSubmitBtn');
+            btn.disabled = true;
+            btn.innerText = 'Updating...';
+
+            try {
+                const res = await fetch(`/admin/staff/${userId}/password`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ password })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.detail || 'Failed to update password');
+                    return;
+                }
+
+                alert('Password updated successfully!');
+                closePwdModal();
+            } catch (err) {
+                alert('Server error: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = 'Update Password';
+            }
+        }
+
+        // Suspend / Reactivate
+        async function toggleStaffStatus(userId, is_active, name) {
+            const action = is_active ? 'Reactivate' : 'Suspend';
+            if (!confirm(`Are you sure you want to ${action.toLowerCase()} account for "${name}"?`)) return;
+
+            try {
+                const res = await fetch(`/admin/staff/${userId}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ is_active })
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.detail || `Failed to ${action.toLowerCase()} account`);
+                    return;
+                }
+
+                loadStaff();
+            } catch (err) {
+                alert('Server error: ' + err.message);
+            }
+        }
+
+        // Delete
+        async function deleteStaff(userId, name) {
+            if (!confirm(`PERMANENT ACTION: Delete sub-admin "${name}"? This cannot be undone.`)) return;
+
+            try {
+                const res = await fetch(`/admin/staff/${userId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.detail || 'Failed to delete staff account');
+                    return;
+                }
+
+                loadStaff();
+            } catch (err) {
+                alert('Server error: ' + err.message);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function logout() {
+            localStorage.removeItem('modelyx_token');
+            localStorage.removeItem('modelyx_user_role');
+            localStorage.removeItem('modelyx_user_name');
+            document.cookie = 'modelyx_token=; Max-Age=0; path=/;';
+            document.cookie = 'modelyx_role=; Max-Age=0; path=/;';
+            document.cookie = 'modelyx_name=; Max-Age=0; path=/;';
+            location.href = '/index.html';
+        }
+
+        // Initial Load
+        loadStaff();
+    </script>
+</body>
+
+</html>
+

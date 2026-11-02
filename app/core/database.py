@@ -73,24 +73,37 @@ ORDER_COLUMN_DEFINITIONS = {
     "delivery_notes": "TEXT NULL",
 }
 
+USER_COLUMN_DEFINITIONS = {
+    "is_active": "INT DEFAULT 1 NULL",
+    "latitude": "DECIMAL(10,8) NULL",
+    "longitude": "DECIMAL(11,8) NULL",
+}
+
 def ensure_order_shipping_columns():
     inspector = inspect(engine)
-    if not inspector.has_table("orders"):
-        return
+    if inspector.has_table("orders"):
+        existing_columns = {column["name"] for column in inspector.get_columns("orders")}
+        missing_columns = [
+            (name, definition)
+            for name, definition in ORDER_COLUMN_DEFINITIONS.items()
+            if name not in existing_columns
+        ]
+        if missing_columns:
+            with engine.begin() as conn:
+                for name, definition in missing_columns:
+                    conn.execute(text(f"ALTER TABLE orders ADD COLUMN {name} {definition}"))
 
-    existing_columns = {column["name"] for column in inspector.get_columns("orders")}
-    missing_columns = [
-        (name, definition)
-        for name, definition in ORDER_COLUMN_DEFINITIONS.items()
-        if name not in existing_columns
-    ]
-
-    if not missing_columns:
-        return
-
-    with engine.begin() as conn:
-        for name, definition in missing_columns:
-            conn.execute(text(f"ALTER TABLE orders ADD COLUMN {name} {definition}"))
+    if inspector.has_table("users"):
+        existing_user_cols = {column["name"] for column in inspector.get_columns("users")}
+        missing_user_cols = [
+            (name, definition)
+            for name, definition in USER_COLUMN_DEFINITIONS.items()
+            if name not in existing_user_cols
+        ]
+        if missing_user_cols:
+            with engine.begin() as conn:
+                for name, definition in missing_user_cols:
+                    conn.execute(text(f"ALTER TABLE users ADD COLUMN {name} {definition}"))
 
 def get_db():
     db = SessionLocal()

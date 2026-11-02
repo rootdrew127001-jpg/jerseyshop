@@ -393,3 +393,66 @@ def get_current_admin_info(admin: dict = Depends(require_admin)):
         "authenticated": True,
         "admin": admin
     }
+
+class ProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    state: Optional[str] = None
+    zip_code: Optional[str] = None
+    country: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+@router.get("/profile")
+def get_user_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == current_user["id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    has_shipping = bool(user.address and user.city and user.zip_code)
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "phone": user.phone,
+        "address": user.address,
+        "city": user.city,
+        "state": user.state,
+        "zip_code": user.zip_code,
+        "country": user.country,
+        "latitude": float(user.latitude) if user.latitude else None,
+        "longitude": float(user.longitude) if user.longitude else None,
+        "has_shipping_setup": has_shipping
+    }
+
+@router.put("/profile")
+def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == current_user["id"]).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    for field, val in payload.dict(exclude_unset=True).items():
+        if hasattr(user, field):
+            setattr(user, field, val)
+    db.commit()
+    db.refresh(user)
+    has_shipping = bool(user.address and user.city and user.zip_code)
+    return {
+        "message": "Profile updated successfully",
+        "has_shipping_setup": has_shipping,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "phone": user.phone,
+            "address": user.address,
+            "city": user.city,
+            "state": user.state,
+            "zip_code": user.zip_code,
+            "country": user.country,
+            "latitude": float(user.latitude) if user.latitude else None,
+            "longitude": float(user.longitude) if user.longitude else None
+        }
+    }

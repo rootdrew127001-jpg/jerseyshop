@@ -28,6 +28,18 @@ def get_current_user(
     if token:
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_role = payload.get("role")
+            user_email = payload.get("email")
+            user_id = int(payload.get("sub")) if payload.get("sub") and str(payload.get("sub")).isdigit() else None
+
+            if user_id:
+                db_user = db.query(User).filter(User.id == user_id).first()
+                if db_user and getattr(db_user, "is_active", 1) == 0:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="Account has been suspended by store owner"
+                    )
+
             if redis_service.is_redis_available():
                 session = redis_service.get_session(token)
                 if not session:
@@ -39,13 +51,11 @@ def get_current_user(
                     session["role"] = "owner"
                 return session
 
-            user_role = payload.get("role")
-            user_email = payload.get("email")
             if is_admin_email(user_email):
                 user_role = "owner"
 
             return {
-                "id": int(payload.get("sub")),
+                "id": user_id,
                 "email": user_email,
                 "role": user_role
             }
@@ -93,6 +103,11 @@ def get_current_user(
             (User.email == credentials.username) | (User.email == f"{username_clean}@modelyx.dev")
         ).first()
         if user and verify_password(credentials.password, user.password):
+            if getattr(user, "is_active", 1) == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Account has been suspended by store owner"
+                )
             role = "owner" if is_admin_email(user.email) else user.role
             return {
                 "id": user.id,
@@ -170,9 +185,25 @@ def require_admin_basic_auth(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required"
         )
+    if getattr(user, "is_active", 1) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account has been suspended by store owner"
+        )
     return {
         "id": user.id,
         "email": user.email,
         "role": user.role,
         "name": user.name
     }
+
+def require_owner(current_user: dict = Depends(get_current_user)):
+    user_email = (current_user.get("email") or "").strip().lower()
+    if is_admin_email(user_email) or current_user.get("role") == "owner":
+        current_user["role"] = "owner"
+        return current_user
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Store Owner privileges required. Sub-admins cannot access this resource."
+    )

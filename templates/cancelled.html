@@ -28,6 +28,14 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round"/></svg>
                 <span>Cancelled Orders</span>
             </a>
+            <a id="navStaffLink" href="/staff.html"
+                class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>Staff & Sub-Admins</span>
+            </a>
             <button onclick="window.ModelyxTheme && window.ModelyxTheme.openThemeModal()"
                 class="w-full flex items-center space-x-3 p-3 hover:bg-white/10 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-300">
                 <span class="text-base">🎨</span>
@@ -46,7 +54,7 @@
                     <p class="text-slate-500 text-sm">Track cancelled requests, reasons, and estimated lost revenue.</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="exportCancelledCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
+                    <button id="exportCancelledCsvBtn" onclick="exportCancelledCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
                     <!-- Admin Theme Switcher Dropdown -->
                     <div class="relative">
                         <button id="adminThemeBtn" onclick="toggleAdminThemeDropdown(event)"
@@ -72,33 +80,36 @@
             </div>
         </header>
 
-        <div class="grid grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Cancelled</p>
-                <h3 id="sCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
+        <!-- Cancellation Analytics Section (Owner Only) -->
+        <div id="ownerCancelledAnalyticsSection">
+            <div class="grid grid-cols-4 gap-4 mb-8">
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Cancelled</p>
+                    <h3 id="sCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Revenue Lost</p>
+                    <h3 id="sLost" class="text-2xl font-black text-orange-600 mt-1">₱0</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Cancel Rate</p>
+                    <h3 id="sRate" class="text-2xl font-black mt-1">0%</h3>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase">Admin Cancelled</p>
+                    <h3 id="sAdminCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
+                </div>
             </div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Revenue Lost</p>
-                <h3 id="sLost" class="text-2xl font-black text-orange-600 mt-1">₱0</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Cancel Rate</p>
-                <h3 id="sRate" class="text-2xl font-black mt-1">0%</h3>
-            </div>
-            <div class="bg-white p-6 rounded-2xl border shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase">Admin Cancelled</p>
-                <h3 id="sAdminCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
-            </div>
-        </div>
 
-        <div class="grid grid-cols-3 gap-6 mb-8">
-            <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled By</p>
-                <canvas id="cancelledByChart" height="200"></canvas>
-            </div>
-            <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled Orders by Order Date</p>
-                <canvas id="cancelledTimeChart" height="100"></canvas>
+            <div class="grid grid-cols-3 gap-6 mb-8">
+                <div class="bg-white border rounded-2xl p-6 shadow-sm">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled By</p>
+                    <canvas id="cancelledByChart" height="200"></canvas>
+                </div>
+                <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled Orders by Order Date</p>
+                    <canvas id="cancelledTimeChart" height="100"></canvas>
+                </div>
             </div>
         </div>
 
@@ -125,6 +136,16 @@
         const token = localStorage.getItem('modelyx_token');
         const role = localStorage.getItem('modelyx_user_role');
         if (!token || (role !== 'owner' && role !== 'admin')) location.href = '/index.html';
+        if (role !== 'owner') {
+            const staffLink = $('navStaffLink');
+            if (staffLink) staffLink.style.display = 'none';
+
+            const analyticsSec = $('ownerCancelledAnalyticsSection');
+            if (analyticsSec) analyticsSec.style.display = 'none';
+
+            const exportBtn = $('exportCancelledCsvBtn');
+            if (exportBtn) exportBtn.style.display = 'none';
+        }
 
         let cancelledByChartInst = null;
         let cancelledTimeChartInst = null;
@@ -217,12 +238,13 @@
                 const adminCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Admin').length;
                 const cancelRate = allData.length ? Math.round((totalCancelled / allData.length) * 100) : 0;
 
-                $('sCancelled').innerText = totalCancelled;
-                $('sLost').innerText = formatPeso(revenueLost);
-                $('sRate').innerText = `${cancelRate}%`;
-                $('sAdminCancelled').innerText = adminCancelled;
-
-                renderCharts(cancelled);
+                if (role === 'owner') {
+                    if ($('sCancelled')) $('sCancelled').innerText = totalCancelled;
+                    if ($('sLost')) $('sLost').innerText = formatPeso(revenueLost);
+                    if ($('sRate')) $('sRate').innerText = `${cancelRate}%`;
+                    if ($('sAdminCancelled')) $('sAdminCancelled').innerText = adminCancelled;
+                    renderCharts(cancelled);
+                }
 
                 const query = $('cancelSearch')?.value.trim().toLowerCase();
                 const filtered = cancelled.filter(order => {

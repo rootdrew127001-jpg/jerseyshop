@@ -101,14 +101,16 @@ GMAIL_ACCOUNTS = parse_gmail_accounts()
 def get_all_admin_accounts() -> list[dict]:
     load_env_files()
     admin_accounts = []
-    admin_email_env = os.getenv("ADMIN_EMAIL", "").strip().lower()
-    admin_pass_env = os.getenv("ADMIN_PASSWORD", "").strip()
+    
+    # Store Owner Credentials (support both OWNER_EMAIL and legacy ADMIN_EMAIL)
+    owner_email_env = (os.getenv("OWNER_EMAIL") or os.getenv("ADMIN_EMAIL", "")).strip().lower()
+    owner_pass_env = (os.getenv("OWNER_PASSWORD") or os.getenv("ADMIN_PASSWORD", "")).strip()
 
-    if admin_email_env:
+    if owner_email_env:
         admin_accounts.append({
-            "email": admin_email_env,
-            "passwords": [p for p in [admin_pass_env] if p],
-            "name": "Store Administrator"
+            "email": owner_email_env,
+            "passwords": [p for p in [owner_pass_env] if p],
+            "name": "Store Owner"
         })
 
     def_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@modelyx.com").strip().lower()
@@ -134,13 +136,13 @@ def get_all_admin_accounts() -> list[dict]:
             admin_accounts.append({
                 "email": u,
                 "passwords": [p] if p else [],
-                "name": u.split("@")[0].capitalize() + " (Admin)"
+                "name": u.split("@")[0].capitalize() + " (Owner)"
             })
 
-    if admin_pass_env:
+    if owner_pass_env:
         for a in admin_accounts:
-            if admin_pass_env not in a["passwords"]:
-                a["passwords"].append(admin_pass_env)
+            if owner_pass_env not in a["passwords"]:
+                a["passwords"].append(owner_pass_env)
 
     return admin_accounts
 

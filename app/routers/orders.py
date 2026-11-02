@@ -4,7 +4,7 @@ from typing import List
 from app.core.database import get_db
 from app.schemas.schemas import CancelOrderRequest, OrderCreate, OrderResponse
 from app.services import order_service
-from app.routers.deps import get_current_user, require_admin
+from app.routers.deps import get_current_user, require_admin, require_owner
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -46,7 +46,7 @@ def update_status(
 def delete_order(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user = Depends(require_admin)
+    current_user = Depends(require_owner)
 ):
     result = order_service.remove_order(db, order_id)
     if not result:
