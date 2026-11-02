@@ -76,7 +76,7 @@
 </div>
         </header>
         <div class="p-10 max-w-7xl mx-auto space-y-10">
-            <div class="grid gap-4 md:grid-cols-3">
+            <div class="grid gap-4 md:grid-cols-2">
                 <div class="glass bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm transition-colors duration-200">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last scanned DNA</p>
                     <div class="mt-5 flex items-center gap-4">
@@ -88,25 +88,9 @@
                     </div>
                 </div>
                 <div class="glass bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm transition-colors duration-200">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Current roster</p>
-                    <p class="mt-5 text-3xl font-black text-slate-900 dark:text-white" id="rosterCount">1</p>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">players added</p>
-                </div>
-                <div class="glass bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm transition-colors duration-200">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Design mode</p>
                     <p class="mt-5 text-2xl font-black text-indigo-600 dark:text-indigo-400">Live Studio</p>
                     <p class="text-sm text-slate-500 dark:text-slate-400">Use scanner then customize in editor.</p>
-                </div>
-            </div>
-            <!-- Shop Section -->
-            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 shadow-sm grid md:grid-cols-2 gap-8 transition-colors duration-200">
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-4 block">Jersey Type</label>
-                    <div class="grid grid-cols-3 gap-2" id="catFilter"></div>
-                </div>
-                <div>
-                    <label class="text-[10px] font-black text-slate-400 uppercase mb-4 block">Size Cut</label>
-                    <div class="grid grid-cols-3 gap-2" id="cutFilter"></div>
                 </div>
             </div>
             <!-- Action Cards -->
@@ -122,35 +106,8 @@
                     <button onclick="location.href='editor.html'" class="mt-8 bg-white dark:bg-slate-100 text-slate-900 px-8 py-3.5 rounded-2xl font-bold hover:bg-slate-200 cursor-pointer">Open Studio</button>
                 </div>
             </div>
-            <!-- Bulk Roster Banner -->
-            <div class="bg-indigo-600 rounded-[2.5rem] p-10 text-white flex flex-col md:flex-row items-center justify-between shadow-2xl shadow-indigo-200 dark:shadow-none">
-                <div class="mb-6 md:mb-0">
-                    <h4 class="text-2xl font-black uppercase text-white">Bulk Roster Tool</h4>
-                    <p class="text-indigo-100">15% discount for team orders of 10+ jerseys.</p>
-                </div>
-                <button onclick="toggleModal('rosterModal', true)" class="bg-white text-indigo-600 px-8 py-4 rounded-2xl font-bold shadow-xl cursor-pointer">Open Bulk Tool</button>
-            </div>
         </div>
     </main>
-    <!-- Roster Modal -->
-    <div id="rosterModal" class="fixed inset-0 bg-slate-900/90 backdrop-blur-md hidden z-[100] flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-4xl rounded-[3rem] p-10 overflow-y-auto max-h-[90vh]">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-black">Team Roster</h3>
-                <button onclick="toggleModal('rosterModal', false)" class="text-3xl">&times;</button>
-            </div>
-            <table class="w-full mb-6">
-                <tbody id="rTable" class="divide-y divide-slate-100">
-                    <tr>
-                        <td class="py-2"><input placeholder="Player Name" class="w-full p-2 border rounded-lg text-sm"></td>
-                        <td class="py-2"><input type="number" placeholder="#" class="w-20 p-2 border rounded-lg text-sm ml-2"></td>
-                    </tr>
-                </tbody>
-            </table>
-            <button onclick="addRRow()" class="w-full border-2 border-dashed border-slate-200 py-3 rounded-xl text-slate-400 font-bold mb-6">+ Add Player</button>
-            <button onclick="location.href='editor.html'" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold">Proceed to Checkout</button>
-        </div>
-    </div>
     <script>
         const $ = id => document.getElementById(id);
         // Sync cookies from OAuth / Dev bypass if token is not yet in localStorage
@@ -171,29 +128,6 @@
         } else if (role === 'owner' || role === 'admin') {
             location.href = '/admin.html';
         }
-        const toggleModal = (id, show) => {
-            const modal = $(id);
-            if (!modal) return;
-            modal.classList.toggle('hidden', !show);
-            modal.classList.toggle('flex', show);
-        };
-        const filters = {
-            cat: [{id:'auth',l:'Authentic'},{id:'swing',l:'Swingman'},{id:'custom',l:'Custom'}],
-            cut: [{id:'mens',l:"Men's"},{id:'womens',l:"Women's"},{id:'youth',l:'Youth'}]
-        };
-        const renderFilters = (id,data) => $(id).innerHTML = data.map(i => `<button type="button" onclick="setFilter('${id}','${i.id}')" id="${i.id}" class="p-3 border-2 rounded-xl text-xs font-bold transition" aria-pressed="false">${i.l}</button>`).join('');
-        const setFilter = (groupId, btnId) => $(groupId).querySelectorAll('button').forEach(b => {
-            const active = b.id===btnId;
-            b.classList.toggle('filter-active', active);
-            b.setAttribute('aria-pressed', active);
-        });
-        const updateRosterCount = () => $('rosterCount').innerText = $('rTable').querySelectorAll('tr').length;
-        const addRRow = () => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="py-2"><input placeholder="Player Name" class="w-full p-2 border rounded-lg text-sm"></td><td class="py-2"><input type="number" placeholder="#" class="w-20 p-2 border rounded-lg text-sm ml-2"></td>`;
-            $('rTable').appendChild(tr);
-            updateRosterCount();
-        };
         const escapeHtml = (value = '') =>
             String(value)
                 .replace(/&/g, '&amp;')
@@ -288,14 +222,9 @@
 
         window.onload = () => {
             $('welcomeName').innerText = localStorage.getItem('modelyx_user_name') || localStorage.getItem('modelyx_user_email')?.split('@')[0] || 'Designer';
-            renderFilters('catFilter',filters.cat);
-            renderFilters('cutFilter',filters.cut);
-            setFilter('catFilter','custom');
-            setFilter('cutFilter','mens');
             const color = localStorage.getItem('modelyx_color') || '#4F46E5';
             $('pickMain').style.background = color;
             $('scanHexMain').innerText = color;
-            updateRosterCount();
             loadNotifications();
             setInterval(loadNotifications, 30000);
         };

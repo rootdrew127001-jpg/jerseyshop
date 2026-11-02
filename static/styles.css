@@ -342,10 +342,10 @@ body[data-theme] {
     border-color: var(--theme-border) !important;
 }
 
-/* 12. Protect Swatches and Color Pickers from being overridden */
+/* 12. Swatches and Color Pickers styling */
 #previewSwatch,
 #pickMain,
 .swatch-color,
 .color-preview-box {
-    background-color: revert !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }

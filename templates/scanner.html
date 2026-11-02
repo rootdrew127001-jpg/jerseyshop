@@ -75,9 +75,14 @@
                     <canvas id="sampleCanvas" class="w-full h-full object-contain bg-slate-950 hidden"></canvas>
 
                     <!-- Interactive Reticle Box (Centered by default, moves on click/drag) -->
-                    <div id="reticle" class="absolute w-20 h-20 border-2 border-white/90 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.25)] pointer-events-none transition-all duration-75 flex items-center justify-center ring-1 ring-black/40" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
-                        <div class="w-2.5 h-2.5 rounded-full bg-white ring-2 ring-black/60 shadow"></div>
-                        <div id="reticleBadge" class="absolute -top-6 text-[10px] font-mono font-bold bg-black/75 px-1.5 py-0.5 rounded text-white shadow pointer-events-none">COLOR DNA</div>
+                    <div id="reticle" class="absolute w-20 h-20 border-2 border-white/90 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.3)] pointer-events-none transition-all duration-75 flex items-center justify-center ring-2 ring-black/50" style="left: 50%; top: 50%; transform: translate(-50%, -50%);">
+                        <!-- Crosshair dynamic color dot -->
+                        <div id="reticleDot" class="w-4 h-4 rounded-full bg-[#4F46E5] ring-2 ring-white shadow-lg transition-transform duration-75" style="box-shadow: 0 0 10px rgba(0,0,0,0.8);"></div>
+                        <!-- Crosshair target badge with live color swatch & hex -->
+                        <div id="reticleBadge" class="absolute -top-7 flex items-center gap-1.5 text-[11px] font-mono font-bold bg-black/85 px-2.5 py-0.5 rounded-full text-white shadow-xl pointer-events-none border border-white/20 whitespace-nowrap">
+                            <span id="reticleBadgeDot" class="inline-block w-2.5 h-2.5 rounded-full border border-white/50 bg-[#4F46E5]"></span>
+                            <span id="reticleBadgeText">#4F46E5</span>
+                        </div>
                     </div>
 
                     <!-- Reticle Help Hint Overlay -->
@@ -93,11 +98,11 @@
                 <div class="space-y-5">
                     <div>
                         <p class="text-[10px] uppercase tracking-widest text-slate-400 font-black">Sampled Color DNA</p>
-                        <div class="mt-3 flex items-center gap-4 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/80">
-                            <div id="previewSwatch" class="w-16 h-16 rounded-2xl border border-slate-300 dark:border-slate-700 shadow-md transition-all duration-150" style="background-color: #4F46E5;"></div>
-                            <div>
+                        <div class="mt-3 flex items-center gap-4 bg-slate-50 dark:bg-slate-950/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-inner">
+                            <div id="previewSwatch" class="w-16 h-16 rounded-2xl border-2 border-white/40 ring-1 ring-black/40 shadow-xl shrink-0 transition-all duration-100" style="background-color: #4F46E5;"></div>
+                            <div class="min-w-0">
                                 <p id="previewHex" class="text-2xl font-black font-mono tracking-tight text-slate-900 dark:text-white">#4F46E5</p>
-                                <p id="sampleInfo" class="text-[11px] text-slate-500 dark:text-slate-400">Center-area average (25x25)</p>
+                                <p id="sampleInfo" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Center-area average (25x25)</p>
                             </div>
                         </div>
                     </div>
@@ -140,9 +145,37 @@
 
         const setPreview = (hex, label = 'Center-area average (25x25)') => {
             currentHex = hex.toUpperCase();
-            $('previewSwatch').style.backgroundColor = currentHex;
+            
+            // 1. Update Preview Swatch with high-priority background & dynamic glow
+            const swatch = $('previewSwatch');
+            if (swatch) {
+                swatch.style.setProperty('background-color', currentHex, 'important');
+                swatch.style.boxShadow = `0 4px 20px ${currentHex}80`;
+            }
             $('previewHex').innerText = currentHex;
             $('sampleInfo').innerText = label;
+
+            // 2. Update Reticle Center Dot so the user sees the color on the crosshair!
+            const dot = $('reticleDot');
+            if (dot) {
+                dot.style.setProperty('background-color', currentHex, 'important');
+                dot.style.boxShadow = `0 0 10px ${currentHex}`;
+            }
+
+            // 3. Update Reticle Badge with dot & hex
+            const badgeDot = $('reticleBadgeDot');
+            if (badgeDot) {
+                badgeDot.style.setProperty('background-color', currentHex, 'important');
+            }
+            const badgeText = $('reticleBadgeText');
+            if (badgeText) {
+                badgeText.innerText = currentHex;
+            }
+
+            // 4. Update Reticle ring border color
+            if (reticle) {
+                reticle.style.borderColor = currentHex;
+            }
         };
 
         const updateStatus = (text, icon = 'ℹ️', isWarning = false) => {
@@ -373,10 +406,14 @@
             ctx.drawImage(img, x, y, w, h);
         };
 
-        // Sample 25x25 average around (normX, normY)
+        // Sample average color around (normX, normY)
         const sampleAreaHex = (normX, normY, size = null) => {
             let ctx, w, h;
             const actualSize = size !== null ? size : (activeMode === 'camera' ? 25 : 5);
+
+            let sampleNormX = normX;
+            let sampleNormY = normY;
+
             if (activeMode === 'camera' && video.videoWidth > 0) {
                 tempCanvas.width = video.videoWidth;
                 tempCanvas.height = video.videoHeight;
@@ -385,6 +422,26 @@
                 ctx = tempCtx;
                 w = video.videoWidth;
                 h = video.videoHeight;
+
+                // Accurately map screen coordinates to video coordinates accounting for CSS object-cover
+                const wrapper = $('viewfinderWrapper');
+                if (wrapper) {
+                    const cw = wrapper.clientWidth || wrapper.offsetWidth || 1;
+                    const ch = wrapper.clientHeight || wrapper.offsetHeight || 1;
+                    const scale = Math.max(cw / w, ch / h);
+                    const renderedW = w * scale;
+                    const renderedH = h * scale;
+                    const cropX = (renderedW - cw) / 2;
+                    const cropY = (renderedH - ch) / 2;
+
+                    const screenX = normX * cw;
+                    const screenY = normY * ch;
+                    const videoX = (screenX + cropX) / scale;
+                    const videoY = (screenY + cropY) / scale;
+
+                    sampleNormX = Math.max(0, Math.min(1, videoX / w));
+                    sampleNormY = Math.max(0, Math.min(1, videoY / h));
+                }
             } else {
                 ctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
                 w = sampleCanvas.width;
@@ -393,8 +450,8 @@
 
             if (!ctx || w <= 0 || h <= 0) return currentHex;
 
-            const centerX = Math.floor(normX * w);
-            const centerY = Math.floor(normY * h);
+            const centerX = Math.floor(sampleNormX * w);
+            const centerY = Math.floor(sampleNormY * h);
             const half = Math.floor(actualSize / 2);
             const startX = Math.max(0, Math.min(w - actualSize, centerX - half));
             const startY = Math.max(0, Math.min(h - actualSize, centerY - half));
@@ -435,7 +492,26 @@
             }
         };
 
+        let liveSampleTimer = null;
+        const startLiveSampling = () => {
+            if (liveSampleTimer) return;
+            liveSampleTimer = setInterval(() => {
+                if (activeMode === 'camera' && video && !video.paused && !video.ended && video.videoWidth > 0 && !isPointerDown) {
+                    const hex = sampleAreaHex(reticleNormX, reticleNormY);
+                    setPreview(hex, `Camera Target (${Math.round(reticleNormX * 100)}%, ${Math.round(reticleNormY * 100)}%)`);
+                }
+            }, 100);
+        };
+
+        const stopLiveSampling = () => {
+            if (liveSampleTimer) {
+                clearInterval(liveSampleTimer);
+                liveSampleTimer = null;
+            }
+        };
+
         const stopCamera = () => {
+            stopLiveSampling();
             if (stream) {
                 stream.getTracks().forEach((track) => track.stop());
                 stream = null;
@@ -460,17 +536,17 @@
                 ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition cursor-pointer'
                 : 'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer';
 
-            const badge = $('reticleBadge');
+            const badgeText = $('reticleBadgeText');
             if (mode === 'camera') {
                 video.classList.remove('hidden');
                 sampleCanvas.classList.add('hidden');
                 $('modeBadge').innerText = 'Camera Mode Active';
-                if (badge) badge.innerText = '25x25 DNA';
+                startLiveSampling();
             } else {
+                stopLiveSampling();
                 video.classList.add('hidden');
                 sampleCanvas.classList.remove('hidden');
                 stopCamera();
-                if (badge) badge.innerText = 'COLOR DNA';
                 if (mode === 'testcard') {
                     $('modeBadge').innerText = 'Color Spectrum & Wheel Active';
                     drawTestCard();
@@ -491,6 +567,13 @@
                 }
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
+                video.onloadedmetadata = () => {
+                    updateReticlePosition(reticleNormX, reticleNormY, true);
+                    startLiveSampling();
+                };
+                video.onplay = () => {
+                    startLiveSampling();
+                };
             } catch (err) {
                 // Graceful fallback when no camera is connected or permission denied
                 switchMode('testcard');
