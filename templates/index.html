@@ -492,29 +492,45 @@
         setTimeout(() => location.href = nextPage, 800);
     };
 
-    // Handle Google OAuth cookie on return
-    const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
-    if (cookieToken) {
-        const token = cookieToken.split('=')[1];
-        const cookieRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
-        const cookieName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
-        const role = cookieRole ? cookieRole.split('=')[1] : 'customer';
-        const name = cookieName ? cookieName.split('=')[1] : '';
-        localStorage.setItem('modelyx_token', token);
-        localStorage.setItem('modelyx_user_role', role);
-        localStorage.setItem('modelyx_user_name', decodeURIComponent(name));
-        document.cookie = 'modelyx_token=; Max-Age=0';
-        document.cookie = 'modelyx_role=; Max-Age=0';
-        document.cookie = 'modelyx_name=; Max-Age=0';
-        const isManager = role === 'owner' || role === 'admin';
-        location.href = isManager ? 'admin.html' : 'dashboard.html';
-    }
-
-    const token = localStorage.getItem('modelyx_token');
-    const role = localStorage.getItem('modelyx_user_role');
-    if (token && role) {
-        const isManager = role === 'owner' || role === 'admin';
-        location.href = isManager ? 'admin.html' : (redirectTarget || 'dashboard.html');
+    // Check if user just logged out
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('logout')) {
+        ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
+            document.cookie = `${name}=; Max-Age=0; path=/;`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        });
+        localStorage.removeItem('modelyx_token');
+        localStorage.removeItem('modelyx_user_role');
+        localStorage.removeItem('modelyx_user_name');
+        sessionStorage.clear();
+        window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        // Handle Google OAuth cookie on return
+        const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
+        if (cookieToken) {
+            const token = cookieToken.split('=')[1];
+            if (token) {
+                const cookieRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
+                const cookieName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
+                const role = cookieRole ? cookieRole.split('=')[1] : 'customer';
+                const name = cookieName ? cookieName.split('=')[1] : '';
+                localStorage.setItem('modelyx_token', token);
+                localStorage.setItem('modelyx_user_role', role);
+                localStorage.setItem('modelyx_user_name', decodeURIComponent(name));
+                document.cookie = 'modelyx_token=; Max-Age=0; path=/;';
+                document.cookie = 'modelyx_role=; Max-Age=0; path=/;';
+                document.cookie = 'modelyx_name=; Max-Age=0; path=/;';
+                const isManager = role === 'owner' || role === 'admin';
+                location.href = isManager ? 'admin.html' : 'dashboard.html';
+            }
+        } else {
+            const token = localStorage.getItem('modelyx_token');
+            const role = localStorage.getItem('modelyx_user_role');
+            if (token && role) {
+                const isManager = role === 'owner' || role === 'admin';
+                location.href = isManager ? 'admin.html' : (redirectTarget || 'dashboard.html');
+            }
+        }
     }
 
     const rememberedEmail = localStorage.getItem('modelyx_remembered_email');

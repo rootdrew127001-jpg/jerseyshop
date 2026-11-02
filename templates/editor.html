@@ -315,18 +315,6 @@
             background-color: #e2e8f0 !important;
         }
 
-        /* Preset Cards */
-        html:not(.dark) .preset-card {
-            background-color: #ffffff !important;
-            border-color: #e2e8f0 !important;
-        }
-        html:not(.dark) .preset-card:hover {
-            border-color: #818cf8 !important;
-            background-color: #f8fafc !important;
-        }
-        html:not(.dark) .preset-card span {
-            color: #334155 !important;
-        }
 
         /* Fit, Silhouette & Showroom buttons (neutral inactive states) */
         html:not(.dark) #leftSidebar button.bg-slate-700\/80,
@@ -956,29 +944,9 @@
                     <span id="aiLiveStatusText" class="text-[10px] font-semibold text-violet-200 tracking-wide">🧠 Analyzing concept...</span>
                 </div>
 
-                <!-- Quick Suggestion Pills -->
-                <div class="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[11px] no-scrollbar">
-                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Rename the player as drew')"
-                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
-                        👤 "Rename player as Drew"
-                    </button>
-                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Generate a royal blue jersey with stripes')"
-                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
-                        🎨 "Royal Blue Stripes"
-                    </button>
-                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Change number to 77')"
-                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
-                        🔢 "Number 77"
-                    </button>
-                    <button type="button" onclick="window.sendAIQuickPrompt && window.sendAIQuickPrompt('Match shorts to jersey')"
-                            class="shrink-0 px-2.5 py-1 rounded-full bg-slate-900/90 hover:bg-violet-600/30 text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer">
-                        🩳 "Match Shorts"
-                    </button>
-                </div>
-
                 <!-- Input Form -->
                 <form id="aiChatForm" class="flex gap-2 items-center" onsubmit="event.preventDefault(); window.submitAIChat && window.submitAIChat();">
-                    <input id="aiTeamInput" type="text" placeholder="e.g. 'rename player as drew'..." 
+                    <input id="aiTeamInput" type="text" placeholder="Type what you want to design or tweak..." 
                            class="flex-1 min-w-0 bg-slate-900 border border-slate-700 focus:border-violet-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition shadow-inner font-medium">
                     <button id="aiBtn" type="submit"
                         class="bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold py-2 px-3 rounded-xl transition-all duration-200 text-xs shadow-md shadow-violet-900/30 flex items-center justify-center gap-1 cursor-pointer shrink-0 active:scale-[0.98]">
@@ -997,77 +965,27 @@
                 🎲 Generate Random Design
             </button>
 
-            <!-- Quick Visual Style Presets (1-Tap Selectable Picture Cards) -->
-            <div class="space-y-2 pb-3 border-b border-slate-700/40">
-                <div class="flex justify-between items-center">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">🎨 Quick Style Presets</p>
-                    <span class="text-[9px] text-violet-400 font-bold">1-Tap Select</span>
-                </div>
-                <div class="grid grid-cols-3 gap-2" id="presetCardsContainer">
-                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="cyber_volt" title="Cyber Volt: Royal & Volt">
-                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#0f172a;">
-                            <div class="w-1/2 h-full bg-[#0284C7] flex items-center justify-center text-[11px]">⚡</div>
-                            <div class="w-1/2 h-full bg-[#FACC15]"></div>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Cyber Volt</span>
-                    </button>
-                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="miami_heat" title="Miami Heat: Crimson & Flame">
-                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#18181b;">
-                            <div class="w-1/2 h-full bg-[#DC2626] flex items-center justify-center text-[11px]">🔥</div>
-                            <div class="w-1/2 h-full bg-[#EA580C]"></div>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Miami Heat</span>
-                    </button>
-                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="lakers_gold" title="Royal Gold: Purple & Gold">
-                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#4C1D95;">
-                            <div class="w-1/2 h-full bg-[#7C3AED] flex items-center justify-center text-[11px]">🏆</div>
-                            <div class="w-1/2 h-full bg-[#FACC15]"></div>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Royal Gold</span>
-                    </button>
-                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="stealth_black" title="Stealth Black: Matte & Carbon">
-                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#09090b;">
-                            <div class="w-1/2 h-full bg-[#18181b] flex items-center justify-center text-[11px]">🖤</div>
-                            <div class="w-1/2 h-full bg-[#3F3F46]"></div>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Stealth</span>
-                    </button>
-                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="ocean_wave" title="Ocean Wave: Navy & Aqua">
-                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#082f49;">
-                            <div class="w-1/2 h-full bg-[#0284C7] flex items-center justify-center text-[11px]">🌊</div>
-                            <div class="w-1/2 h-full bg-[#38BDF8]"></div>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Ocean</span>
-                    </button>
-                    <button type="button" class="preset-card group flex flex-col items-center p-2 rounded-xl border border-slate-700/70 bg-slate-900/80 hover:border-violet-500 hover:bg-slate-800 transition cursor-pointer" data-preset="apex_predator" title="Apex Predator: Slate & Cyber Neon">
-                        <div class="w-full h-9 rounded-lg overflow-hidden border border-white/10 mb-1.5 flex" style="background:#020617;">
-                            <div class="w-1/2 h-full bg-[#4F46E5] flex items-center justify-center text-[11px]">🦅</div>
-                            <div class="w-1/2 h-full bg-[#EC4899]"></div>
-                        </div>
-                        <span class="text-[10px] font-bold text-slate-300 group-hover:text-white truncate">Apex</span>
-                    </button>
-                </div>
-            </div>
-
             <!-- Model Fit & Gender Selector -->
             <div class="space-y-2 pb-3 border-b border-slate-700/40">
                 <div class="flex justify-between items-center">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Model Fit / Gender</p>
                     <span id="lblGender" class="text-[9px] font-bold text-indigo-400 uppercase tracking-wider">Men's</span>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="genderMale" type="button" class="flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
+                <div class="grid grid-cols-1 gap-2">
+                    <button id="genderMale" type="button" class="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-indigo-600 border-indigo-400/50 text-white shadow-md shadow-indigo-900/30 cursor-pointer">
                         <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2a5 5 0 105 5 5 5 0 00-5-5zm0 12c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
                         </svg>
-                        <span>Men's Fit</span>
+                        <span>Men's Athletic Fit</span>
                     </button>
+                    <!-- Women's Fit commented out
                     <button id="genderFemale" type="button" class="flex items-center justify-center gap-2 p-2.5 rounded-xl text-xs font-bold transition border bg-slate-700/80 hover:bg-slate-700 border-slate-600/50 text-slate-300 cursor-pointer">
                         <svg class="w-4 h-4 text-pink-300" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2a5 5 0 105 5 5 5 0 00-5-5zm0 12c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"/>
                         </svg>
                         <span>Women's Fit</span>
                     </button>
+                    -->
                 </div>
             </div>
 

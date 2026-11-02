@@ -92,9 +92,23 @@ const Auth = {
     isCustomer: () => {
         return localStorage.getItem('modelyx_user_role') === 'customer';
     },
-    logout: () => {
+    logout: async () => {
+        const token = localStorage.getItem('modelyx_token');
+        if (token) {
+            try {
+                await fetch('/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+            } catch (e) {}
+        }
+        ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
+            document.cookie = `${name}=; Max-Age=0; path=/;`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        });
         StorageManager.clear();
-        window.location.href = 'index.html';
+        sessionStorage.clear();
+        window.location.href = '/index.html?logout=1';
     },
     requireLogin: () => {
         if (!Auth.isLoggedIn()) {

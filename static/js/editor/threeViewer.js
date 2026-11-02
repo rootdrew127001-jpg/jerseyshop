@@ -874,20 +874,22 @@ let currentGender = 'male';
  * @param {'sleeveless'|'tshirt'} jerseyType - Target silhouette model to load
  * @param {'male'|'female'} gender - Target mannequin gender fit
  */
-export function loadJerseyModel(jerseyType = 'sleeveless', gender = currentGender) {
+export function loadJerseyModel(jerseyType = 'sleeveless', gender = 'male') {
     currentModelType = jerseyType;
-    currentGender = gender || 'male';
+    currentGender = 'male';
 
     let modelPath = '';
-    if (currentGender === 'female') {
+    /* Female 3D models commented out
+    if (gender === 'female') {
         modelPath = (jerseyType === 'tshirt')
             ? '/static/assets/models/female/(Female)+Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
             : '/static/assets/models/female/(Female)+Sleeveless+Basketball+Jersey.glb?v=' + Date.now();
     } else {
-        modelPath = (jerseyType === 'tshirt')
-            ? '/static/assets/models/male/Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
-            : '/static/assets/models/male/trey.glb?v=' + Date.now();
-    }
+    */
+    modelPath = (jerseyType === 'tshirt')
+        ? '/static/assets/models/male/Regular+T-Shirt+Jersey+With+Sleeves.glb?v=' + Date.now()
+        : '/static/assets/models/male/trey.glb?v=' + Date.now();
+    // }
     tryLoadGLB(modelPath);
 }
 

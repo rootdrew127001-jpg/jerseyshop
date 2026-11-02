@@ -694,14 +694,23 @@
                 .replace(/'/g, '&#039;');
         }
 
-        function logout() {
-            localStorage.removeItem('modelyx_token');
-            localStorage.removeItem('modelyx_user_role');
-            localStorage.removeItem('modelyx_user_name');
-            document.cookie = 'modelyx_token=; Max-Age=0; path=/;';
-            document.cookie = 'modelyx_role=; Max-Age=0; path=/;';
-            document.cookie = 'modelyx_name=; Max-Age=0; path=/;';
-            location.href = '/index.html';
+        async function logout() {
+            const token = localStorage.getItem('modelyx_token');
+            if (token) {
+                try {
+                    await fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                } catch (e) {}
+            }
+            ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
+                document.cookie = `${name}=; Max-Age=0; path=/;`;
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            });
+            localStorage.clear();
+            sessionStorage.clear();
+            location.href = '/index.html?logout=1';
         }
 
         // Initial Load

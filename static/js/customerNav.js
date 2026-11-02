@@ -81,10 +81,34 @@
             applyState(!nav.classList.contains('is-collapsed'));
         });
 
-        document.getElementById('customerNavLogout').addEventListener('click', () => {
+        const performLogout = async () => {
+            const token = localStorage.getItem('modelyx_token');
+            if (token) {
+                try {
+                    await fetch('/auth/logout', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                } catch (e) {
+                    console.warn('Backend logout warning:', e);
+                }
+            }
+            ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
+                document.cookie = `${name}=; Max-Age=0; path=/;`;
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            });
             localStorage.clear();
-            location.href = '/index.html';
-        });
+            sessionStorage.clear();
+            location.href = '/index.html?logout=1';
+        };
+
+        const logoutBtn = document.getElementById('customerNavLogout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                performLogout();
+            });
+        }
 
         // Theme Toggle Controller
         const themeBtn = document.getElementById('customerNavThemeBtn');

@@ -154,6 +154,7 @@ function bindControls() {
             applyDesign(currentDesign);
         });
     }
+    /* Women's Fit event listener commented out
     if (genderFemale) {
         genderFemale.addEventListener('click', () => {
             updateGenderUI('female');
@@ -161,6 +162,7 @@ function bindControls() {
             applyDesign(currentDesign);
         });
     }
+    */
 
     // Jersey Silhouette Style selector
     const typeSleeveless = document.getElementById('typeSleeveless');
@@ -372,7 +374,7 @@ function bindControls() {
         });
     });
 
-    // Wire up Quick Style Presets Cards
+    /* Quick Style Presets Cards commented out
     document.querySelectorAll('.preset-card').forEach(card => {
         card.addEventListener('click', () => {
             const key = card.getAttribute('data-preset');
@@ -388,6 +390,7 @@ function bindControls() {
             sessionStorage.setItem('modelyx_editor_draft', JSON.stringify(currentDesign));
         });
     });
+    */
 
     // Dropdown selectors fallback
     const patternSelect = document.getElementById('pattern');
