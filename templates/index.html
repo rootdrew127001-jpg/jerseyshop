@@ -42,8 +42,8 @@
                     <button id="rTab" onclick="toggle('r')" class="flex-1 py-2 rounded-xl font-bold text-xs uppercase text-gray-400">Register</button>
                 </div>
                 <div>
-                    <h2 class="text-3xl font-black text-white">Welcome back.</h2>
-                    <p class="text-slate-300 text-sm mt-2">Sign in to continue designing your custom kit.</p>
+                    <h2 id="authTitle" class="text-3xl font-black text-white">Welcome back.</h2>
+                    <p id="authSubtitle" class="text-slate-300 text-sm mt-2">Sign in to continue designing your custom kit.</p>
                 </div>
                 <div class="rounded-3xl border border-slate-700 bg-slate-900/70 p-4 text-slate-200 shadow-sm">
                     <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Why Modelyx?</p>
@@ -141,14 +141,6 @@
                 <div class="relative">
                     <input type="password" id="rConfirmPass" placeholder="Retype Password" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
                     <button type="button" onclick="togglePassword('rConfirmPass','rConfirmToggle')" id="rConfirmToggle" class="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500">Show</button>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <label><input type="radio" name="role" value="customer" class="hidden" checked>
-                        <div class="role-card p-3 rounded-xl text-center text-xs font-bold">👕 Customer</div>
-                    </label>
-                    <label><input type="radio" name="role" value="owner" class="hidden">
-                        <div class="role-card p-3 rounded-xl text-center text-xs font-bold">⚙️ Outfitter</div>
-                    </label>
                 </div>
                 <button type="button" onclick="handleAuth('r')" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl uppercase text-xs tracking-widest">Create Profile</button>
             </form>
@@ -278,6 +270,15 @@
         const inactive = 'flex-1 py-2 rounded-xl font-bold text-xs text-gray-400';
         $('lTab').className = l ? active : inactive;
         $('rTab').className = l ? inactive : active;
+
+        if ($('authTitle')) {
+            $('authTitle').textContent = l ? 'Welcome back.' : 'Create account.';
+        }
+        if ($('authSubtitle')) {
+            $('authSubtitle').textContent = l
+                ? 'Sign in to continue designing your custom kit.'
+                : 'Join Modelyx to start designing your custom kits.';
+        }
     };
 
     let pendingEmail = '';
@@ -296,7 +297,7 @@
         if (mode === 'r') {
             const name = $('rName').value.trim();
             const confirm = $('rConfirmPass').value;
-            const role = document.querySelector('input[name=role]:checked').value;
+            const role = 'customer';
             if (!name) return setError(errId, 'Name is required');
             if (pass !== confirm) return setError(errId, 'Passwords do not match');
 
@@ -306,28 +307,6 @@
             if (!/[0-9]/.test(pass)) return setError(errId, 'Password must have at least one number');
 
             try {
-                if (role === 'owner') {
-                    // Create and verify Admin account directly via Basic Auth / Admin Create API
-                    const basicCredentials = btoa(`${email}:${pass}`);
-                    const res = await fetch('/auth/admin/create', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Basic ${basicCredentials}`
-                        },
-                        body: JSON.stringify({
-                            name, email, password: pass,
-                            phone: $('rPhone').value.trim()
-                        })
-                    });
-                    const data = await res.json();
-                    if (!res.ok) return setError(errId, data.detail || 'Admin registration failed');
-
-                    toast('Admin account created successfully!');
-                    saveAndRedirect(data);
-                    return;
-                }
-
                 const res = await fetch('/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
