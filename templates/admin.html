@@ -328,7 +328,15 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) {
-                    if (res.status === 401) { localStorage.clear(); location.href = '/index.html'; }
+                    if (res.status === 401) {
+                        localStorage.removeItem('modelyx_token');
+                        localStorage.removeItem('modelyx_user_role');
+                        localStorage.removeItem('modelyx_user_name');
+                        document.cookie = 'modelyx_token=; Max-Age=0; path=/;';
+                        window.location.href = '/index.html?error=expired';
+                    } else if (res.status === 403) {
+                        alert('Access Denied: You do not have permission to perform this action.');
+                    }
                     return;
                 }
 
