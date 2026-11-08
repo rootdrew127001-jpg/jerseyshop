@@ -36,11 +36,18 @@
 
     const normalizePlace = place => {
         const address = place.address || {};
-        const street = [
-            address.house_number,
-            address.road || address.pedestrian || address.footway || address.residential,
-            address.neighbourhood || address.suburb || address.quarter || address.village
-        ].filter(Boolean).join(', ');
+        const house = (address.house_number || '').trim();
+        const road = (address.road || address.pedestrian || address.footway || address.residential || '').trim();
+        const neighbourhood = (address.neighbourhood || address.suburb || address.quarter || address.village || '').trim();
+
+        let streetMain = '';
+        if (house && road) {
+            streetMain = road.toLowerCase().startsWith(house.toLowerCase()) ? road : `${house} ${road}`;
+        } else {
+            streetMain = road || house;
+        }
+
+        const street = [streetMain, neighbourhood].filter(Boolean).join(', ');
 
         return {
             display: place.display_name,

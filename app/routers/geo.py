@@ -23,9 +23,6 @@ def _format_google_result(item):
     zip_code = get_comp(["postal_code"])
     country = get_comp(["country"])
 
-    road_parts = [p for p in [street_num, route, barangay] if p]
-    road = ", ".join(road_parts) if road_parts else item.get("formatted_address", "")
-
     loc = item.get("geometry", {}).get("location", {})
     lat = loc.get("lat")
     lng = loc.get("lng")
@@ -36,7 +33,7 @@ def _format_google_result(item):
         "lon": str(lng) if lng is not None else "",
         "address": {
             "house_number": street_num,
-            "road": road,
+            "road": route or item.get("formatted_address", ""),
             "neighbourhood": barangay,
             "suburb": barangay,
             "city": city,
