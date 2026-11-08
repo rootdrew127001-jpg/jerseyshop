@@ -14,6 +14,15 @@
     ];
 
     const currentPath = window.location.pathname;
+    const role = localStorage.getItem('modelyx_user_role');
+    const shipping = localStorage.getItem('modelyx_shipping_address');
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSetupMode = urlParams.get('setup') === 'address' || urlParams.get('required') === '1';
+
+    if (role === 'customer' && !shipping && currentPath !== '/settings.html') {
+        location.href = '/settings.html?setup=address&required=1';
+        return;
+    }
 
     const icon = path => `
         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +49,12 @@
                 </button>
             </div>
             <nav class="customer-link-list">
-                ${links.map(link => {
+                ${isSetupMode ? `
+                    <div class="px-4 py-3 text-xs text-amber-500 font-bold flex items-center gap-2">
+                        <span>📍</span>
+                        <span class="customer-label">Complete Delivery Setup</span>
+                    </div>
+                ` : links.map(link => {
                     const active = currentPath === link.href || (currentPath === '/' && link.href === '/dashboard.html');
                     return `
                         <a href="${link.href}" title="${link.label}" class="customer-link ${active ? 'is-active' : ''}">

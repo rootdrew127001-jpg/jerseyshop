@@ -2093,6 +2093,12 @@
     window.openOrderModal = function() {
         const token = localStorage.getItem('modelyx_token');
         if (!token) { location.href = '/index.html?redirect=editor'; return; }
+        const role = localStorage.getItem('modelyx_user_role');
+        const shipping = localStorage.getItem('modelyx_shipping_address');
+        if (role === 'customer' && !shipping) {
+            location.href = '/settings.html?setup=address&required=1';
+            return;
+        }
 
         const design = getCurrentDesign();
         document.getElementById('summaryTeam').textContent = `${design.frontText || '-'} / ${design.backName || '-'}`;
@@ -2326,7 +2332,14 @@
     });
 
     window.addEventListener('modelyx:theme:change', updateStudioThemeUI);
-    window.addEventListener('DOMContentLoaded', updateStudioThemeUI);
+    window.addEventListener('DOMContentLoaded', () => {
+        updateStudioThemeUI();
+        const role = localStorage.getItem('modelyx_user_role');
+        const shipping = localStorage.getItem('modelyx_shipping_address');
+        if (role === 'customer' && !shipping) {
+            location.href = '/settings.html?setup=address&required=1';
+        }
+    });
     updateStudioThemeUI();
 </script>
 </body>

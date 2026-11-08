@@ -124,15 +124,6 @@
                     <input type="email" id="rEmail" placeholder="Email" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
                     <input type="tel" id="rPhone" placeholder="Phone" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
                 </div>
-                <input type="text" id="rAddress" placeholder="Shipping Address" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="rCity" placeholder="City" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
-                    <input type="text" id="rState" placeholder="State" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="text" id="rZip" placeholder="Zip Code" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
-                    <input type="text" id="rCountry" placeholder="Country" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
-                </div>
                 <div id="rError" aria-live="polite" class="hidden text-xs text-red-300"></div>
                 <div class="relative">
                     <input type="password" id="rPass" placeholder="Password (Min 6 chars)" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
@@ -312,12 +303,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name, email, password: pass, role,
-                        phone: $('rPhone').value.trim(),
-                        address: $('rAddress').value.trim(),
-                        city: $('rCity').value.trim(),
-                        state: $('rState').value.trim(),
-                        zip_code: $('rZip').value.trim(),
-                        country: $('rCountry').value.trim()
+                        phone: $('rPhone')?.value.trim() || ''
                     })
                 });
                 const data = await res.json();
@@ -480,7 +466,17 @@
         localStorage.setItem('modelyx_user_role', data.role);
         localStorage.setItem('modelyx_user_name', data.name);
 
-        // Remember me — save email for next visit
+        if (data.shipping && data.shipping.address) {
+            localStorage.setItem('modelyx_shipping_address', data.shipping.address);
+            localStorage.setItem('modelyx_shipping_city', data.shipping.city || '');
+            localStorage.setItem('modelyx_shipping_state', data.shipping.state || '');
+            localStorage.setItem('modelyx_shipping_zip', data.shipping.zip_code || '');
+            localStorage.setItem('modelyx_shipping_country', data.shipping.country || '');
+            if (data.shipping.phone) localStorage.setItem('modelyx_shipping_phone', data.shipping.phone);
+            if (data.shipping.latitude) localStorage.setItem('modelyx_shipping_latitude', data.shipping.latitude);
+            if (data.shipping.longitude) localStorage.setItem('modelyx_shipping_longitude', data.shipping.longitude);
+        }
+
         if (remember) {
             localStorage.setItem('modelyx_remembered_email', $('lEmail').value.trim().toLowerCase());
         } else {
@@ -488,7 +484,14 @@
         }
 
         const isManager = data.role === 'owner' || data.role === 'admin';
-        const nextPage = isManager ? 'admin.html' : (redirectTarget || 'dashboard.html');
+        let nextPage = 'dashboard.html';
+        if (isManager) {
+            nextPage = 'admin.html';
+        } else if (data.has_shipping_setup === false) {
+            nextPage = 'settings.html?setup=address&required=1';
+        } else {
+            nextPage = redirectTarget || 'dashboard.html';
+        }
         setTimeout(() => location.href = nextPage, 800);
     };
 

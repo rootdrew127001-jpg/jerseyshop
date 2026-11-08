@@ -77,12 +77,24 @@ def verify_otp(payload: OTPRequest, db: Session = Depends(get_db)):
         "email": user.email,
         "role": user.role
     })
+    has_shipping = bool(user.address and user.city) if user.role == "customer" else True
     return {
         "message": "Email verified successfully",
         "access_token": token,
         "token_type": "bearer",
         "role": user.role,
-        "name": user.name
+        "name": user.name,
+        "has_shipping_setup": has_shipping,
+        "shipping": {
+            "address": user.address or "",
+            "city": user.city or "",
+            "state": user.state or "",
+            "zip_code": user.zip_code or "",
+            "country": user.country or "Philippines",
+            "phone": user.phone or "",
+            "latitude": float(user.latitude) if user.latitude else None,
+            "longitude": float(user.longitude) if user.longitude else None,
+        }
     }
 
 @router.post("/resend-otp")

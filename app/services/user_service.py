@@ -30,8 +30,13 @@ def validate_password_strength(password: str) -> Optional[str]:
     return None
 
 def verify_password(plain: str, hashed: str) -> bool:
-    password_bytes = plain.encode('utf-8')[:72].decode('utf-8', errors='ignore')
-    return pwd_context.verify(password_bytes, hashed)
+    if not hashed or not plain:
+        return False
+    try:
+        password_bytes = plain.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+        return pwd_context.verify(password_bytes, hashed)
+    except Exception:
+        return plain == hashed
 
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
@@ -157,6 +162,14 @@ def login_user(db: Session, payload: LoginRequest):
                 is_valid = True
                 existing_user.password = hash_password(pass_clean)
 
+        if is_valid:
+            # Upgrade plaintext or malformed password to a secure bcrypt hash
+            try:
+                if not existing_user.password or not pwd_context.identify(existing_user.password):
+                    existing_user.password = hash_password(pass_clean)
+            except Exception:
+                existing_user.password = hash_password(pass_clean)
+
         if not is_valid:
             return None, "Invalid password"
 
@@ -172,11 +185,23 @@ def login_user(db: Session, payload: LoginRequest):
             "email": existing_user.email,
             "role": existing_user.role
         })
+        has_shipping = bool(existing_user.address and existing_user.city) if existing_user.role == "customer" else True
         return {
             "access_token": token,
             "token_type": "bearer",
             "role": existing_user.role,
-            "name": existing_user.name
+            "name": existing_user.name,
+            "has_shipping_setup": has_shipping,
+            "shipping": {
+                "address": existing_user.address or "",
+                "city": existing_user.city or "",
+                "state": existing_user.state or "",
+                "zip_code": existing_user.zip_code or "",
+                "country": existing_user.country or "Philippines",
+                "phone": existing_user.phone or "",
+                "latitude": float(existing_user.latitude) if existing_user.latitude else None,
+                "longitude": float(existing_user.longitude) if existing_user.longitude else None,
+            }
         }, None
 
     admin_accounts = get_all_admin_accounts()
@@ -197,7 +222,9 @@ def login_user(db: Session, payload: LoginRequest):
             "access_token": token,
             "token_type": "bearer",
             "role": "owner",
-            "name": admin_user.name
+            "name": admin_user.name,
+            "has_shipping_setup": True,
+            "shipping": None
         }, None
 
     return None, "User not found"
@@ -385,11 +412,21 @@ def ensure_default_admin(db: Session):
                 create_admin_account(db, email=email, password=pwd, name=name)
                 print(f"[BOOTSTRAP] Created admin account: {email}", flush=True)
             else:
+                updated = False
                 if user.role != "owner" or not user.is_verified:
                     user.role = "owner"
                     user.is_verified = 1
+                    updated = True
+                try:
+                    if not user.password or not pwd_context.identify(user.password):
+                        user.password = hash_password(pwd)
+                        updated = True
+                except Exception:
+                    user.password = hash_password(pwd)
+                    updated = True
+                if updated:
                     db.commit()
-                    print(f"[BOOTSTRAP] Promoted existing account to owner: {email}", flush=True)
+                    print(f"[BOOTSTRAP] Synchronized owner account credentials & role: {email}", flush=True)
         except Exception as e:
             print(f"[BOOTSTRAP] Error provisioning admin {email}: {e}", flush=True)
 

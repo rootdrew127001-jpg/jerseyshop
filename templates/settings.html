@@ -36,10 +36,18 @@
                     </button>
                     <div id="settingsThemeMenu" class="hidden absolute right-0 top-14 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
                 </div>
-                <button onclick="location.href='profile.html'" class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3 text-sm font-bold text-slate-900 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800">Profile</button>
-                <button onclick="location.href='dashboard.html'" class="rounded-2xl bg-slate-900 dark:bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 dark:hover:bg-indigo-500">Dashboard</button>
+                <button id="headerProfileBtn" onclick="location.href='profile.html'" class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-5 py-3 text-sm font-bold text-slate-900 dark:text-slate-200 transition hover:bg-slate-100 dark:hover:bg-slate-800">Profile</button>
+                <button id="headerDashboardBtn" onclick="location.href='dashboard.html'" class="rounded-2xl bg-slate-900 dark:bg-indigo-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800 dark:hover:bg-indigo-500">Dashboard</button>
             </div>
         </header>
+
+        <div id="requiredSetupBanner" class="hidden mb-6 p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 text-amber-900 dark:text-amber-200 flex items-start gap-4 shadow-sm">
+            <span class="text-2xl shrink-0">📍</span>
+            <div>
+                <h3 class="font-bold text-base">Action Required: Complete Your Delivery Address</h3>
+                <p class="text-xs mt-1 text-amber-800 dark:text-amber-300">To activate your account and start customizing sports jerseys, please save your default shipping address below.</p>
+            </div>
+        </div>
 
         <section class="grid gap-6 lg:grid-cols-[0.9fr_1.4fr]">
             <!-- Profile Overview Aside -->
@@ -497,7 +505,41 @@
             $('completionBar').style.width = `${percent}%`;
         };
 
-        window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const isSetupRequired = urlParams.get('setup') === 'address' || urlParams.get('required') === '1' || (!localStorage.getItem('modelyx_shipping_address') && localStorage.getItem('modelyx_user_role') === 'customer');
+
+        window.onload = async () => {
+            if (isSetupRequired) {
+                $('requiredSetupBanner')?.classList.remove('hidden');
+                $('headerProfileBtn')?.classList.add('hidden');
+                $('headerDashboardBtn')?.classList.add('hidden');
+            }
+
+            const token = localStorage.getItem('modelyx_token');
+            if (token) {
+                try {
+                    const res = await fetch('/auth/profile', {
+                        headers: { 'Authorization': 'Bearer ' + token }
+                    });
+                    if (res.ok) {
+                        const prof = await res.json();
+                        if (prof.name && !localStorage.getItem('modelyx_user_name')) localStorage.setItem('modelyx_user_name', prof.name);
+                        if (prof.email && !localStorage.getItem('modelyx_user_email')) localStorage.setItem('modelyx_user_email', prof.email);
+                        if (prof.phone && !localStorage.getItem('modelyx_user_phone')) {
+                            localStorage.setItem('modelyx_user_phone', prof.phone);
+                            localStorage.setItem('modelyx_shipping_phone', prof.phone);
+                        }
+                        if (prof.address && !localStorage.getItem('modelyx_shipping_address')) localStorage.setItem('modelyx_shipping_address', prof.address);
+                        if (prof.city && !localStorage.getItem('modelyx_shipping_city')) localStorage.setItem('modelyx_shipping_city', prof.city);
+                        if (prof.state && !localStorage.getItem('modelyx_shipping_state')) localStorage.setItem('modelyx_shipping_state', prof.state);
+                        if (prof.zip_code && !localStorage.getItem('modelyx_shipping_zip')) localStorage.setItem('modelyx_shipping_zip', prof.zip_code);
+                        if (prof.country && !localStorage.getItem('modelyx_shipping_country')) localStorage.setItem('modelyx_shipping_country', prof.country);
+                        if (prof.latitude && !localStorage.getItem('modelyx_shipping_latitude')) localStorage.setItem('modelyx_shipping_latitude', prof.latitude);
+                        if (prof.longitude && !localStorage.getItem('modelyx_shipping_longitude')) localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
+                    }
+                } catch (e) {}
+            }
+
             const name = localStorage.getItem('modelyx_user_name') || '';
             const email = localStorage.getItem('modelyx_user_email') || '';
             const phone = localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '';
@@ -527,7 +569,6 @@
 
             updateSummary();
 
-            // Initialize Theme UI from saved state
             const currentTheme = localStorage.getItem('modelyx_theme') || 'light';
             updateThemeUI(currentTheme);
 
@@ -541,6 +582,10 @@
                 lngId: 'longitude',
                 theme: window.ModelyxTheme ? window.ModelyxTheme.getEffectiveTheme() : 'light'
             });
+
+            if (isSetupRequired) {
+                $('address').focus();
+            }
         };
 
         $('profileImage').addEventListener('change', (e) => {
@@ -556,7 +601,7 @@
             reader.readAsDataURL(file);
         });
 
-        $('settingsForm').addEventListener('submit', (e) => {
+        $('settingsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = $('name').value.trim();
             const email = $('email').value.trim();
@@ -568,6 +613,36 @@
             const country = $('country').value.trim();
             const latitude = $('latitude').value.trim();
             const longitude = $('longitude').value.trim();
+
+            if (isSetupRequired && (!address || !city)) {
+                alert('Please enter your shipping address and city to continue.');
+                $('address').focus();
+                return;
+            }
+
+            const token = localStorage.getItem('modelyx_token');
+            if (token) {
+                try {
+                    await fetch('/auth/profile', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + token
+                        },
+                        body: JSON.stringify({
+                            name: name || undefined,
+                            phone: phone || undefined,
+                            address: address || undefined,
+                            city: city || undefined,
+                            state: state || undefined,
+                            zip_code: zip || undefined,
+                            country: country || undefined,
+                            latitude: latitude ? parseFloat(latitude) : undefined,
+                            longitude: longitude ? parseFloat(longitude) : undefined
+                        })
+                    });
+                } catch (err) {}
+            }
 
             if (name) localStorage.setItem('modelyx_user_name', name);
             if (email) localStorage.setItem('modelyx_user_email', email);
@@ -585,7 +660,12 @@
 
             updateSummary();
             sessionStorage.setItem('modelyx_profile_saved', '1');
-            location.href = 'profile.html';
+
+            if (isSetupRequired) {
+                location.href = 'dashboard.html';
+            } else {
+                location.href = 'profile.html';
+            }
         });
     </script>
 </body>

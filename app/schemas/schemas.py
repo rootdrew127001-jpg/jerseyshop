@@ -32,6 +32,8 @@ class TokenResponse(BaseModel):
     role: str
     name: str
     is_verified: Optional[int] = 0
+    has_shipping_setup: Optional[bool] = True
+    shipping: Optional[dict] = None
 
 
 class OrderCreate(BaseModel):

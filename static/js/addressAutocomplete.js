@@ -50,7 +50,8 @@
             zip: address.postcode || '',
             country: address.country || '',
             lat: Number(place.lat),
-            lng: Number(place.lon)
+            lng: Number(place.lon || place.lng),
+            provider: place.provider || 'osm'
         };
     };
 
@@ -129,7 +130,7 @@
             </button>
         `).join('') + `
             <div class="px-4 py-2 text-[10px] ${dark ? 'text-slate-500' : 'text-slate-400'}">
-                Suggestions by OpenStreetMap
+                ${places[0] && places[0].provider === 'google' ? 'Suggestions by Google Maps' : 'Suggestions by OpenStreetMap'}
             </div>
         `;
 
