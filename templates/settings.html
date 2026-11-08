@@ -692,6 +692,8 @@
 
             if (latitude && longitude) {
                 showSettingsMap(latitude, longitude);
+            } else if (isSetupRequired || !address) {
+                detectUserLocation(true);
             }
 
             if (isSetupRequired) {
@@ -699,46 +701,50 @@
             }
         };
 
-        const btnLoc = $('btnUseCurrentLocation');
-        if (btnLoc) {
-            btnLoc.addEventListener('click', () => {
-                if (!navigator.geolocation) {
-                    alert('Geolocation is not supported by your browser.');
-                    return;
-                }
-                const icon = $('locIcon');
-                const text = $('locText');
-                if (icon) icon.textContent = '⏳';
-                if (text) text.textContent = 'Locating GPS...';
+        const detectUserLocation = (silent = false) => {
+            if (!navigator.geolocation) {
+                if (!silent) alert('Geolocation is not supported by your browser.');
+                return;
+            }
+            const icon = $('locIcon');
+            const text = $('locText');
+            if (icon) icon.textContent = '⏳';
+            if (text) text.textContent = 'Locating GPS...';
 
-                navigator.geolocation.getCurrentPosition(async (pos) => {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    if (icon) icon.textContent = '✅';
-                    if (text) text.textContent = 'Location Found!';
-                    showSettingsMap(lat, lng);
-                    try {
-                        const res = await fetch(`/geo/reverse?lat=${lat}&lng=${lng}`);
-                        if (res.ok) {
-                            const data = await res.json();
-                            if (data.street) $('address').value = data.street;
-                            if (data.city) $('city').value = data.city;
-                            if (data.state) $('state').value = data.state;
-                            if (data.zip) $('zip').value = data.zip;
-                            if (data.country) $('country').value = data.country || 'Philippines';
-                            updateSummary();
-                        }
-                    } catch (e) {}
-                    setTimeout(() => {
-                        if (icon) icon.textContent = '📍';
-                        if (text) text.textContent = 'Use Current Location';
-                    }, 2500);
-                }, (err) => {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                if (icon) icon.textContent = '✅';
+                if (text) text.textContent = 'Location Found!';
+                showSettingsMap(lat, lng);
+                try {
+                    const res = await fetch(`/geo/reverse?lat=${lat}&lng=${lng}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.street && (!$('address').value || $('address').value.trim() === '')) $('address').value = data.street;
+                        if (data.city) $('city').value = data.city;
+                        if (data.state) $('state').value = data.state;
+                        if (data.zip) $('zip').value = data.zip;
+                        if (data.country) $('country').value = data.country || 'Philippines';
+                        updateSummary();
+                    }
+                } catch (e) {}
+                setTimeout(() => {
                     if (icon) icon.textContent = '📍';
                     if (text) text.textContent = 'Use Current Location';
+                }, 2500);
+            }, (err) => {
+                if (icon) icon.textContent = '📍';
+                if (text) text.textContent = 'Use Current Location';
+                if (!silent) {
                     alert('Could not get GPS location. Please allow location access in your browser or search your address manually.');
-                }, { enableHighAccuracy: true, timeout: 10000 });
-            });
+                }
+            }, { enableHighAccuracy: true, timeout: 10000 });
+        };
+
+        const btnLoc = $('btnUseCurrentLocation');
+        if (btnLoc) {
+            btnLoc.addEventListener('click', () => detectUserLocation(false));
         }
 
         $('address').addEventListener('address:selected', (e) => {
