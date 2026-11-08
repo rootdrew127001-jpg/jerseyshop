@@ -116,7 +116,7 @@
                     console.warn('Backend logout warning:', e);
                 }
             }
-            ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
+            ['modelyx_token', 'modelyx_role', 'modelyx_name', 'modelyx_email', 'modelyx_shipping_setup'].forEach(name => {
                 document.cookie = `${name}=; Max-Age=0; path=/;`;
                 document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
             });

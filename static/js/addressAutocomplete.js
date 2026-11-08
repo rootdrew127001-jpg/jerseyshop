@@ -11,19 +11,28 @@
     };
 
     const createDropdown = (input, dark) => {
-        const dropdown = document.createElement('div');
+        let dropdown = document.getElementById('addressAutocompleteDropdown');
+        if (!dropdown) {
+            dropdown = document.createElement('div');
+            dropdown.id = 'addressAutocompleteDropdown';
+            document.body.appendChild(dropdown);
+        }
         dropdown.className = [
-            'hidden fixed z-[9999] max-h-72 overflow-y-auto rounded-2xl border shadow-2xl text-sm',
+            'hidden fixed max-h-72 overflow-y-auto rounded-2xl border shadow-2xl text-sm',
             dark ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-200 text-slate-900'
         ].join(' ');
+        dropdown.style.position = 'fixed';
+        dropdown.style.zIndex = '99999';
+        dropdown.style.backgroundColor = dark ? '#1e293b' : '#ffffff';
+        dropdown.style.borderColor = dark ? '#475569' : '#e2e8f0';
+        dropdown.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
         dropdown.setAttribute('role', 'listbox');
-        document.body.appendChild(dropdown);
 
         const position = () => {
             const rect = input.getBoundingClientRect();
             dropdown.style.left = `${rect.left}px`;
             dropdown.style.top = `${rect.bottom + 6}px`;
-            dropdown.style.width = `${rect.width}px`;
+            dropdown.style.width = `${Math.max(rect.width, 320)}px`;
         };
 
         window.addEventListener('resize', position);
@@ -165,12 +174,15 @@
         `;
 
         dropdown.querySelectorAll('button[data-index]').forEach(button => {
-            button.addEventListener('mousedown', event => {
+            const onSelect = (event) => {
                 event.preventDefault();
+                event.stopPropagation();
                 const place = places[Number(button.dataset.index)];
                 fillFields(place, mapping);
                 hide();
-            });
+            };
+            button.addEventListener('pointerdown', onSelect);
+            button.addEventListener('mousedown', onSelect);
         });
 
         dropdown.classList.remove('hidden');
@@ -198,7 +210,7 @@
         const hide = () => dropdown.classList.add('hidden');
         const runSearch = debounce(async () => {
             const query = input.value.trim();
-            if (query.length < 3) {
+            if (query.length < 2) {
                 hide();
                 return;
             }
@@ -219,9 +231,9 @@
 
         input.addEventListener('input', runSearch);
         input.addEventListener('focus', () => {
-            if (input.value.trim().length >= 3) runSearch();
+            if (input.value.trim().length >= 2) runSearch();
         });
-        input.addEventListener('blur', () => setTimeout(hide, 150));
+        input.addEventListener('blur', () => setTimeout(hide, 250));
     };
 
     window.AddressAutocomplete = { init };

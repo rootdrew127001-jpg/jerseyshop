@@ -83,8 +83,37 @@ async def _fetch_nominatim(client: httpx.AsyncClient, q: str):
         return raw
     return []
 
+@router.get("/ip-lookup")
+async def ip_lookup():
+    async with httpx.AsyncClient(timeout=4) as client:
+        try:
+            res = await client.get("http://ip-api.com/json/?fields=status,country,regionName,city,zip,lat,lon")
+            if res.status_code == 200:
+                data = res.json()
+                if data.get("status") == "success":
+                    return {
+                        "city": data.get("city", ""),
+                        "state": data.get("regionName", ""),
+                        "zip": data.get("zip", ""),
+                        "country": data.get("country", "Philippines"),
+                        "lat": data.get("lat"),
+                        "lng": data.get("lon"),
+                        "provider": "ip"
+                    }
+        except Exception:
+            pass
+    return {
+        "city": "Mandaluyong City",
+        "state": "Metro Manila",
+        "zip": "1550",
+        "country": "Philippines",
+        "lat": 14.5766773,
+        "lng": 121.0347259,
+        "provider": "default"
+    }
+
 @router.get("/search")
-async def search_address(q: str = Query(..., min_length=3)):
+async def search_address(q: str = Query(..., min_length=1)):
     async with httpx.AsyncClient(timeout=8) as client:
         if GOOGLE_MAPS_API_KEY:
             try:

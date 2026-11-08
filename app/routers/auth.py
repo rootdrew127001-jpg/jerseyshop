@@ -50,9 +50,11 @@ def reset_password(response: Response, payload: ResetPasswordRequest, db: Sessio
     if error:
         raise HTTPException(status_code=400, detail=error)
 
-    response.set_cookie(key="modelyx_token", value=result["access_token"], httponly=False, max_age=86400 * 7)
-    response.set_cookie(key="modelyx_role", value=result["role"], httponly=False, max_age=86400 * 7)
-    response.set_cookie(key="modelyx_name", value=result["name"], httponly=False, max_age=86400 * 7)
+    response.set_cookie(key="modelyx_token", value=result["access_token"], httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_role", value=result["role"], httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_name", value=result["name"], httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_email", value=result.get("email", ""), httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_shipping_setup", value="1" if result.get("has_shipping_setup") else "0", httponly=False, max_age=86400 * 7, path="/")
     return result
 
 @router.post("/register")
@@ -114,9 +116,11 @@ def login(response: Response, payload: LoginRequest, db: Session = Depends(get_d
     if error:
         raise HTTPException(status_code=401, detail=error)
 
-    response.set_cookie(key="modelyx_token", value=result["access_token"], httponly=False, max_age=86400 * 7)
-    response.set_cookie(key="modelyx_role", value=result["role"], httponly=False, max_age=86400 * 7)
-    response.set_cookie(key="modelyx_name", value=result["name"], httponly=False, max_age=86400 * 7)
+    response.set_cookie(key="modelyx_token", value=result["access_token"], httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_role", value=result["role"], httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_name", value=result["name"], httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_email", value=result.get("email", ""), httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_shipping_setup", value="1" if result.get("has_shipping_setup") else "0", httponly=False, max_age=86400 * 7, path="/")
     return result
 
 @router.get("/config")
@@ -146,16 +150,17 @@ async def google_login(db: Session = Depends(get_db)):
 
         has_shipping = bool(user.address and user.city) if user.role == "customer" else True
         if user.role == "owner":
-            redirect_page = "admin.html"
+            redirect_page = f"admin.html?token={jwt_token}"
         elif not has_shipping:
-            redirect_page = "settings.html?setup=address&required=1"
+            redirect_page = f"settings.html?setup=address&required=1&token={jwt_token}"
         else:
-            redirect_page = "dashboard.html"
+            redirect_page = f"dashboard.html?token={jwt_token}"
         response = RedirectResponse(url=f"/{redirect_page}", status_code=303)
-        response.set_cookie(key="modelyx_token", value=jwt_token, httponly=False, max_age=86400 * 7)
-        response.set_cookie(key="modelyx_role", value=user.role, httponly=False, max_age=86400 * 7)
-        response.set_cookie(key="modelyx_name", value=user.name, httponly=False, max_age=86400 * 7)
-        response.set_cookie(key="modelyx_shipping_setup", value="1" if has_shipping else "0", httponly=False, max_age=86400 * 7)
+        response.set_cookie(key="modelyx_token", value=jwt_token, httponly=False, max_age=86400 * 7, path="/")
+        response.set_cookie(key="modelyx_role", value=user.role, httponly=False, max_age=86400 * 7, path="/")
+        response.set_cookie(key="modelyx_name", value=user.name, httponly=False, max_age=86400 * 7, path="/")
+        response.set_cookie(key="modelyx_email", value=user.email, httponly=False, max_age=86400 * 7, path="/")
+        response.set_cookie(key="modelyx_shipping_setup", value="1" if has_shipping else "0", httponly=False, max_age=86400 * 7, path="/")
         return response
 
     url = await get_google_auth_url()
@@ -179,21 +184,17 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
 
     has_shipping = bool(user.address and user.city) if user.role == "customer" else True
     if user.role == "owner":
-        redirect_page = "admin.html"
+        redirect_page = f"admin.html?token={jwt_token}"
     elif not has_shipping:
-        redirect_page = "settings.html?setup=address&required=1"
+        redirect_page = f"settings.html?setup=address&required=1&token={jwt_token}"
     else:
-        redirect_page = "dashboard.html"
-    response = RedirectResponse(url=f"/{redirect_page}")
-    response.set_cookie(
-        key="modelyx_token",
-        value=jwt_token,
-        httponly=False,
-        max_age=3600
-    )
-    response.set_cookie(key="modelyx_role", value=user.role, httponly=False)
-    response.set_cookie(key="modelyx_name", value=user.name, httponly=False)
-    response.set_cookie(key="modelyx_shipping_setup", value="1" if has_shipping else "0", httponly=False)
+        redirect_page = f"dashboard.html?token={jwt_token}"
+    response = RedirectResponse(url=f"/{redirect_page}", status_code=303)
+    response.set_cookie(key="modelyx_token", value=jwt_token, httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_role", value=user.role, httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_name", value=user.name, httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_email", value=user.email, httponly=False, max_age=86400 * 7, path="/")
+    response.set_cookie(key="modelyx_shipping_setup", value="1" if has_shipping else "0", httponly=False, max_age=86400 * 7, path="/")
     return response
 
 @router.post("/logout")

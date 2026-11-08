@@ -612,14 +612,133 @@
             }, 150);
         };
 
-        window.onload = async () => {
+        const detectUserLocation = (silent = false) => {
+            const icon = $('locIcon');
+            const text = $('locText');
+            if (icon) icon.textContent = '⏳';
+            if (text) text.textContent = 'Locating GPS...';
+
+            const fallbackToIP = async () => {
+                try {
+                    const res = await fetch('/geo/ip-lookup');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.city && !$('city').value) $('city').value = data.city;
+                        if (data.state && !$('state').value) $('state').value = data.state;
+                        if (data.zip && !$('zip').value) $('zip').value = data.zip;
+                        if (data.country && !$('country').value) $('country').value = data.country || 'Philippines';
+                        if (data.street && !$('address').value) $('address').value = data.street;
+                        if (data.lat && data.lng) {
+                            showSettingsMap(data.lat, data.lng);
+                            updateCoordsUI(data.lat, data.lng);
+                        }
+                        updateSummary();
+                        if (icon) icon.textContent = '✅';
+                        if (text) text.textContent = 'Location Found!';
+                        setTimeout(() => {
+                            if (icon) icon.textContent = '📍';
+                            if (text) text.textContent = 'Use Current Location';
+                        }, 2000);
+                        return true;
+                    }
+                } catch (e) {}
+                if (icon) icon.textContent = '📍';
+                if (text) text.textContent = 'Use Current Location';
+                if (!silent) {
+                    alert('Could not get GPS location. Please search or type your address manually.');
+                }
+                return false;
+            };
+
+            if (!navigator.geolocation) {
+                fallbackToIP();
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                if (icon) icon.textContent = '✅';
+                if (text) text.textContent = 'Location Found!';
+                showSettingsMap(lat, lng);
+                try {
+                    const res = await fetch(`/geo/reverse?lat=${lat}&lng=${lng}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.street) $('address').value = data.street;
+                        if (data.city) $('city').value = data.city;
+                        if (data.state) $('state').value = data.state;
+                        if (data.zip) $('zip').value = data.zip;
+                        if (data.country) $('country').value = data.country || 'Philippines';
+                        updateSummary();
+                    }
+                } catch (e) {
+                    await fallbackToIP();
+                }
+                setTimeout(() => {
+                    if (icon) icon.textContent = '📍';
+                    if (text) text.textContent = 'Use Current Location';
+                }, 2000);
+            }, async (err) => {
+                await fallbackToIP();
+            }, { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 });
+        };
+
+        const initSettingsPage = async () => {
+            AddressAutocomplete.init({
+                inputId: 'address',
+                cityId: 'city',
+                stateId: 'state',
+                zipId: 'zip',
+                countryId: 'country',
+                latId: 'latitude',
+                lngId: 'longitude',
+                theme: window.ModelyxTheme ? window.ModelyxTheme.getEffectiveTheme() : 'light'
+            });
+
+            const currentUrlParams = new URLSearchParams(window.location.search);
+            const queryToken = currentUrlParams.get('token');
+            if (queryToken) {
+                localStorage.setItem('modelyx_token', queryToken);
+            }
+
+            let token = localStorage.getItem('modelyx_token');
+            if (!token) {
+                const ct = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
+                if (ct) {
+                    token = ct.split('=')[1];
+                    localStorage.setItem('modelyx_token', token);
+                }
+            }
+            let role = localStorage.getItem('modelyx_user_role');
+            if (!role) {
+                const cr = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
+                if (cr) {
+                    role = cr.split('=')[1];
+                    localStorage.setItem('modelyx_user_role', role);
+                }
+            }
+            const cn = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
+            if (cn) {
+                const cookieName = decodeURIComponent(cn.split('=')[1] || '');
+                if (cookieName) {
+                    localStorage.setItem('modelyx_user_name', cookieName);
+                }
+            }
+            const ce = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_email='));
+            if (ce) {
+                const cookieEmail = decodeURIComponent(ce.split('=')[1] || '');
+                if (cookieEmail) {
+                    localStorage.setItem('modelyx_user_email', cookieEmail);
+                }
+            }
+
             if (isSetupRequired) {
                 $('requiredSetupBanner')?.classList.remove('hidden');
                 $('headerProfileBtn')?.classList.add('hidden');
                 $('headerDashboardBtn')?.classList.add('hidden');
             }
 
-            const token = localStorage.getItem('modelyx_token');
             if (token) {
                 try {
                     const res = await fetch('/auth/profile', {
@@ -627,19 +746,49 @@
                     });
                     if (res.ok) {
                         const prof = await res.json();
-                        if (prof.name && !localStorage.getItem('modelyx_user_name')) localStorage.setItem('modelyx_user_name', prof.name);
-                        if (prof.email && !localStorage.getItem('modelyx_user_email')) localStorage.setItem('modelyx_user_email', prof.email);
-                        if (prof.phone && !localStorage.getItem('modelyx_user_phone')) {
+                        if (prof.name) {
+                            localStorage.setItem('modelyx_user_name', prof.name);
+                            $('name').value = prof.name;
+                        }
+                        if (prof.email) {
+                            localStorage.setItem('modelyx_user_email', prof.email);
+                            $('email').value = prof.email;
+                            $('email').readOnly = true;
+                            $('email').classList.add('opacity-75', 'cursor-not-allowed');
+                        }
+                        if (prof.phone) {
                             localStorage.setItem('modelyx_user_phone', prof.phone);
                             localStorage.setItem('modelyx_shipping_phone', prof.phone);
+                            $('phone').value = prof.phone;
                         }
-                        if (prof.address && !localStorage.getItem('modelyx_shipping_address')) localStorage.setItem('modelyx_shipping_address', prof.address);
-                        if (prof.city && !localStorage.getItem('modelyx_shipping_city')) localStorage.setItem('modelyx_shipping_city', prof.city);
-                        if (prof.state && !localStorage.getItem('modelyx_shipping_state')) localStorage.setItem('modelyx_shipping_state', prof.state);
-                        if (prof.zip_code && !localStorage.getItem('modelyx_shipping_zip')) localStorage.setItem('modelyx_shipping_zip', prof.zip_code);
-                        if (prof.country && !localStorage.getItem('modelyx_shipping_country')) localStorage.setItem('modelyx_shipping_country', prof.country);
-                        if (prof.latitude && !localStorage.getItem('modelyx_shipping_latitude')) localStorage.setItem('modelyx_shipping_latitude', prof.latitude);
-                        if (prof.longitude && !localStorage.getItem('modelyx_shipping_longitude')) localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
+                        if (prof.address) {
+                            localStorage.setItem('modelyx_shipping_address', prof.address);
+                            $('address').value = prof.address;
+                        }
+                        if (prof.city) {
+                            localStorage.setItem('modelyx_shipping_city', prof.city);
+                            $('city').value = prof.city;
+                        }
+                        if (prof.state) {
+                            localStorage.setItem('modelyx_shipping_state', prof.state);
+                            $('state').value = prof.state;
+                        }
+                        if (prof.zip_code) {
+                            localStorage.setItem('modelyx_shipping_zip', prof.zip_code);
+                            $('zip').value = prof.zip_code;
+                        }
+                        if (prof.country) {
+                            localStorage.setItem('modelyx_shipping_country', prof.country);
+                            $('country').value = prof.country;
+                        }
+                        if (prof.latitude) {
+                            localStorage.setItem('modelyx_shipping_latitude', prof.latitude);
+                            $('latitude').value = prof.latitude;
+                        }
+                        if (prof.longitude) {
+                            localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
+                            $('longitude').value = prof.longitude;
+                        }
                         if (prof.has_shipping_setup === true || (prof.address && prof.city)) {
                             localStorage.setItem('modelyx_shipping_setup', '1');
                         } else {
@@ -649,20 +798,24 @@
                 } catch (e) {}
             }
 
-            const name = localStorage.getItem('modelyx_user_name') || '';
-            const email = localStorage.getItem('modelyx_user_email') || '';
-            const phone = localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '';
-            const address = localStorage.getItem('modelyx_shipping_address') || '';
-            const city = localStorage.getItem('modelyx_shipping_city') || '';
-            const state = localStorage.getItem('modelyx_shipping_state') || '';
-            const zip = localStorage.getItem('modelyx_shipping_zip') || '';
-            const country = localStorage.getItem('modelyx_shipping_country') || '';
-            const latitude = localStorage.getItem('modelyx_shipping_latitude') || '';
-            const longitude = localStorage.getItem('modelyx_shipping_longitude') || '';
+            const name = $('name').value || localStorage.getItem('modelyx_user_name') || '';
+            const email = $('email').value || localStorage.getItem('modelyx_user_email') || '';
+            const phone = $('phone').value || localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '';
+            const address = $('address').value || localStorage.getItem('modelyx_shipping_address') || '';
+            const city = $('city').value || localStorage.getItem('modelyx_shipping_city') || '';
+            const state = $('state').value || localStorage.getItem('modelyx_shipping_state') || '';
+            const zip = $('zip').value || localStorage.getItem('modelyx_shipping_zip') || '';
+            const country = $('country').value || localStorage.getItem('modelyx_shipping_country') || '';
+            const latitude = $('latitude').value || localStorage.getItem('modelyx_shipping_latitude') || '';
+            const longitude = $('longitude').value || localStorage.getItem('modelyx_shipping_longitude') || '';
             const profileImg = localStorage.getItem('modelyx_profile_image');
 
             $('name').value = name;
             $('email').value = email;
+            if (email) {
+                $('email').readOnly = true;
+                $('email').classList.add('opacity-75', 'cursor-not-allowed');
+            }
             $('phone').value = phone;
             $('address').value = address;
             $('city').value = city;
@@ -681,17 +834,6 @@
             const currentTheme = localStorage.getItem('modelyx_theme') || 'light';
             updateThemeUI(currentTheme);
 
-            AddressAutocomplete.init({
-                inputId: 'address',
-                cityId: 'city',
-                stateId: 'state',
-                zipId: 'zip',
-                countryId: 'country',
-                latId: 'latitude',
-                lngId: 'longitude',
-                theme: window.ModelyxTheme ? window.ModelyxTheme.getEffectiveTheme() : 'light'
-            });
-
             const notes = localStorage.getItem('modelyx_shipping_notes') || '';
             if ($('deliveryNotes')) $('deliveryNotes').value = notes;
 
@@ -706,46 +848,11 @@
             }
         };
 
-        const detectUserLocation = (silent = false) => {
-            if (!navigator.geolocation) {
-                if (!silent) alert('Geolocation is not supported by your browser.');
-                return;
-            }
-            const icon = $('locIcon');
-            const text = $('locText');
-            if (icon) icon.textContent = '⏳';
-            if (text) text.textContent = 'Locating GPS...';
-
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const lat = pos.coords.latitude;
-                const lng = pos.coords.longitude;
-                if (icon) icon.textContent = '✅';
-                if (text) text.textContent = 'Location Found!';
-                showSettingsMap(lat, lng);
-                try {
-                    const res = await fetch(`/geo/reverse?lat=${lat}&lng=${lng}`);
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data.street && (!$('address').value || $('address').value.trim() === '')) $('address').value = data.street;
-                        if (data.city) $('city').value = data.city;
-                        if (data.state) $('state').value = data.state;
-                        if (data.zip) $('zip').value = data.zip;
-                        if (data.country) $('country').value = data.country || 'Philippines';
-                        updateSummary();
-                    }
-                } catch (e) {}
-                setTimeout(() => {
-                    if (icon) icon.textContent = '📍';
-                    if (text) text.textContent = 'Use Current Location';
-                }, 2500);
-            }, (err) => {
-                if (icon) icon.textContent = '📍';
-                if (text) text.textContent = 'Use Current Location';
-                if (!silent) {
-                    alert('Could not get GPS location. Please allow location access in your browser or search your address manually.');
-                }
-            }, { enableHighAccuracy: true, timeout: 10000 });
-        };
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initSettingsPage);
+        } else {
+            initSettingsPage();
+        }
 
         const btnLoc = $('btnUseCurrentLocation');
         if (btnLoc) {
