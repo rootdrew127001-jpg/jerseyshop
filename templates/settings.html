@@ -368,39 +368,63 @@
 
                 <!-- Section 3: Shipping Defaults -->
                 <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm transition-colors duration-200">
-                    <div class="mb-5">
-                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shipping Defaults</p>
-                        <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white">Address & Map Pin</h2>
-                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Use address search to save a default location. Checkout still lets you confirm or change the pin per order.</p>
+                    <div class="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shipping Defaults</p>
+                            <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white">Delivery Address & Pin</h2>
+                        </div>
+                        <button type="button" id="btnUseCurrentLocation" class="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/70 border border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 text-xs font-bold transition shadow-sm cursor-pointer">
+                            <span id="locIcon">📍</span>
+                            <span id="locText">Use Current Location</span>
+                        </button>
                     </div>
                     <div class="space-y-4">
                         <div>
-                            <label for="address" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Shipping Address</label>
-                            <input type="text" id="address" name="address" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="Street address">
+                            <label for="address" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">House No., Building, Street Name</label>
+                            <input type="text" id="address" name="address" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="Type street or landmark (Google Maps suggestions will appear)">
                             <input type="hidden" id="latitude" name="latitude">
                             <input type="hidden" id="longitude" name="longitude">
-                            <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">Type at least 3 letters, then choose a suggested address.</p>
                         </div>
-                        <div class="grid gap-3 md:grid-cols-2">
-                            <input type="text" id="city" name="city" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="City">
-                            <input type="text" id="state" name="state" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="State">
-                        </div>
-                        <div class="grid gap-3 md:grid-cols-2">
-                            <input type="text" id="zip" name="zip" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="Zip Code">
-                            <input type="text" id="country" name="country" class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="Country">
-                        </div>
-                        <div id="settingsMapWrap" class="hidden space-y-2 pt-2">
+
+                        <div id="settingsMapWrap" class="hidden space-y-2 pt-1">
                             <div class="flex items-center justify-between text-xs">
                                 <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                                    <span>📍</span> Delivery Pin Location
+                                    <span>📍</span> Exact Delivery Pin
                                 </span>
                                 <span id="settingsCoordsBadge" class="font-mono text-[11px] text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800"></span>
                             </div>
-                            <div id="settingsMap" class="w-full h-56 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-inner z-10"></div>
+                            <div id="settingsMap" class="w-full h-60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-inner z-10"></div>
                             <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                 <svg class="w-3.5 h-3.5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                                Drag the red marker to adjust your exact delivery rooftop or gate.
+                                Drag the red marker to point directly to your building gate or roof.
                             </p>
+                        </div>
+
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <div>
+                                <label for="city" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">City / Municipality</label>
+                                <input type="text" id="city" name="city" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="City">
+                            </div>
+                            <div>
+                                <label for="state" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Province / Region</label>
+                                <input type="text" id="state" name="state" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="State/Province">
+                            </div>
+                        </div>
+
+                        <div class="grid gap-3 md:grid-cols-2">
+                            <div>
+                                <label for="zip" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Postal Code</label>
+                                <input type="text" id="zip" name="zip" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="Zip Code">
+                            </div>
+                            <div>
+                                <label for="country" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Country</label>
+                                <input type="text" id="country" name="country" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="Country" value="Philippines">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="deliveryNotes" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Delivery Landmark / Gate Notes (Optional)</label>
+                            <input type="text" id="deliveryNotes" name="deliveryNotes" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="e.g. Beside bakery, white gate with #47">
                         </div>
                     </div>
                 </section>
@@ -560,9 +584,23 @@
 
             if (!settingsMarker) {
                 settingsMarker = window.L.marker(point, { draggable: true }).addTo(settingsMap);
-                settingsMarker.on('dragend', () => {
+                settingsMarker.on('dragend', async () => {
                     const moved = settingsMarker.getLatLng();
                     updateCoordsUI(moved.lat, moved.lng);
+                    const badge = $('settingsCoordsBadge');
+                    if (badge) badge.textContent = `⏳ Resolving pin...`;
+                    try {
+                        const res = await fetch(`/geo/reverse?lat=${moved.lat}&lng=${moved.lng}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.city && !$('city').value) $('city').value = data.city;
+                            if (data.state && !$('state').value) $('state').value = data.state;
+                            if (data.zip && !$('zip').value) $('zip').value = data.zip;
+                            if (badge) badge.textContent = `🟢 Pin Set: ${Number(moved.lat).toFixed(6)}, ${Number(moved.lng).toFixed(6)}`;
+                        }
+                    } catch (e) {
+                        if (badge) badge.textContent = `${Number(moved.lat).toFixed(6)}, ${Number(moved.lng).toFixed(6)}`;
+                    }
                 });
             } else {
                 settingsMarker.setLatLng(point);
@@ -649,6 +687,9 @@
                 theme: window.ModelyxTheme ? window.ModelyxTheme.getEffectiveTheme() : 'light'
             });
 
+            const notes = localStorage.getItem('modelyx_shipping_notes') || '';
+            if ($('deliveryNotes')) $('deliveryNotes').value = notes;
+
             if (latitude && longitude) {
                 showSettingsMap(latitude, longitude);
             }
@@ -657,6 +698,48 @@
                 $('address').focus();
             }
         };
+
+        const btnLoc = $('btnUseCurrentLocation');
+        if (btnLoc) {
+            btnLoc.addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser.');
+                    return;
+                }
+                const icon = $('locIcon');
+                const text = $('locText');
+                if (icon) icon.textContent = '⏳';
+                if (text) text.textContent = 'Locating GPS...';
+
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    if (icon) icon.textContent = '✅';
+                    if (text) text.textContent = 'Location Found!';
+                    showSettingsMap(lat, lng);
+                    try {
+                        const res = await fetch(`/geo/reverse?lat=${lat}&lng=${lng}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            if (data.street) $('address').value = data.street;
+                            if (data.city) $('city').value = data.city;
+                            if (data.state) $('state').value = data.state;
+                            if (data.zip) $('zip').value = data.zip;
+                            if (data.country) $('country').value = data.country || 'Philippines';
+                            updateSummary();
+                        }
+                    } catch (e) {}
+                    setTimeout(() => {
+                        if (icon) icon.textContent = '📍';
+                        if (text) text.textContent = 'Use Current Location';
+                    }, 2500);
+                }, (err) => {
+                    if (icon) icon.textContent = '📍';
+                    if (text) text.textContent = 'Use Current Location';
+                    alert('Could not get GPS location. Please allow location access in your browser or search your address manually.');
+                }, { enableHighAccuracy: true, timeout: 10000 });
+            });
+        }
 
         $('address').addEventListener('address:selected', (e) => {
             if (e.detail && e.detail.lat && e.detail.lng) {
@@ -733,6 +816,8 @@
             if (country) localStorage.setItem('modelyx_shipping_country', country);
             if (latitude) localStorage.setItem('modelyx_shipping_latitude', latitude);
             if (longitude) localStorage.setItem('modelyx_shipping_longitude', longitude);
+            const notes = $('deliveryNotes') ? $('deliveryNotes').value.trim() : '';
+            if (notes) localStorage.setItem('modelyx_shipping_notes', notes);
 
             updateSummary();
             sessionStorage.setItem('modelyx_profile_saved', '1');

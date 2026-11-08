@@ -5,6 +5,7 @@ from app.core.config import GOOGLE_MAPS_API_KEY
 router = APIRouter(prefix="/geo", tags=["Geocoding"])
 
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
 GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 def _format_google_result(item):
@@ -90,3 +91,95 @@ async def search_address(q: str = Query(..., min_length=3)):
             return await _fetch_nominatim(client, q)
         except httpx.HTTPError as exc:
             raise HTTPException(status_code=502, detail="Address search is temporarily unavailable") from exc
+
+@router.get("/reverse")
+async def reverse_geocode(lat: float = Query(...), lng: float = Query(...)):
+    async with httpx.AsyncClient(timeout=8) as client:
+        if GOOGLE_MAPS_API_KEY:
+            try:
+                g_params = {
+                    "latlng": f"{lat},{lng}",
+                    "key": GOOGLE_MAPS_API_KEY
+                }
+                g_res = await client.get(GOOGLE_GEOCODE_URL, params=g_params)
+                if g_res.status_code == 200:
+                    g_data = g_res.json()
+                    if g_data.get("status") == "OK" and g_data.get("results"):
+                        item = g_data["results"][0]
+                        res = _format_google_result(item)
+                        house = res["address"]["house_number"]
+                        road = res["address"]["road"]
+                        neighbourhood = res["address"]["neighbourhood"]
+                        street_parts = []
+                        if house and road:
+                            street_parts.append(road if road.lower().startswith(house.lower()) else f"{house} {road}")
+                        else:
+                            street_parts.append(road or house)
+                        if neighbourhood and neighbourhood not in street_parts[0]:
+                            street_parts.append(neighbourhood)
+                        clean_street = ", ".join([p for p in street_parts if p])
+                        return {
+                            "display_name": res["display_name"],
+                            "street": clean_street or res["display_name"],
+                            "house_number": house,
+                            "road": road,
+                            "barangay": neighbourhood,
+                            "city": res["address"]["city"],
+                            "state": res["address"]["state"],
+                            "zip": res["address"]["postcode"],
+                            "country": res["address"]["country"],
+                            "lat": lat,
+                            "lng": lng,
+                            "provider": "google"
+                        }
+            except Exception:
+                pass
+
+        try:
+            params = {
+                "lat": lat,
+                "lon": lng,
+                "format": "jsonv2",
+                "addressdetails": "1"
+            }
+            headers = {
+                "User-Agent": "ModelyxThesis/1.0",
+                "Accept": "application/json",
+            }
+            res = await client.get(NOMINATIM_REVERSE_URL, params=params, headers=headers)
+            res.raise_for_status()
+            data = res.json()
+            address = data.get("address", {})
+            house = address.get("house_number", "")
+            road = address.get("road", "") or address.get("pedestrian", "") or address.get("residential", "")
+            neighbourhood = address.get("neighbourhood", "") or address.get("suburb", "") or address.get("quarter", "")
+            city = address.get("city", "") or address.get("town", "") or address.get("municipality", "") or address.get("city_district", "")
+            state = address.get("state", "") or address.get("region", "") or address.get("province", "")
+            zip_code = address.get("postcode", "")
+            country = address.get("country", "")
+
+            street_parts = []
+            if house and road:
+                street_parts.append(road if road.lower().startswith(house.lower()) else f"{house} {road}")
+            else:
+                street_parts.append(road or house)
+            if neighbourhood and neighbourhood not in street_parts[0]:
+                street_parts.append(neighbourhood)
+            clean_street = ", ".join([p for p in street_parts if p])
+
+            return {
+                "display_name": data.get("display_name", ""),
+                "street": clean_street or data.get("display_name", ""),
+                "house_number": house,
+                "road": road,
+                "barangay": neighbourhood,
+                "city": city,
+                "state": state,
+                "zip": zip_code,
+                "country": country,
+                "lat": lat,
+                "lng": lng,
+                "provider": "osm"
+            }
+        except httpx.HTTPError as exc:
+            raise HTTPException(status_code=502, detail="Reverse geocoding is temporarily unavailable") from exc
