@@ -16,11 +16,12 @@
     const currentPath = window.location.pathname;
     const role = localStorage.getItem('modelyx_user_role');
     const shipping = localStorage.getItem('modelyx_shipping_address');
+    const setup = localStorage.getItem('modelyx_shipping_setup');
     const urlParams = new URLSearchParams(window.location.search);
     const isSetupMode = urlParams.get('setup') === 'address' || urlParams.get('required') === '1';
 
-    if (role === 'customer' && !shipping && currentPath !== '/settings.html') {
-        location.href = '/settings.html?setup=address&required=1';
+    if (role === 'customer' && (!shipping || setup === '0') && currentPath !== '/settings.html') {
+        window.location.replace('/settings.html?setup=address&required=1');
         return;
     }
 

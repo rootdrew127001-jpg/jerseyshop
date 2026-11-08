@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <title>Modelyx | T-Shirt Customizer Studio</title>
     <script>
+        (function() {
+            var token = localStorage.getItem('modelyx_token');
+            var role = localStorage.getItem('modelyx_user_role');
+            var shipping = localStorage.getItem('modelyx_shipping_address');
+            var setup = localStorage.getItem('modelyx_shipping_setup');
+            if (token && role === 'customer' && (!shipping || setup === '0')) {
+                window.location.replace('/settings.html?setup=address&required=1');
+            }
+        })();
+    </script>
+    <script>
     (function() {
         const originalLog = console.log;
         const originalError = console.error;
@@ -71,7 +82,7 @@
         }
     }
     </script>
-    <script src="/static/js/addressAutocomplete.js"></script>
+    <script src="/static/js/addressAutocomplete.js?v=13"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; font-family: 'Inter', sans-serif; }

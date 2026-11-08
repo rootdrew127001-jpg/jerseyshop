@@ -14,7 +14,7 @@
     <script src="/static/js/customerNav.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/static/js/addressAutocomplete.js"></script>
+    <script src="/static/js/addressAutocomplete.js?v=13"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -640,6 +640,11 @@
                         if (prof.country && !localStorage.getItem('modelyx_shipping_country')) localStorage.setItem('modelyx_shipping_country', prof.country);
                         if (prof.latitude && !localStorage.getItem('modelyx_shipping_latitude')) localStorage.setItem('modelyx_shipping_latitude', prof.latitude);
                         if (prof.longitude && !localStorage.getItem('modelyx_shipping_longitude')) localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
+                        if (prof.has_shipping_setup === true || (prof.address && prof.city)) {
+                            localStorage.setItem('modelyx_shipping_setup', '1');
+                        } else {
+                            localStorage.setItem('modelyx_shipping_setup', '0');
+                        }
                     }
                 } catch (e) {}
             }
@@ -822,6 +827,7 @@
             if (country) localStorage.setItem('modelyx_shipping_country', country);
             if (latitude) localStorage.setItem('modelyx_shipping_latitude', latitude);
             if (longitude) localStorage.setItem('modelyx_shipping_longitude', longitude);
+            if (address && city) localStorage.setItem('modelyx_shipping_setup', '1');
             const notes = $('deliveryNotes') ? $('deliveryNotes').value.trim() : '';
             if (notes) localStorage.setItem('modelyx_shipping_notes', notes);
 

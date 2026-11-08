@@ -466,7 +466,10 @@
         localStorage.setItem('modelyx_user_role', data.role);
         localStorage.setItem('modelyx_user_name', data.name);
 
-        if (data.shipping && data.shipping.address) {
+        const isManager = data.role === 'owner' || data.role === 'admin';
+        const hasShipping = data.has_shipping_setup === true || (data.shipping && Boolean(data.shipping.address && data.shipping.city));
+
+        if (data.shipping && data.shipping.address && hasShipping) {
             localStorage.setItem('modelyx_shipping_address', data.shipping.address);
             localStorage.setItem('modelyx_shipping_city', data.shipping.city || '');
             localStorage.setItem('modelyx_shipping_state', data.shipping.state || '');
@@ -475,6 +478,14 @@
             if (data.shipping.phone) localStorage.setItem('modelyx_shipping_phone', data.shipping.phone);
             if (data.shipping.latitude) localStorage.setItem('modelyx_shipping_latitude', data.shipping.latitude);
             if (data.shipping.longitude) localStorage.setItem('modelyx_shipping_longitude', data.shipping.longitude);
+            localStorage.setItem('modelyx_shipping_setup', '1');
+        } else {
+            [
+                'modelyx_shipping_address', 'modelyx_shipping_city', 'modelyx_shipping_state',
+                'modelyx_shipping_zip', 'modelyx_shipping_country', 'modelyx_shipping_phone',
+                'modelyx_shipping_notes', 'modelyx_shipping_latitude', 'modelyx_shipping_longitude'
+            ].forEach(k => localStorage.removeItem(k));
+            localStorage.setItem('modelyx_shipping_setup', '0');
         }
 
         if (remember) {
@@ -483,11 +494,10 @@
             localStorage.removeItem('modelyx_remembered_email');
         }
 
-        const isManager = data.role === 'owner' || data.role === 'admin';
         let nextPage = 'dashboard.html';
         if (isManager) {
             nextPage = 'admin.html';
-        } else if (data.has_shipping_setup === false) {
+        } else if (!hasShipping) {
             nextPage = 'settings.html?setup=address&required=1';
         } else {
             nextPage = redirectTarget || 'dashboard.html';
@@ -495,20 +505,22 @@
         setTimeout(() => location.href = nextPage, 800);
     };
 
-    // Check if user just logged out
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('logout')) {
         ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
             document.cookie = `${name}=; Max-Age=0; path=/;`;
             document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
         });
-        localStorage.removeItem('modelyx_token');
-        localStorage.removeItem('modelyx_user_role');
-        localStorage.removeItem('modelyx_user_name');
+        [
+            'modelyx_token', 'modelyx_user_role', 'modelyx_user_name',
+            'modelyx_shipping_address', 'modelyx_shipping_city', 'modelyx_shipping_state',
+            'modelyx_shipping_zip', 'modelyx_shipping_country', 'modelyx_shipping_phone',
+            'modelyx_shipping_notes', 'modelyx_shipping_setup', 'modelyx_shipping_latitude',
+            'modelyx_shipping_longitude'
+        ].forEach(k => localStorage.removeItem(k));
         sessionStorage.clear();
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        // Handle Google OAuth cookie on return
         const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
         if (cookieToken) {
             const token = cookieToken.split('=')[1];
@@ -524,14 +536,28 @@
                 document.cookie = 'modelyx_role=; Max-Age=0; path=/;';
                 document.cookie = 'modelyx_name=; Max-Age=0; path=/;';
                 const isManager = role === 'owner' || role === 'admin';
-                location.href = isManager ? 'admin.html' : 'dashboard.html';
+                const hasShipping = localStorage.getItem('modelyx_shipping_setup') === '1' && Boolean(localStorage.getItem('modelyx_shipping_address'));
+                if (isManager) {
+                    location.href = 'admin.html';
+                } else if (!hasShipping) {
+                    location.href = 'settings.html?setup=address&required=1';
+                } else {
+                    location.href = 'dashboard.html';
+                }
             }
         } else {
             const token = localStorage.getItem('modelyx_token');
             const role = localStorage.getItem('modelyx_user_role');
             if (token && role) {
                 const isManager = role === 'owner' || role === 'admin';
-                location.href = isManager ? 'admin.html' : (redirectTarget || 'dashboard.html');
+                const hasShipping = localStorage.getItem('modelyx_shipping_setup') === '1' && Boolean(localStorage.getItem('modelyx_shipping_address'));
+                if (isManager) {
+                    location.href = 'admin.html';
+                } else if (!hasShipping) {
+                    location.href = 'settings.html?setup=address&required=1';
+                } else {
+                    location.href = redirectTarget || 'dashboard.html';
+                }
             }
         }
     }

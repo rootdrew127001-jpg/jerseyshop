@@ -34,6 +34,23 @@
 
     const addressPart = (address, keys) => keys.map(key => address[key]).find(Boolean) || '';
 
+    const dedupeAddressParts = (...parts) => {
+        const seen = new Set();
+        const unique = [];
+        for (const raw of parts) {
+            if (!raw) continue;
+            const subparts = String(raw).split(',').map(s => s.trim()).filter(Boolean);
+            for (const part of subparts) {
+                const norm = part.toLowerCase();
+                if (!seen.has(norm)) {
+                    seen.add(norm);
+                    unique.push(part);
+                }
+            }
+        }
+        return unique.join(', ');
+    };
+
     const normalizePlace = place => {
         const address = place.address || {};
         const house = (address.house_number || '').trim();
@@ -42,12 +59,18 @@
 
         let streetMain = '';
         if (house && road) {
-            streetMain = road.toLowerCase().startsWith(house.toLowerCase()) ? road : `${house} ${road}`;
+            const roadNorm = road.toLowerCase();
+            const houseNorm = house.toLowerCase();
+            if (roadNorm === houseNorm || roadNorm.startsWith(houseNorm + ' ') || roadNorm.startsWith(houseNorm + ',')) {
+                streetMain = road;
+            } else {
+                streetMain = `${house} ${road}`;
+            }
         } else {
             streetMain = road || house;
         }
 
-        const street = [streetMain, neighbourhood].filter(Boolean).join(', ');
+        const street = dedupeAddressParts(streetMain, neighbourhood);
 
         return {
             display: place.display_name,

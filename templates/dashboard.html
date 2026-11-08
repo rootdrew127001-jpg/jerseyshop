@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Hub</title>
+    <script>
+        (function() {
+            var token = localStorage.getItem('modelyx_token');
+            var role = localStorage.getItem('modelyx_user_role');
+            var shipping = localStorage.getItem('modelyx_shipping_address');
+            var setup = localStorage.getItem('modelyx_shipping_setup');
+            if (token && role === 'customer' && (!shipping || setup === '0')) {
+                window.location.replace('/settings.html?setup=address&required=1');
+            }
+        })();
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {

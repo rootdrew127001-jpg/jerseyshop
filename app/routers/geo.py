@@ -8,6 +8,20 @@ NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 NOMINATIM_REVERSE_URL = "https://nominatim.openstreetmap.org/reverse"
 GOOGLE_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
+def _dedupe_address_parts(*parts):
+    seen = set()
+    unique = []
+    for raw in parts:
+        if not raw:
+            continue
+        subparts = [s.strip() for s in str(raw).split(",") if s.strip()]
+        for part in subparts:
+            norm = part.lower()
+            if norm not in seen:
+                seen.add(norm)
+                unique.append(part)
+    return ", ".join(unique)
+
 def _format_google_result(item):
     components = item.get("address_components", [])
     def get_comp(types):
@@ -112,12 +126,17 @@ async def reverse_geocode(lat: float = Query(...), lng: float = Query(...)):
                         neighbourhood = res["address"]["neighbourhood"]
                         street_parts = []
                         if house and road:
-                            street_parts.append(road if road.lower().startswith(house.lower()) else f"{house} {road}")
+                            road_lower = road.lower()
+                            house_lower = house.lower()
+                            if road_lower == house_lower or road_lower.startswith(house_lower + " ") or road_lower.startswith(house_lower + ","):
+                                street_parts.append(road)
+                            else:
+                                street_parts.append(f"{house} {road}")
                         else:
                             street_parts.append(road or house)
-                        if neighbourhood and neighbourhood not in street_parts[0]:
+                        if neighbourhood:
                             street_parts.append(neighbourhood)
-                        clean_street = ", ".join([p for p in street_parts if p])
+                        clean_street = _dedupe_address_parts(*street_parts)
                         return {
                             "display_name": res["display_name"],
                             "street": clean_street or res["display_name"],
@@ -160,12 +179,17 @@ async def reverse_geocode(lat: float = Query(...), lng: float = Query(...)):
 
             street_parts = []
             if house and road:
-                street_parts.append(road if road.lower().startswith(house.lower()) else f"{house} {road}")
+                road_lower = road.lower()
+                house_lower = house.lower()
+                if road_lower == house_lower or road_lower.startswith(house_lower + " ") or road_lower.startswith(house_lower + ","):
+                    street_parts.append(road)
+                else:
+                    street_parts.append(f"{house} {road}")
             else:
                 street_parts.append(road or house)
-            if neighbourhood and neighbourhood not in street_parts[0]:
+            if neighbourhood:
                 street_parts.append(neighbourhood)
-            clean_street = ", ".join([p for p in street_parts if p])
+            clean_street = _dedupe_address_parts(*street_parts)
 
             return {
                 "display_name": data.get("display_name", ""),

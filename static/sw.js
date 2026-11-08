@@ -3,7 +3,7 @@
  * Enables offline functionality and PWA capabilities
  */
 
-const CACHE_NAME = 'modelyx-v12';
+const CACHE_NAME = 'modelyx-v13';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
