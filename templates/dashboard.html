@@ -8,8 +8,20 @@
         (function() {
             var token = localStorage.getItem('modelyx_token');
             var role = localStorage.getItem('modelyx_user_role');
-            var shipping = localStorage.getItem('modelyx_shipping_address');
             var setup = localStorage.getItem('modelyx_shipping_setup');
+            if (!token) {
+                var ct = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_token='); });
+                if (ct) token = ct.split('=')[1];
+            }
+            if (!role) {
+                var cr = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_role='); });
+                if (cr) role = cr.split('=')[1];
+            }
+            if (!setup) {
+                var cs = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_shipping_setup='); });
+                if (cs) setup = cs.split('=')[1];
+            }
+            var shipping = localStorage.getItem('modelyx_shipping_address');
             if (token && role === 'customer' && (!shipping || setup === '0')) {
                 window.location.replace('/settings.html?setup=address&required=1');
             }
