@@ -175,7 +175,7 @@
             const lng = localStorage.getItem('modelyx_shipping_longitude');
             if (lat && lng) {
                 const pin = $('pinPreview');
-                pin.href = `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=18/${lat}/${lng}`;
+                pin.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
                 pin.classList.remove('hidden');
             }
         };

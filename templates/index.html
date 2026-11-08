@@ -467,18 +467,19 @@
         localStorage.setItem('modelyx_user_name', data.name);
 
         const isManager = data.role === 'owner' || data.role === 'admin';
-        const hasShipping = data.has_shipping_setup === true || (data.shipping && Boolean(data.shipping.address && data.shipping.city));
+        const hasShipping = data.has_shipping_setup === true;
 
-        if (data.shipping && data.shipping.address && hasShipping) {
-            localStorage.setItem('modelyx_shipping_address', data.shipping.address);
-            localStorage.setItem('modelyx_shipping_city', data.shipping.city || '');
-            localStorage.setItem('modelyx_shipping_state', data.shipping.state || '');
-            localStorage.setItem('modelyx_shipping_zip', data.shipping.zip_code || '');
-            localStorage.setItem('modelyx_shipping_country', data.shipping.country || '');
+        if (data.shipping && hasShipping) {
+            if (data.shipping.address) localStorage.setItem('modelyx_shipping_address', data.shipping.address);
+            if (data.shipping.city) localStorage.setItem('modelyx_shipping_city', data.shipping.city);
+            if (data.shipping.state) localStorage.setItem('modelyx_shipping_state', data.shipping.state);
+            if (data.shipping.zip_code) localStorage.setItem('modelyx_shipping_zip', data.shipping.zip_code);
+            if (data.shipping.country) localStorage.setItem('modelyx_shipping_country', data.shipping.country);
             if (data.shipping.phone) localStorage.setItem('modelyx_shipping_phone', data.shipping.phone);
             if (data.shipping.latitude) localStorage.setItem('modelyx_shipping_latitude', data.shipping.latitude);
             if (data.shipping.longitude) localStorage.setItem('modelyx_shipping_longitude', data.shipping.longitude);
             localStorage.setItem('modelyx_shipping_setup', '1');
+            document.cookie = "modelyx_shipping_setup=1; path=/; max-age=2592000; SameSite=Lax";
         } else {
             [
                 'modelyx_shipping_address', 'modelyx_shipping_city', 'modelyx_shipping_state',
@@ -486,6 +487,7 @@
                 'modelyx_shipping_notes', 'modelyx_shipping_latitude', 'modelyx_shipping_longitude'
             ].forEach(k => localStorage.removeItem(k));
             localStorage.setItem('modelyx_shipping_setup', '0');
+            document.cookie = "modelyx_shipping_setup=0; path=/; max-age=2592000; SameSite=Lax";
         }
 
         if (remember) {

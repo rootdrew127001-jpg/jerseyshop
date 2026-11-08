@@ -24,11 +24,23 @@
         const cs = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_shipping_setup='));
         if (cs) setup = cs.split('=')[1];
     }
-    const shipping = localStorage.getItem('modelyx_shipping_address');
-    const urlParams = new URLSearchParams(window.location.search);
-    const isSetupMode = urlParams.get('setup') === 'address' || urlParams.get('required') === '1';
+    const name = (localStorage.getItem('modelyx_user_name') || '').trim();
+    const email = (localStorage.getItem('modelyx_user_email') || '').trim();
+    const phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
+    const shipping = (localStorage.getItem('modelyx_shipping_address') || '').trim();
+    const city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
+    const state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
+    const zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
+    const country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
+    const lat = localStorage.getItem('modelyx_shipping_latitude');
+    const lng = localStorage.getItem('modelyx_shipping_longitude');
+    const hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+    const isProfileComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords;
 
-    if (role === 'customer' && (!shipping || setup === '0') && currentPath !== '/settings.html') {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isSetupMode = urlParams.get('setup') === 'address' || urlParams.get('required') === '1' || (role === 'customer' && !isProfileComplete);
+
+    if (role === 'customer' && !isProfileComplete && currentPath !== '/settings.html') {
         window.location.replace('/settings.html?setup=address&required=1');
         return;
     }

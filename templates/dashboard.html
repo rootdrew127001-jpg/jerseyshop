@@ -21,8 +21,20 @@
                 var cs = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_shipping_setup='); });
                 if (cs) setup = cs.split('=')[1];
             }
-            var shipping = localStorage.getItem('modelyx_shipping_address');
-            if (token && role === 'customer' && (!shipping || setup === '0')) {
+            var name = (localStorage.getItem('modelyx_user_name') || '').trim();
+            var email = (localStorage.getItem('modelyx_user_email') || '').trim();
+            var phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
+            var addr = (localStorage.getItem('modelyx_shipping_address') || '').trim();
+            var city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
+            var state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
+            var zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
+            var country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
+            var lat = localStorage.getItem('modelyx_shipping_latitude');
+            var lng = localStorage.getItem('modelyx_shipping_longitude');
+            var hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+            var isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && addr && city && state && zip && country && hasCoords;
+
+            if (token && role === 'customer' && !isComplete) {
                 window.location.replace('/settings.html?setup=address&required=1');
             }
         })();

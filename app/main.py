@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.core.database import engine, Base, ensure_order_shipping_columns, get_db
 from app.models.models import User
@@ -83,6 +83,22 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 def index():
     return FileResponse(os.path.join(templates_path, "index.html"))
 
+def is_profile_complete(user) -> bool:
+    if not user:
+        return False
+    if user.role != "customer":
+        return True
+    has_name = bool(user.name and user.name.strip())
+    has_email = bool(user.email and user.email.strip())
+    has_phone = bool(user.phone and sum(1 for c in user.phone if c.isdigit()) >= 7)
+    has_address = bool(user.address and user.address.strip())
+    has_city = bool(user.city and user.city.strip())
+    has_state = bool(user.state and user.state.strip())
+    has_zip = bool(user.zip_code and user.zip_code.strip())
+    has_country = bool(user.country and user.country.strip())
+    has_coords = bool(user.latitude is not None and user.longitude is not None)
+    return all([has_name, has_email, has_phone, has_address, has_city, has_state, has_zip, has_country, has_coords])
+
 @app.get("/settings.html")
 @app.get("/settings")
 def serve_settings_page(request: Request, db: Session = Depends(get_db)):
@@ -136,20 +152,82 @@ def serve_settings_page(request: Request, db: Session = Depends(get_db)):
             html = html.replace('id="zip" name="zip"', f'id="zip" name="zip" value="{safe_zip}"')
         if safe_country:
             html = html.replace('id="country" name="country"', f'id="country" name="country" value="{safe_country}"')
+        if user.latitude is not None:
+            html = html.replace('id="latitude" name="latitude"', f'id="latitude" name="latitude" value="{user.latitude}"')
+        if user.longitude is not None:
+            html = html.replace('id="longitude" name="longitude"', f'id="longitude" name="longitude" value="{user.longitude}"')
 
-        has_shipping = "1" if (user.address and user.city) else "0"
-        init_script = f"""<script>try{{localStorage.setItem('modelyx_token','{token}');localStorage.setItem('modelyx_user_role','{user.role}');localStorage.setItem('modelyx_user_name','{safe_name}');localStorage.setItem('modelyx_user_email','{safe_email}');localStorage.setItem('modelyx_shipping_setup','{has_shipping}');}}catch(e){{}}</script>"""
+        has_shipping = "1" if is_profile_complete(user) else "0"
+        lat_js = f"localStorage.setItem('modelyx_shipping_latitude','{user.latitude}');" if user.latitude is not None else ""
+        lng_js = f"localStorage.setItem('modelyx_shipping_longitude','{user.longitude}');" if user.longitude is not None else ""
+        init_script = f"""<script>try{{localStorage.setItem('modelyx_token','{token}');localStorage.setItem('modelyx_user_role','{user.role}');localStorage.setItem('modelyx_user_name','{safe_name}');localStorage.setItem('modelyx_user_email','{safe_email}');localStorage.setItem('modelyx_shipping_setup','{has_shipping}');{lat_js}{lng_js}}}catch(e){{}}</script>"""
         html = html.replace("</head>", f"{init_script}\n</head>")
 
     response = HTMLResponse(content=html, status_code=200, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
     if user and token:
-        has_shipping = "1" if (user.address and user.city) else "0"
+        has_shipping = "1" if is_profile_complete(user) else "0"
         response.set_cookie(key="modelyx_token", value=token, httponly=False, max_age=86400 * 7, path="/")
         response.set_cookie(key="modelyx_role", value=user.role, httponly=False, max_age=86400 * 7, path="/")
         response.set_cookie(key="modelyx_name", value=user.name, httponly=False, max_age=86400 * 7, path="/")
         response.set_cookie(key="modelyx_email", value=user.email, httponly=False, max_age=86400 * 7, path="/")
         response.set_cookie(key="modelyx_shipping_setup", value=has_shipping, httponly=False, max_age=86400 * 7, path="/")
     return response
+
+@app.get("/editor.html")
+@app.get("/editor")
+def serve_editor_page(request: Request, db: Session = Depends(get_db)):
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    elif request.query_params.get("token"):
+        token = request.query_params.get("token")
+    elif "modelyx_token" in request.cookies:
+        token = request.cookies.get("modelyx_token")
+
+    if token:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = int(payload.get("sub")) if payload.get("sub") and str(payload.get("sub")).isdigit() else None
+            if user_id:
+                user = db.query(User).filter(User.id == user_id).first()
+                if user and user.role == "customer" and not is_profile_complete(user):
+                    return RedirectResponse(url="/settings.html?setup=address&required=1&from=editor", status_code=303)
+        except Exception:
+            pass
+
+    file_path = os.path.join(templates_path, "editor.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return FileResponse(os.path.join(templates_path, "index.html"))
+
+@app.get("/dashboard.html")
+@app.get("/dashboard")
+def serve_dashboard_page(request: Request, db: Session = Depends(get_db)):
+    token = None
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+    elif request.query_params.get("token"):
+        token = request.query_params.get("token")
+    elif "modelyx_token" in request.cookies:
+        token = request.cookies.get("modelyx_token")
+
+    if token:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            user_id = int(payload.get("sub")) if payload.get("sub") and str(payload.get("sub")).isdigit() else None
+            if user_id:
+                user = db.query(User).filter(User.id == user_id).first()
+                if user and user.role == "customer" and not is_profile_complete(user):
+                    return RedirectResponse(url="/settings.html?setup=address&required=1", status_code=303)
+        except Exception:
+            pass
+
+    file_path = os.path.join(templates_path, "dashboard.html")
+    if os.path.exists(file_path):
+        return FileResponse(file_path)
+    return FileResponse(os.path.join(templates_path, "index.html"))
 
 @app.get("/{page}.html")
 def serve_page(page: str):

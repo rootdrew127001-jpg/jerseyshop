@@ -79,7 +79,7 @@ def verify_otp(payload: OTPRequest, db: Session = Depends(get_db)):
         "email": user.email,
         "role": user.role
     })
-    has_shipping = bool(user.address and user.city) if user.role == "customer" else True
+    has_shipping = is_profile_complete(user)
     return {
         "message": "Email verified successfully",
         "access_token": token,
@@ -148,7 +148,7 @@ async def google_login(db: Session = Depends(get_db)):
             "role": user.role
         })
 
-        has_shipping = bool(user.address and user.city) if user.role == "customer" else True
+        has_shipping = is_profile_complete(user)
         if user.role == "owner":
             redirect_page = f"admin.html?token={jwt_token}"
         elif not has_shipping:
@@ -182,7 +182,7 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
         "role": user.role
     })
 
-    has_shipping = bool(user.address and user.city) if user.role == "customer" else True
+    has_shipping = is_profile_complete(user)
     if user.role == "owner":
         redirect_page = f"admin.html?token={jwt_token}"
     elif not has_shipping:
@@ -432,12 +432,28 @@ class ProfileUpdateRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
+def is_profile_complete(user) -> bool:
+    if not user:
+        return False
+    if user.role != "customer":
+        return True
+    has_name = bool(user.name and user.name.strip())
+    has_email = bool(user.email and user.email.strip())
+    has_phone = bool(user.phone and sum(1 for c in user.phone if c.isdigit()) >= 7)
+    has_address = bool(user.address and user.address.strip())
+    has_city = bool(user.city and user.city.strip())
+    has_state = bool(user.state and user.state.strip())
+    has_zip = bool(user.zip_code and user.zip_code.strip())
+    has_country = bool(user.country and user.country.strip())
+    has_coords = bool(user.latitude is not None and user.longitude is not None)
+    return all([has_name, has_email, has_phone, has_address, has_city, has_state, has_zip, has_country, has_coords])
+
 @router.get("/profile")
 def get_user_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    has_shipping = bool(user.address and user.city and user.zip_code)
+    has_shipping = is_profile_complete(user)
     return {
         "id": user.id,
         "name": user.name,
@@ -464,7 +480,7 @@ def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depe
             setattr(user, field, val)
     db.commit()
     db.refresh(user)
-    has_shipping = bool(user.address and user.city and user.zip_code)
+    has_shipping = is_profile_complete(user)
     return {
         "message": "Profile updated successfully",
         "has_shipping_setup": has_shipping,

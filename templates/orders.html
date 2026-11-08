@@ -266,7 +266,7 @@
                                     <p class="text-xs text-slate-500">${shippingAddress || 'No shipping address saved.'}</p>
                                     ${order.delivery_notes ? `<p class="text-xs text-slate-400 mt-1">${order.delivery_notes}</p>` : ''}
                                     ${order.latitude && order.longitude ? `
-                                        <a href="https://www.openstreetmap.org/?mlat=${order.latitude}&mlon=${order.longitude}#map=18/${order.latitude}/${order.longitude}"
+                                        <a href="https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}"
                                             target="_blank" rel="noopener"
                                             class="text-xs font-bold text-indigo-600 hover:underline mt-2 inline-block">
                                             View delivery pin
@@ -326,6 +326,16 @@
                 style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' },
                 createOrder: (data, actions) => {
                     return actions.order.create({
+                        application_context: {
+                            shipping_preference: 'NO_SHIPPING'
+                        },
+                        payment_source: {
+                            paypal: {
+                                experience_context: {
+                                    shipping_preference: 'NO_SHIPPING'
+                                }
+                            }
+                        },
                         purchase_units: [{
                             amount: {
                                 value: Number(price).toFixed(2),

@@ -20,9 +20,22 @@
                 var cs = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_shipping_setup='); });
                 if (cs) setup = cs.split('=')[1];
             }
-            var shipping = localStorage.getItem('modelyx_shipping_address');
-            if (token && role === 'customer' && (!shipping || setup === '0')) {
-                window.location.replace('/settings.html?setup=address&required=1');
+            var name = (localStorage.getItem('modelyx_user_name') || '').trim();
+            var email = (localStorage.getItem('modelyx_user_email') || '').trim();
+            var phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
+            var addr = (localStorage.getItem('modelyx_shipping_address') || '').trim();
+            var city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
+            var state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
+            var zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
+            var country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
+            var lat = localStorage.getItem('modelyx_shipping_latitude');
+            var lng = localStorage.getItem('modelyx_shipping_longitude');
+            var hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+            var isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && addr && city && state && zip && country && hasCoords;
+
+            if (token && role === 'customer' && !isComplete) {
+                sessionStorage.setItem('modelyx_redirect_after_setup', 'editor');
+                window.location.replace('/settings.html?setup=address&required=1&from=editor');
             }
         })();
     </script>
@@ -773,50 +786,63 @@
             </div>
 
             <div class="space-y-4">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shipping Details</p>
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Shipping Details</p>
+                        <p class="text-xs text-slate-400">Verified default delivery destination</p>
+                    </div>
+                    <button type="button" onclick="promptChangeAddressInSettings()"
+                        class="text-xs font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-700/60 px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer">
+                        <span>✏️</span>
+                        <span>Change in Settings</span>
+                    </button>
+                </div>
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-xs text-slate-300 mb-1 block">Recipient</label>
-                        <input id="shippingName" type="text" placeholder="Full name"
-                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                        <input id="shippingName" type="text" placeholder="Full name" readonly
+                            class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
                     </div>
                     <div>
                         <label class="text-xs text-slate-300 mb-1 block">Phone</label>
-                        <input id="shippingPhone" type="tel" placeholder="09..."
-                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                        <input id="shippingPhone" type="tel" placeholder="09..." readonly
+                            class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
                     </div>
                 </div>
                 <div>
                     <label class="text-xs text-slate-300 mb-1 block">Street Address</label>
-                    <input id="shippingAddress" type="text" placeholder="House no., street, barangay"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
-                    <p class="mt-1 text-[10px] text-slate-500">Type at least 3 letters, then choose a suggested address.</p>
+                    <input id="shippingAddress" type="text" placeholder="House no., street, barangay" readonly
+                        class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
+                    <p class="mt-1 text-[10px] text-slate-400 flex items-center justify-between">
+                        <span>🔒 Delivery address is locked to your saved profile.</span>
+                        <button type="button" onclick="promptChangeAddressInSettings()" class="text-indigo-400 hover:underline cursor-pointer">Edit in Settings</button>
+                    </p>
                     <input id="shippingLatitude" type="hidden">
                     <input id="shippingLongitude" type="hidden">
                     <div id="shippingMapWrap" class="hidden mt-3 overflow-hidden rounded-2xl border border-slate-600">
                         <div id="shippingMap" class="h-56 w-full"></div>
-                        <div class="bg-slate-700 px-4 py-3">
-                            <p class="text-xs font-bold text-white">Drag the pin to the exact delivery point.</p>
-                            <p id="shippingCoords" class="mt-1 font-mono text-[10px] text-slate-400">No pin selected.</p>
+                        <div class="bg-slate-700 px-4 py-2.5 flex items-center justify-between">
+                            <p class="text-xs font-bold text-white flex items-center gap-1.5"><span>📍</span> Delivery Pin Location</p>
+                            <p id="shippingCoords" class="font-mono text-[10px] text-slate-300"></p>
                         </div>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <input id="shippingCity" type="text" placeholder="City"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
-                    <input id="shippingState" type="text" placeholder="Province / State"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    <input id="shippingCity" type="text" placeholder="City" readonly
+                        class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
+                    <input id="shippingState" type="text" placeholder="Province / State" readonly
+                        class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <input id="shippingZip" type="text" placeholder="ZIP / Postal code"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
-                    <input id="shippingCountry" type="text" placeholder="Country"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none placeholder-slate-500">
+                    <input id="shippingZip" type="text" placeholder="ZIP / Postal code" readonly
+                        class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
+                    <input id="shippingCountry" type="text" placeholder="Country" readonly
+                        class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
                 </div>
                 <div>
                     <label class="text-xs text-slate-300 mb-1 block">Delivery Notes (optional)</label>
                     <textarea id="deliveryNotes" rows="2" placeholder="Landmark, preferred delivery instructions..."
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none resize-none placeholder-slate-500"></textarea>
+                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border border-slate-600 outline-none resize-none placeholder-slate-500 focus:border-indigo-500"></textarea>
                 </div>
             </div>
             </div>
@@ -912,6 +938,30 @@
                         Design Another
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="leaveSettingsModal" style="display:none"
+        class="fixed inset-0 z-[100] bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-800 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-700 text-center">
+            <div class="text-4xl mb-3">⚠️</div>
+            <h3 class="text-lg font-black text-white mb-2">Leave 3D Jersey Studio?</h3>
+            <p class="text-slate-300 text-xs leading-relaxed mb-4">
+                Your current <span class="font-bold text-amber-400">3D Jersey Studio design will not be saved</span> if you leave now.
+            </p>
+            <p class="text-slate-400 text-[11px] mb-6">
+                To change your delivery address and map pin, you must update your profile in Settings.
+            </p>
+            <div class="space-y-2">
+                <button type="button" onclick="confirmLeaveToSettings()"
+                    class="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-2xl transition text-xs shadow-lg shadow-rose-950/40 cursor-pointer">
+                    Discard Design & Go to Settings
+                </button>
+                <button type="button" onclick="closeLeaveSettingsModal()"
+                    class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-3 rounded-2xl transition text-xs cursor-pointer">
+                    Stay in 3D Jersey Studio
+                </button>
             </div>
         </div>
     </div>
@@ -1851,29 +1901,19 @@
          }
      }, 2000);
 
-    AddressAutocomplete.init({
-        inputId: 'shippingAddress',
-        cityId: 'shippingCity',
-        stateId: 'shippingState',
-        zipId: 'shippingZip',
-        countryId: 'shippingCountry',
-        latId: 'shippingLatitude',
-        lngId: 'shippingLongitude',
-        theme: 'dark'
-    });
+    window.promptChangeAddressInSettings = function() {
+        const modal = document.getElementById('leaveSettingsModal');
+        if (modal) modal.style.display = 'flex';
+    };
 
-    document.getElementById('shippingAddress').addEventListener('input', () => {
-        document.getElementById('shippingLatitude').value = '';
-        document.getElementById('shippingLongitude').value = '';
-        document.getElementById('shippingCoords').textContent = 'Choose a suggestion to drop the delivery pin.';
-        document.getElementById('shippingMapWrap').classList.add('hidden');
-    });
+    window.closeLeaveSettingsModal = function() {
+        const modal = document.getElementById('leaveSettingsModal');
+        if (modal) modal.style.display = 'none';
+    };
 
-    document.getElementById('shippingAddress').addEventListener('address:selected', event => {
-        if (Number.isFinite(event.detail.lat) && Number.isFinite(event.detail.lng)) {
-            showShippingMap(event.detail.lat, event.detail.lng);
-        }
-    });
+    window.confirmLeaveToSettings = function() {
+        location.href = '/settings.html';
+    };
 
     const PRICE_PER_JERSEY = 850;
     const SHIPPING_FEE = 120;
@@ -1906,9 +1946,9 @@
                 return;
             }
             shippingMap = window.L.map('shippingMap');
-            window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            window.L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20,
+                attribution: '&copy; Google Maps'
             }).addTo(shippingMap);
         }
 
@@ -1916,11 +1956,7 @@
         shippingMap.setView(point, 17);
 
         if (!shippingMarker) {
-            shippingMarker = window.L.marker(point, { draggable: true }).addTo(shippingMap);
-            shippingMarker.on('dragend', () => {
-                const moved = shippingMarker.getLatLng();
-                updateShippingCoordinates(moved.lat, moved.lng);
-            });
+            shippingMarker = window.L.marker(point, { draggable: false }).addTo(shippingMap);
         } else {
             shippingMarker.setLatLng(point);
         }
@@ -1930,7 +1966,9 @@
     }
 
     function prefillShippingDetails() {
-        document.getElementById('shippingName').value = localStorage.getItem('modelyx_shipping_name') || localStorage.getItem('modelyx_user_name') || '';
+        const cn = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
+        const cookieName = cn ? decodeURIComponent(cn.split('=')[1] || '') : '';
+        document.getElementById('shippingName').value = localStorage.getItem('modelyx_shipping_name') || cookieName || localStorage.getItem('modelyx_user_name') || '';
         document.getElementById('shippingPhone').value = localStorage.getItem('modelyx_shipping_phone') || localStorage.getItem('modelyx_user_phone') || '';
         document.getElementById('shippingAddress').value = localStorage.getItem('modelyx_shipping_address') || '';
         document.getElementById('shippingCity').value = localStorage.getItem('modelyx_shipping_city') || '';
@@ -1939,6 +1977,51 @@
         document.getElementById('shippingCountry').value = localStorage.getItem('modelyx_shipping_country') || 'Philippines';
         document.getElementById('shippingLatitude').value = localStorage.getItem('modelyx_shipping_latitude') || '';
         document.getElementById('shippingLongitude').value = localStorage.getItem('modelyx_shipping_longitude') || '';
+
+        const token = localStorage.getItem('modelyx_token');
+        if (token) {
+            fetch('/auth/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+                .then(r => r.ok ? r.json() : null)
+                .then(prof => {
+                    if (prof) {
+                        if (prof.name) {
+                            localStorage.setItem('modelyx_user_name', prof.name);
+                            document.getElementById('shippingName').value = prof.name;
+                        }
+                        if (prof.phone) {
+                            localStorage.setItem('modelyx_shipping_phone', prof.phone);
+                            document.getElementById('shippingPhone').value = prof.phone;
+                        }
+                        if (prof.address) {
+                            localStorage.setItem('modelyx_shipping_address', prof.address);
+                            document.getElementById('shippingAddress').value = prof.address;
+                        }
+                        if (prof.city) {
+                            localStorage.setItem('modelyx_shipping_city', prof.city);
+                            document.getElementById('shippingCity').value = prof.city;
+                        }
+                        if (prof.state) {
+                            localStorage.setItem('modelyx_shipping_state', prof.state);
+                            document.getElementById('shippingState').value = prof.state;
+                        }
+                        if (prof.zip_code) {
+                            localStorage.setItem('modelyx_shipping_zip', prof.zip_code);
+                            document.getElementById('shippingZip').value = prof.zip_code;
+                        }
+                        if (prof.country) {
+                            localStorage.setItem('modelyx_shipping_country', prof.country);
+                            document.getElementById('shippingCountry').value = prof.country;
+                        }
+                        if (prof.latitude && prof.longitude) {
+                            localStorage.setItem('modelyx_shipping_latitude', prof.latitude);
+                            localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
+                            document.getElementById('shippingLatitude').value = prof.latitude;
+                            document.getElementById('shippingLongitude').value = prof.longitude;
+                            showShippingMap(prof.latitude, prof.longitude);
+                        }
+                    }
+                }).catch(() => {});
+        }
     }
 
     function getShippingDetails() {
@@ -2061,6 +2144,16 @@
             },
             createOrder: (data, actions) => {
                 return actions.order.create({
+                    application_context: {
+                        shipping_preference: 'NO_SHIPPING'
+                    },
+                    payment_source: {
+                        paypal: {
+                            experience_context: {
+                                shipping_preference: 'NO_SHIPPING'
+                            }
+                        }
+                    },
                     purchase_units: [{
                         amount: {
                             value: total.toFixed(2),
@@ -2117,9 +2210,23 @@
         const token = localStorage.getItem('modelyx_token');
         if (!token) { location.href = '/index.html?redirect=editor'; return; }
         const role = localStorage.getItem('modelyx_user_role');
-        const shipping = localStorage.getItem('modelyx_shipping_address');
-        if (role === 'customer' && !shipping) {
-            location.href = '/settings.html?setup=address&required=1';
+        const setup = localStorage.getItem('modelyx_shipping_setup');
+        const name = (localStorage.getItem('modelyx_user_name') || '').trim();
+        const email = (localStorage.getItem('modelyx_user_email') || '').trim();
+        const phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
+        const shipping = (localStorage.getItem('modelyx_shipping_address') || '').trim();
+        const city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
+        const state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
+        const zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
+        const country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
+        const savedLat = localStorage.getItem('modelyx_shipping_latitude');
+        const savedLng = localStorage.getItem('modelyx_shipping_longitude');
+        const hasCoords = savedLat !== null && savedLng !== null && savedLat !== '' && savedLng !== '' && !isNaN(parseFloat(savedLat)) && !isNaN(parseFloat(savedLng));
+        const isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords;
+
+        if (role === 'customer' && !isComplete) {
+            sessionStorage.setItem('modelyx_redirect_after_setup', 'editor');
+            location.href = '/settings.html?setup=address&required=1&from=editor';
             return;
         }
 
@@ -2146,9 +2253,9 @@
         prefillShippingDetails();
         updatePrice();
         document.getElementById('orderModal').style.display = 'flex';
-        const lat = Number(document.getElementById('shippingLatitude').value);
-        const lng = Number(document.getElementById('shippingLongitude').value);
-        if (lat && lng) setTimeout(() => showShippingMap(lat, lng), 100);
+        const mapLat = Number(document.getElementById('shippingLatitude').value);
+        const mapLng = Number(document.getElementById('shippingLongitude').value);
+        if (mapLat && mapLng) setTimeout(() => showShippingMap(mapLat, mapLng), 100);
     };
 
     window.closeOrderModal = function() {
@@ -2358,9 +2465,23 @@
     window.addEventListener('DOMContentLoaded', () => {
         updateStudioThemeUI();
         const role = localStorage.getItem('modelyx_user_role');
-        const shipping = localStorage.getItem('modelyx_shipping_address');
-        if (role === 'customer' && !shipping) {
-            location.href = '/settings.html?setup=address&required=1';
+        const setup = localStorage.getItem('modelyx_shipping_setup');
+        const name = (localStorage.getItem('modelyx_user_name') || '').trim();
+        const email = (localStorage.getItem('modelyx_user_email') || '').trim();
+        const phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
+        const shipping = (localStorage.getItem('modelyx_shipping_address') || '').trim();
+        const city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
+        const state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
+        const zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
+        const country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
+        const lat = localStorage.getItem('modelyx_shipping_latitude');
+        const lng = localStorage.getItem('modelyx_shipping_longitude');
+        const hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
+        const isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords;
+
+        if (role === 'customer' && !isComplete) {
+            sessionStorage.setItem('modelyx_redirect_after_setup', 'editor');
+            location.href = '/settings.html?setup=address&required=1&from=editor';
         }
     });
     updateStudioThemeUI();

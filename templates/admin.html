@@ -412,7 +412,7 @@
                             ${o.delivery_notes ? `<p class="mt-1 text-xs text-slate-400">${o.delivery_notes}</p>` : ''}
                             ${o.latitude && o.longitude ? `<p class="mt-1 font-mono text-[10px] text-slate-400">${Number(o.latitude).toFixed(8)}, ${Number(o.longitude).toFixed(8)}</p>` : ''}
                             ${o.latitude && o.longitude ? `
-                                <a href="https://www.openstreetmap.org/?mlat=${o.latitude}&mlon=${o.longitude}#map=18/${o.latitude}/${o.longitude}"
+                                <a href="https://www.google.com/maps/search/?api=1&query=${o.latitude},${o.longitude}"
                                     target="_blank" rel="noopener"
                                     class="text-[10px] font-bold text-indigo-600 hover:underline">
                                     View pin
