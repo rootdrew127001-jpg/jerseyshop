@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List, Any
 from datetime import datetime
 
 
@@ -36,14 +36,29 @@ class TokenResponse(BaseModel):
     shipping: Optional[dict] = None
 
 
+class RosterItem(BaseModel):
+    player_name: Optional[str] = None
+    player_number: Optional[str] = None
+    size: str = "M"
+    notes: Optional[str] = None
+
+
 class OrderCreate(BaseModel):
     team_name: Optional[str] = None
     player_number: Optional[str] = None
     base_color: Optional[str] = None
     accent_color: Optional[str] = None
     pattern: Optional[str] = None
+    order_type: Optional[str] = "single"
+    jersey_type: Optional[str] = "sleeveless"
+    finish: Optional[str] = "matte"
+    has_shorts: Optional[bool] = False
+    size: Optional[str] = "M"
     quantity: Optional[int] = 1
     price: Optional[float] = 0.0
+    subtotal: Optional[float] = 0.0
+    discount_amount: Optional[float] = 0.0
+    roster: Optional[List[RosterItem]] = None
     shipping_fee: Optional[float] = 0.0
     shipping_name: Optional[str] = None
     shipping_phone: Optional[str] = None
@@ -74,8 +89,13 @@ class OrderResponse(BaseModel):
     base_color: Optional[str]
     accent_color: Optional[str]
     pattern: Optional[str]
+    order_type: Optional[str] = "single"
     quantity: int
     price: float
+    subtotal: Optional[float] = 0.0
+    discount_amount: Optional[float] = 0.0
+    roster_data: Optional[str] = None
+    pricing_breakdown: Optional[str] = None
     shipping_fee: Optional[float] = 0.0
     shipping_name: Optional[str] = None
     shipping_phone: Optional[str] = None

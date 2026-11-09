@@ -759,29 +759,88 @@
             <!-- Order Details -->
             <div class="grid gap-6 md:grid-cols-2 mb-6">
             <div class="space-y-4">
-                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jersey Details</p>
                 <div>
-                    <label class="text-xs text-slate-300 mb-1 block">Size</label>
-                    <select id="orderSize"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none">
-                        <option value="XS">XS</option>
-                        <option value="S">S</option>
-                        <option value="M" selected>M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                        <option value="XXL">XXL</option>
-                    </select>
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Order Format</p>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-900/80 p-1.5 rounded-2xl border border-slate-700">
+                        <button type="button" id="btnOrderModeSingle" onclick="switchCheckoutOrderMode('single')"
+                            class="py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-sm cursor-pointer">
+                            👤 Single Jersey
+                        </button>
+                        <button type="button" id="btnOrderModeTeam" onclick="switchCheckoutOrderMode('team')"
+                            class="py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white cursor-pointer">
+                            👥 Team Roster
+                        </button>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-xs text-slate-300 mb-1 block">Quantity</label>
-                    <input type="number" id="orderQuantity" value="1" min="1" max="100"
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none"
-                        oninput="updatePrice()">
+
+                <div id="singleOrderSection" class="space-y-4">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jersey Details</p>
+                    <div>
+                        <label class="text-xs text-slate-300 mb-1 block">Size</label>
+                        <select id="orderSize"
+                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none">
+                            <option value="XS">XS</option>
+                            <option value="S">S</option>
+                            <option value="M" selected>M</option>
+                            <option value="L">L</option>
+                            <option value="XL">XL</option>
+                            <option value="XXL">XXL</option>
+                            <option value="3XL">3XL</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300 mb-1 block">Quantity</label>
+                        <input type="number" id="orderQuantity" value="1" min="1" max="100"
+                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none"
+                            oninput="updatePrice()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-300 mb-1 block">Notes (optional)</label>
+                        <textarea id="orderNotes" rows="2" placeholder="Any special instructions..."
+                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none resize-none placeholder-slate-500"></textarea>
+                    </div>
                 </div>
-                <div>
-                    <label class="text-xs text-slate-300 mb-1 block">Notes (optional)</label>
-                    <textarea id="orderNotes" rows="2" placeholder="Any special instructions..."
-                        class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none resize-none placeholder-slate-500"></textarea>
+
+                <div id="teamOrderSection" class="hidden space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Team Squad Roster</p>
+                            <p class="text-xs text-slate-400"><span id="teamRosterCount">1</span> player jerseys configured</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" onclick="addRosterRows(1)" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition">
+                                +1 Player
+                            </button>
+                            <button type="button" onclick="addRosterRows(5)" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition">
+                                +5
+                            </button>
+                            <button type="button" onclick="addRosterRows(10)" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 px-2.5 py-1 rounded-lg text-[11px] font-bold cursor-pointer transition">
+                                +10
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="max-h-64 overflow-y-auto border border-slate-700 rounded-2xl bg-slate-900/50 p-2">
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-[10px] uppercase text-slate-400 font-black border-b border-slate-700/60 pb-1">
+                                <tr>
+                                    <th class="p-1.5 w-6">#</th>
+                                    <th class="p-1.5">Player Name</th>
+                                    <th class="p-1.5 w-16">No.</th>
+                                    <th class="p-1.5 w-16">Size</th>
+                                    <th class="p-1.5 w-8 text-center" title="Preview on 3D Model">3D</th>
+                                    <th class="p-1.5 w-8 text-right">✕</th>
+                                </tr>
+                            </thead>
+                            <tbody id="teamRosterTableBody" class="divide-y divide-slate-800"></tbody>
+                        </table>
+                    </div>
+                    <p class="text-[10px] text-slate-400">💡 Click the 👁️ icon on any player row to preview their name and number on the 3D model.</p>
+                    <div>
+                        <label class="text-xs text-slate-300 mb-1 block">Team Order Notes (optional)</label>
+                        <textarea id="teamOrderNotes" rows="2" placeholder="Any special instructions for the squad..."
+                            class="w-full bg-slate-700 text-white text-sm rounded-xl px-4 py-3 border-0 outline-none resize-none placeholder-slate-500"></textarea>
+                    </div>
                 </div>
             </div>
 
@@ -847,26 +906,33 @@
             </div>
             </div>
 
-            <!-- Price -->
-            <div class="bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-4 mb-6">
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <p class="text-xs text-indigo-300">Jersey subtotal</p>
-                        <p class="text-sm font-bold text-white" id="subtotalPrice">₱850.00</p>
+            <!-- Price Summary -->
+            <div class="bg-indigo-600/20 border border-indigo-500/30 rounded-2xl p-4 mb-6 space-y-3">
+                <div id="tierProgressBanner" class="p-2.5 rounded-xl bg-indigo-950/70 border border-indigo-600/40 text-xs font-bold text-indigo-200">
+                    Add 4 more jerseys to unlock 8% Team Discount!
+                </div>
+                <div class="space-y-2 text-xs">
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>Items Subtotal (<span id="summaryQuantityLabel">1 jersey</span>)</span>
+                        <span class="font-bold text-white text-sm" id="subtotalPrice">₱850.00</span>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <p class="text-xs text-indigo-300">Shipping fee</p>
-                        <p class="text-sm font-bold text-white" id="shippingFee">₱120.00</p>
+                    <div id="tierDiscountRow" class="hidden flex justify-between items-center text-emerald-400 font-bold">
+                        <span>Team Volume Discount (<span id="tierPercentLabel">0%</span>)</span>
+                        <span id="tierDiscountValue">-₱0.00</span>
+                    </div>
+                    <div class="flex justify-between items-center text-slate-300">
+                        <span>Shipping Delivery</span>
+                        <span class="font-bold text-white text-sm" id="shippingFee">₱120.00</span>
                     </div>
                     <div class="flex justify-between items-center border-t border-indigo-400/20 pt-3">
-                    <div>
-                        <p class="text-xs text-indigo-300">Price per jersey</p>
-                        <p class="text-sm font-bold text-white">₱850.00</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-xs text-indigo-300">Checkout Total</p>
-                        <p class="text-2xl font-black text-white" id="totalPrice">₱970.00</p>
-                    </div>
+                        <div>
+                            <p class="text-xs text-indigo-300">Unit Price</p>
+                            <p class="text-sm font-bold text-white" id="unitPriceLabel">₱850.00</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-indigo-300">Checkout Total</p>
+                            <p class="text-2xl font-black text-white" id="totalPrice">₱970.00</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2071,23 +2137,60 @@
 
     function getCheckoutContext() {
         const design = getCurrentDesign();
-        const quantity = parseInt(document.getElementById('orderQuantity').value) || 1;
-        const size = document.getElementById('orderSize').value;
-        const notes = document.getElementById('orderNotes').value.trim();
-        const subtotal = quantity * PRICE_PER_JERSEY;
-        const total = subtotal + SHIPPING_FEE;
+        const pricing = window.calculateOrderPricing ? window.calculateOrderPricing() : {
+            order_type: 'single',
+            jersey_type: design.jerseyType || 'sleeveless',
+            finish: design.finish || 'matte',
+            has_shorts: (design.matchJerseyColors !== false) || !!design.shortsBaseColor,
+            quantity: parseInt(document.getElementById('orderQuantity').value) || 1,
+            discounted_subtotal: (parseInt(document.getElementById('orderQuantity').value) || 1) * PRICE_PER_JERSEY,
+            discount_amount: 0,
+            shipping_fee: SHIPPING_FEE,
+            total: ((parseInt(document.getElementById('orderQuantity').value) || 1) * PRICE_PER_JERSEY) + SHIPPING_FEE,
+            roster: []
+        };
+        const isTeam = pricing.order_type === 'team';
+        const size = (isTeam && pricing.roster && pricing.roster.length > 0) ? (pricing.roster[0].size || 'M') : (document.getElementById('orderSize').value || 'M');
+        const notes = (isTeam ? document.getElementById('teamOrderNotes')?.value : document.getElementById('orderNotes')?.value) || '';
         const shipping = getShippingDetails();
         const shippingError = validateShippingDetails(shipping);
 
-        return { design, quantity, size, notes, subtotal, total, shipping, shippingError };
+        return {
+            design,
+            order_type: pricing.order_type,
+            jersey_type: pricing.jersey_type,
+            finish: pricing.finish,
+            has_shorts: pricing.has_shorts,
+            size: size,
+            quantity: pricing.quantity,
+            subtotal: pricing.discounted_subtotal,
+            discount_amount: pricing.discount_amount,
+            shipping_fee: pricing.shipping_fee,
+            total: pricing.total,
+            pricing: pricing,
+            roster: pricing.roster,
+            notes: notes.trim(),
+            shipping,
+            shippingError
+        };
     }
 
     function renderSummary(containerId, context) {
+        const isTeam = context.order_type === 'team';
+        const sizeBreakdown = (isTeam && context.roster && context.roster.length)
+            ? context.roster.map(r => `${r.player_name || 'Player'} #${r.player_number || ''} (${r.size})`).slice(0, 5).join(', ') + (context.roster.length > 5 ? ` +${context.roster.length - 5} more` : '')
+            : `Size ${context.size}`;
+
         document.getElementById(containerId).innerHTML = `
             <div>
-                <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Order</p>
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-400">Order Format</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isTeam ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' : 'bg-slate-600 text-slate-200'}">
+                        ${isTeam ? `👥 Team Roster (${context.quantity} jerseys)` : '👤 Single Jersey'}
+                    </span>
+                </div>
                 <p class="font-bold text-white">${(context.design.showFrontText ? context.design.frontText : '') || (context.design.showBackText ? context.design.backName : '') || 'Custom Jersey'} #${context.design.number || '00'}</p>
-                <p class="text-xs text-slate-400">Size ${context.size} · ${context.quantity} jersey${context.quantity > 1 ? 's' : ''}</p>
+                <p class="text-xs text-slate-400 mt-0.5">${sizeBreakdown}</p>
             </div>
             <div class="border-t border-slate-600 pt-3">
                 <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Ship To</p>
@@ -2099,8 +2202,9 @@
                 ${context.shipping.delivery_notes ? `<p class="text-xs text-slate-400 mt-1">${context.shipping.delivery_notes}</p>` : ''}
             </div>
             <div class="border-t border-slate-600 pt-3 space-y-2">
-                <div class="flex justify-between"><span>Jersey subtotal</span><strong>${peso(context.subtotal)}</strong></div>
-                <div class="flex justify-between"><span>Shipping fee</span><strong>${peso(SHIPPING_FEE)}</strong></div>
+                <div class="flex justify-between"><span>Items subtotal</span><strong>${peso(context.subtotal + context.discount_amount)}</strong></div>
+                ${context.discount_amount > 0 ? `<div class="flex justify-between text-emerald-400 font-bold"><span>Team Volume Discount (${Math.round((context.pricing?.discount_rate || 0) * 100)}%)</span><strong>-${peso(context.discount_amount)}</strong></div>` : ''}
+                <div class="flex justify-between"><span>Shipping fee</span><strong>${context.shipping_fee === 0 ? 'FREE' : peso(context.shipping_fee)}</strong></div>
                 <div class="flex justify-between text-white text-base border-t border-slate-600 pt-2"><span>Total</span><strong>${peso(context.total)}</strong></div>
             </div>
         `;
@@ -2197,13 +2301,314 @@
         }).render('#paypal-button-container');
     }
 
+    window.checkoutOrderMode = 'single';
+    window.teamRosterList = [];
+    window.pricingConfig = null;
+
+    window.switchCheckoutOrderMode = function(mode) {
+        window.checkoutOrderMode = mode;
+        const btnSingle = document.getElementById('btnOrderModeSingle');
+        const btnTeam = document.getElementById('btnOrderModeTeam');
+        const secSingle = document.getElementById('singleOrderSection');
+        const secTeam = document.getElementById('teamOrderSection');
+
+        if (mode === 'team') {
+            if (btnSingle) {
+                btnSingle.className = 'py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white cursor-pointer';
+            }
+            if (btnTeam) {
+                btnTeam.className = 'py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-sm cursor-pointer';
+            }
+            if (secSingle) secSingle.classList.add('hidden');
+            if (secTeam) secTeam.classList.remove('hidden');
+            if (window.teamRosterList.length === 0) {
+                initDefaultRoster();
+            }
+            renderTeamRosterUI();
+        } else {
+            if (btnSingle) {
+                btnSingle.className = 'py-2.5 rounded-xl text-xs font-bold transition bg-indigo-600 text-white shadow-sm cursor-pointer';
+            }
+            if (btnTeam) {
+                btnTeam.className = 'py-2.5 rounded-xl text-xs font-bold transition text-slate-400 hover:text-white cursor-pointer';
+            }
+            if (secSingle) secSingle.classList.remove('hidden');
+            if (secTeam) secTeam.classList.add('hidden');
+        }
+        updatePrice();
+    };
+
+    window.initDefaultRoster = function() {
+        const design = getCurrentDesign();
+        const defaultName = (design.backName || '').trim() || 'PLAYER 1';
+        const defaultNum = (design.number || '').trim() || '01';
+        window.teamRosterList = [
+            { player_name: defaultName, player_number: defaultNum, size: 'M', notes: '' },
+            { player_name: 'PLAYER 2', player_number: '02', size: 'L', notes: '' },
+            { player_name: 'PLAYER 3', player_number: '03', size: 'M', notes: '' },
+            { player_name: 'PLAYER 4', player_number: '04', size: 'XL', notes: '' },
+            { player_name: 'PLAYER 5', player_number: '05', size: 'M', notes: '' }
+        ];
+    };
+
+    window.renderTeamRosterUI = function() {
+        const tbody = document.getElementById('teamRosterTableBody');
+        const countEl = document.getElementById('teamRosterCount');
+        if (countEl) countEl.textContent = window.teamRosterList.length;
+        if (!tbody) return;
+
+        tbody.innerHTML = window.teamRosterList.map((item, idx) => `
+            <tr class="hover:bg-slate-800/60 transition">
+                <td class="p-1.5 font-mono text-[11px] text-slate-500 font-bold">${idx + 1}</td>
+                <td class="p-1.5">
+                    <input type="text" value="${item.player_name || ''}" placeholder="Player name"
+                        oninput="updateRosterItem(${idx}, 'player_name', this.value)"
+                        class="w-full bg-slate-800 text-white rounded-lg px-2 py-1 text-xs border border-slate-700 outline-none focus:border-indigo-500">
+                </td>
+                <td class="p-1.5 w-16">
+                    <input type="text" value="${item.player_number || ''}" placeholder="00" maxlength="4"
+                        oninput="updateRosterItem(${idx}, 'player_number', this.value)"
+                        class="w-full bg-slate-800 text-white font-mono rounded-lg px-2 py-1 text-xs text-center border border-slate-700 outline-none focus:border-indigo-500">
+                </td>
+                <td class="p-1.5 w-16">
+                    <select onchange="updateRosterItem(${idx}, 'size', this.value)"
+                        class="w-full bg-slate-800 text-white rounded-lg px-1.5 py-1 text-xs border border-slate-700 outline-none focus:border-indigo-500">
+                        <option value="XS" ${item.size === 'XS' ? 'selected' : ''}>XS</option>
+                        <option value="S" ${item.size === 'S' ? 'selected' : ''}>S</option>
+                        <option value="M" ${item.size === 'M' || !item.size ? 'selected' : ''}>M</option>
+                        <option value="L" ${item.size === 'L' ? 'selected' : ''}>L</option>
+                        <option value="XL" ${item.size === 'XL' ? 'selected' : ''}>XL</option>
+                        <option value="XXL" ${item.size === 'XXL' ? 'selected' : ''}>XXL</option>
+                        <option value="3XL" ${item.size === '3XL' ? 'selected' : ''}>3XL</option>
+                    </select>
+                </td>
+                <td class="p-1.5 text-center">
+                    <button type="button" onclick="previewRosterPlayer(${idx})" title="Preview on 3D Model"
+                        class="p-1 text-indigo-400 hover:text-white rounded hover:bg-indigo-600/30 transition cursor-pointer">
+                        👁️
+                    </button>
+                </td>
+                <td class="p-1.5 text-right">
+                    <button type="button" onclick="removeRosterRow(${idx})" title="Remove Player"
+                        class="p-1 text-red-400 hover:text-red-300 rounded hover:bg-red-500/20 transition cursor-pointer">
+                        &times;
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    };
+
+    window.addRosterRows = function(count) {
+        const startIdx = window.teamRosterList.length + 1;
+        for (let i = 0; i < count; i++) {
+            const num = String((startIdx + i) % 100).padStart(2, '0');
+            window.teamRosterList.push({
+                player_name: `PLAYER ${startIdx + i}`,
+                player_number: num,
+                size: 'M',
+                notes: ''
+            });
+        }
+        renderTeamRosterUI();
+        updatePrice();
+    };
+
+    window.removeRosterRow = function(index) {
+        if (window.teamRosterList.length <= 1) {
+            alert('A team order must have at least 1 player.');
+            return;
+        }
+        window.teamRosterList.splice(index, 1);
+        renderTeamRosterUI();
+        updatePrice();
+    };
+
+    window.updateRosterItem = function(index, field, value) {
+        if (!window.teamRosterList[index]) return;
+        window.teamRosterList[index][field] = value;
+    };
+
+    window.previewRosterPlayer = function(index) {
+        const item = window.teamRosterList[index];
+        if (!item) return;
+        const backInput = document.getElementById('backName');
+        const numInput = document.getElementById('number');
+        if (backInput) {
+            backInput.value = item.player_name || '';
+            backInput.dispatchEvent(new Event('input'));
+        }
+        if (numInput) {
+            numInput.value = item.player_number || '';
+            numInput.dispatchEvent(new Event('input'));
+        }
+        if (typeof updateCanvas === 'function') updateCanvas();
+        if (typeof updateTexture === 'function') updateTexture();
+    };
+
+    window.getRosterFromUI = function() {
+        return window.teamRosterList.map(item => ({
+            player_name: (item.player_name || '').trim(),
+            player_number: (item.player_number || '').trim(),
+            size: (item.size || 'M').trim().toUpperCase(),
+            notes: (item.notes || '').trim()
+        }));
+    };
+
+    window.calculateOrderPricing = function() {
+        const cfg = window.pricingConfig || {
+            sleeveless_base: 850.0,
+            tshirt_base: 950.0,
+            shorts_addon: 350.0,
+            finish_matte: 0.0,
+            finish_satin: 50.0,
+            finish_metallic: 100.0,
+            finish_carbon: 150.0,
+            tier_1_min: 5,
+            tier_1_discount: 0.08,
+            tier_2_min: 12,
+            tier_2_discount: 0.15,
+            tier_3_min: 20,
+            tier_3_discount: 0.20,
+            shipping_flat: 120.0,
+            free_shipping_min_qty: 10
+        };
+
+        const design = getCurrentDesign();
+        const isTeam = window.checkoutOrderMode === 'team';
+        let qty = 1;
+        let roster = [];
+
+        if (isTeam) {
+            roster = getRosterFromUI();
+            qty = Math.max(roster.length, 1);
+        } else {
+            qty = Math.max(parseInt(document.getElementById('orderQuantity').value) || 1, 1);
+        }
+
+        const jerseyType = design.jerseyType || 'sleeveless';
+        const baseUnit = (jerseyType === 'tshirt') ? (cfg.tshirt_base || 950) : (cfg.sleeveless_base || 850);
+
+        const hasShorts = (design.matchJerseyColors !== false) || !!design.shortsBaseColor;
+        const shortsUnit = hasShorts ? (cfg.shorts_addon || 350) : 0;
+
+        const fullUnit = baseUnit + shortsUnit;
+        const rawSubtotal = fullUnit * qty;
+
+        const parseRate = v => {
+            const n = parseFloat(v) || 0;
+            if (n < 0) return 0.0;
+            const rate = n > 1.0 ? n / 100 : n;
+            return Math.max(0, Math.min(0.99, rate));
+        };
+
+        const tier3Rate = parseRate(cfg.tier_3_discount ?? 20);
+        const tier2Rate = parseRate(cfg.tier_2_discount ?? 15);
+        const tier1Rate = parseRate(cfg.tier_1_discount ?? 8);
+
+        const tier3Min = Math.max(1, parseInt(cfg.tier_3_min) || 20);
+        const tier2Min = Math.max(1, parseInt(cfg.tier_2_min) || 12);
+        const tier1Min = Math.max(1, parseInt(cfg.tier_1_min) || 5);
+
+        let discountRate = 0.0;
+        let nextTierQty = 0;
+        let nextTierRate = 0;
+
+        if (qty >= tier3Min) {
+            discountRate = tier3Rate;
+        } else if (qty >= tier2Min) {
+            discountRate = tier2Rate;
+            nextTierQty = tier3Min - qty;
+            nextTierRate = tier3Rate;
+        } else if (qty >= tier1Min) {
+            discountRate = tier1Rate;
+            nextTierQty = tier2Min - qty;
+            nextTierRate = tier2Rate;
+        } else {
+            discountRate = 0.0;
+            nextTierQty = tier1Min - qty;
+            nextTierRate = tier1Rate;
+        }
+
+        const rawSubtotal = Math.max(0, fullUnit * qty);
+        const discountAmount = Math.max(0, Math.min(rawSubtotal, Math.round(rawSubtotal * discountRate * 100) / 100));
+        const discountedSubtotal = Math.max(0, Math.round((rawSubtotal - discountAmount) * 100) / 100);
+
+        const isFreeShipping = qty >= (parseInt(cfg.free_shipping_min_qty) || 10);
+        const shippingFee = isFreeShipping ? 0.0 : Math.max(0, parseFloat(cfg.shipping_flat) || 120);
+        const total = Math.max(0, Math.round((discountedSubtotal + shippingFee) * 100) / 100);
+        const effectiveUnitPrice = qty > 0 ? Math.max(0, Math.round((discountedSubtotal / qty) * 100) / 100) : 0;
+
+        return {
+            order_type: isTeam ? 'team' : 'single',
+            jersey_type: jerseyType,
+            finish: finish,
+            has_shorts: hasShorts,
+            quantity: qty,
+            unit_price: fullUnit,
+            effective_unit_price: effectiveUnitPrice,
+            rawSubtotal: rawSubtotal,
+            discount_rate: discountRate,
+            discount_amount: discountAmount,
+            discounted_subtotal: discountedSubtotal,
+            shipping_fee: shippingFee,
+            is_free_shipping: isFreeShipping,
+            total: total,
+            next_tier_qty: nextTierQty,
+            next_tier_rate: nextTierRate,
+            roster: roster
+        };
+    };
+
     window.updatePrice = function() {
-        const qty = parseInt(document.getElementById('orderQuantity').value) || 1;
-        const subtotal = qty * PRICE_PER_JERSEY;
-        const total = subtotal + SHIPPING_FEE;
-        document.getElementById('subtotalPrice').textContent = peso(subtotal);
-        document.getElementById('shippingFee').textContent = peso(SHIPPING_FEE);
-        document.getElementById('totalPrice').textContent = peso(total);
+        const p = window.calculateOrderPricing();
+        const subtotalEl = document.getElementById('subtotalPrice');
+        const shippingEl = document.getElementById('shippingFee');
+        const totalEl = document.getElementById('totalPrice');
+        const unitPriceEl = document.getElementById('unitPriceLabel');
+        const qtyLabel = document.getElementById('summaryQuantityLabel');
+        const discountRow = document.getElementById('tierDiscountRow');
+        const discountVal = document.getElementById('tierDiscountValue');
+        const discountPercent = document.getElementById('tierPercentLabel');
+        const banner = document.getElementById('tierProgressBanner');
+
+        if (qtyLabel) qtyLabel.textContent = `${p.quantity} jersey${p.quantity > 1 ? 's' : ''}`;
+        if (subtotalEl) subtotalEl.textContent = peso(p.rawSubtotal);
+        if (shippingEl) shippingEl.textContent = p.is_free_shipping ? 'FREE' : peso(p.shipping_fee);
+        if (totalEl) totalEl.textContent = peso(p.total);
+        if (unitPriceEl) unitPriceEl.textContent = peso(p.effective_unit_price);
+
+        if (discountRow && discountVal && discountPercent) {
+            if (p.discount_amount > 0) {
+                discountRow.classList.remove('hidden');
+                discountPercent.textContent = `${Math.round(p.discount_rate * 100)}%`;
+                discountVal.textContent = `-${peso(p.discount_amount)}`;
+            } else {
+                discountRow.classList.add('hidden');
+            }
+        }
+
+        if (banner) {
+            if (p.discount_rate >= 0.20) {
+                banner.textContent = '🎉 Maximum 20% Team Discount and FREE Shipping unlocked!';
+                banner.className = 'p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-xs font-bold text-emerald-300';
+            } else if (p.next_tier_qty > 0) {
+                const unlocksFree = !p.is_free_shipping && (p.quantity + p.next_tier_qty >= 10);
+                banner.textContent = `Add ${p.next_tier_qty} more jersey${p.next_tier_qty > 1 ? 's' : ''} to unlock ${Math.round(p.next_tier_rate * 100)}% discount${unlocksFree ? ' and FREE shipping' : ''}!`;
+                banner.className = 'p-2.5 rounded-xl bg-indigo-950/70 border border-indigo-600/40 text-xs font-bold text-indigo-200';
+            }
+        }
+    };
+
+    window.loadPricingConfig = async function() {
+        try {
+            const res = await fetch('/pricing/config');
+            if (res.ok) {
+                const raw = await res.json();
+                window.pricingConfig = raw.pricing || raw;
+                updatePrice();
+            }
+        } catch (e) {
+        }
     };
 
     window.openOrderModal = function() {
@@ -2251,6 +2656,7 @@
         }
         document.getElementById('summarySponsor').textContent = design.sponsorText || 'None';
         prefillShippingDetails();
+        loadPricingConfig();
         updatePrice();
         document.getElementById('orderModal').style.display = 'flex';
         const mapLat = Number(document.getElementById('shippingLatitude').value);
@@ -2349,11 +2755,19 @@
                     base_color: context.design.baseColor,
                     accent_color: context.design.accentColor,
                     pattern: context.design.pattern,
+                    order_type: context.order_type,
+                    jersey_type: context.jersey_type,
+                    finish: context.finish,
+                    has_shorts: context.has_shorts,
+                    size: context.size,
                     quantity: context.quantity,
                     price: context.total,
-                    shipping_fee: SHIPPING_FEE,
+                    subtotal: context.subtotal,
+                    discount_amount: context.discount_amount,
+                    shipping_fee: context.shipping_fee,
+                    roster: context.roster,
                     ...context.shipping,
-                    notes: `JerseyType: ${context.design.jerseyType || 'sleeveless'} | Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Shorts: [Match: ${context.design.matchJerseyColors !== false} | Base: ${context.design.shortsBaseColor || context.design.baseColor} | Accent: ${context.design.shortsAccentColor || context.design.accentColor} | Logo: ${context.design.showShortsLogo !== false} | Num: ${context.design.showShortsNumber !== false} | Text: "${context.design.shortsText || ''}" (Show: ${!!context.design.showShortsText})] | ShortsCoords: [Num: ${context.design.shortsNumberX ?? 127},${context.design.shortsNumberY ?? 385} (${context.design.shortsNumberSize || 54}px) | Logo: ${context.design.shortsLogoX ?? 385},${context.design.shortsLogoY ?? 385} (${context.design.shortsLogoSize || 46}px) | Text: ${context.design.shortsTextX ?? 385},${context.design.shortsTextY ?? 320} (${context.design.shortsTextSize || 32}px)] | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
+                    notes: `OrderType: ${context.order_type} | JerseyType: ${context.design.jerseyType || 'sleeveless'} | Size: ${context.size} | Finish: ${context.design.finish || 'matte'} | Shorts: [Match: ${context.design.matchJerseyColors !== false} | Base: ${context.design.shortsBaseColor || context.design.baseColor} | Accent: ${context.design.shortsAccentColor || context.design.accentColor} | Logo: ${context.design.showShortsLogo !== false} | Num: ${context.design.showShortsNumber !== false} | Text: "${context.design.shortsText || ''}" (Show: ${!!context.design.showShortsText})] | ShortsCoords: [Num: ${context.design.shortsNumberX ?? 127},${context.design.shortsNumberY ?? 385} (${context.design.shortsNumberSize || 54}px) | Logo: ${context.design.shortsLogoX ?? 385},${context.design.shortsLogoY ?? 385} (${context.design.shortsLogoSize || 46}px) | Text: ${context.design.shortsTextX ?? 385},${context.design.shortsTextY ?? 320} (${context.design.shortsTextSize || 32}px)] | Logo: ${context.design.logo || 'none'} | Font: ${context.design.font || 'athletic'} | CustomFont: ${context.design.customFont || 'None'} | NumSize: F-${context.design.frontNumberSize || context.design.numberSize || 140}/B-${context.design.backNumberSize || context.design.numberSize || 140} | Outline: ${context.design.outlineWeight || 8} | Coordinates: [F-Logo: ${context.design.logoX ?? 256},${context.design.logoY ?? 150} | F-Sponsor: ${context.design.sponsorX ?? 256},${context.design.sponsorY ?? 220} | F-Num: ${context.design.numberX ?? 256},${context.design.numberY ?? 340} | F-Team: ${context.design.teamX ?? 256},${context.design.teamY ?? 90} | B-Name: ${context.design.backNameX ?? 256},${context.design.backNameY ?? 380} | B-Num: ${context.design.backNumberX ?? 256},${context.design.backNumberY ?? 290}] | Tertiary: ${context.design.tertiaryColor || '#ffffff'} | Sponsor: ${context.design.sponsorText || 'None'} (Show: ${context.design.showSponsor}) | FrontText: ${context.design.frontText || 'None'} (Show: ${context.design.showFrontText}) | BackName: ${context.design.backName || 'None'} (Show: ${context.design.showBackText}) | FrontNum: (Show: ${context.design.showFrontNumber}) | BackNum: (Show: ${context.design.showBackNumber})${context.notes ? ' | Notes: ' + context.notes : ''}`
                 })
             });
 
@@ -2463,6 +2877,7 @@
 
     window.addEventListener('modelyx:theme:change', updateStudioThemeUI);
     window.addEventListener('DOMContentLoaded', () => {
+        window.loadPricingConfig();
         updateStudioThemeUI();
         const role = localStorage.getItem('modelyx_user_role');
         const setup = localStorage.getItem('modelyx_shipping_setup');

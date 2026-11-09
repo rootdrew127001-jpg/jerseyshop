@@ -71,6 +71,11 @@ ORDER_COLUMN_DEFINITIONS = {
     "latitude": "DECIMAL(10,8) NULL",
     "longitude": "DECIMAL(11,8) NULL",
     "delivery_notes": "TEXT NULL",
+    "order_type": "VARCHAR(20) DEFAULT 'single'",
+    "subtotal": "FLOAT DEFAULT 0",
+    "discount_amount": "FLOAT DEFAULT 0",
+    "roster_data": "LONGTEXT NULL",
+    "pricing_breakdown": "LONGTEXT NULL",
 }
 
 USER_COLUMN_DEFINITIONS = {

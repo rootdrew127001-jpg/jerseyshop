@@ -25,15 +25,20 @@
         <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span
                 class="text-indigo-500">PORTAL</span></h1>
         <nav class="flex-1 space-y-2">
-            <a href="/admin.html"
-                class="flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20">
+            <button id="navOrdersBtn" onclick="switchAdminTab('orders')"
+                class="w-full flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 text-left cursor-pointer transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                         stroke-width="2" />
                 </svg>
                 <span>Orders</span>
-            </a>
+            </button>
+            <button id="navPricingBtn" onclick="switchAdminTab('pricing')"
+                class="w-full flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-400">
+                <span class="text-base">🏷️</span>
+                <span>Pricing & Team Tiers</span>
+            </button>
             <a href="/cancelled.html"
                 class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,6 +66,7 @@
     </aside>
 
     <main class="flex-1 overflow-y-auto p-8">
+        <div id="ordersTabView">
         <header class="mb-8 space-y-6">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -193,6 +199,168 @@
                 </thead>
                 <tbody id="table" class="divide-y divide-slate-50"></tbody>
             </table>
+        </div>
+        </div>
+
+        <div id="pricingTabView" class="hidden space-y-8">
+            <header class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Store Configuration</p>
+                    <h2 class="text-3xl font-black">Dynamic Pricing & Team Tiers</h2>
+                    <p class="text-slate-500 text-sm">Configure apparel base rates, material premiums, bulk discounts, and shipping rules.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button type="button" onclick="loadAdminPricing()"
+                        class="bg-white border border-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-50 transition cursor-pointer">
+                        Reload
+                    </button>
+                    <button type="button" onclick="saveAdminPricing()"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-indigo-200 transition cursor-pointer">
+                        Save Pricing Rules
+                    </button>
+                </div>
+            </header>
+
+            <div id="pricingNotice" class="hidden p-4 rounded-2xl text-xs font-bold transition"></div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🎽</span>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">Base Jersey Rates</h3>
+                            <p class="text-xs text-slate-400">Standard single-piece base price</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Basketball / Sleeveless Tank (₱)</label>
+                            <input id="cfg_sleeveless_base" type="number" step="10" min="0" oninput="if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">T-Shirt Jersey with Sleeves (₱)</label>
+                            <input id="cfg_tshirt_base" type="number" step="10" min="0" oninput="if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Shorts / Full Kit Add-on (₱)</label>
+                            <input id="cfg_shorts_addon" type="number" step="10" min="0" oninput="if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🚚</span>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">Shipping Delivery Rules</h3>
+                            <p class="text-xs text-slate-400">Flat standard shipping rate and bulk free shipping eligibility</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Standard Flat Shipping Fee (₱)</label>
+                            <input id="cfg_shipping_flat" type="number" step="10" min="0" oninput="if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Free Shipping Minimum Quantity (Jerseys)</label>
+                            <input id="cfg_free_shipping_min_qty" type="number" min="1" oninput="if(parseFloat(this.value)<1)this.value=1;" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-indigo-500">
+                            <p class="text-[11px] text-slate-400 mt-1">Orders with this many jerseys or more receive free delivery.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm space-y-4 md:col-span-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">👥</span>
+                        <div>
+                            <h3 class="text-base font-black text-slate-900">Team Roster Bulk Tiers</h3>
+                            <p class="text-xs text-slate-400">Automatic volume discount percentage calculated when ordering multiple team jerseys</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                            <p class="text-xs font-black uppercase tracking-wider text-indigo-600">Tier 1 (Small Squad)</p>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Minimum Jerseys</label>
+                                <input id="cfg_tier_1_min" type="number" min="1" max="999" oninput="if(parseFloat(this.value)<1)this.value=1;" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Discount (%) [Max 99%]</label>
+                                <input id="cfg_tier_1_discount" type="number" step="0.5" min="0" max="99" oninput="if(parseFloat(this.value)>99)this.value=99;if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                            <p class="text-xs font-black uppercase tracking-wider text-indigo-600">Tier 2 (Full Team Roster)</p>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Minimum Jerseys</label>
+                                <input id="cfg_tier_2_min" type="number" min="1" max="999" oninput="if(parseFloat(this.value)<1)this.value=1;" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Discount (%) [Max 99%]</label>
+                                <input id="cfg_tier_2_discount" type="number" step="0.5" min="0" max="99" oninput="if(parseFloat(this.value)>99)this.value=99;if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                            <p class="text-xs font-black uppercase tracking-wider text-indigo-600">Tier 3 (Club / League Batch)</p>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Minimum Jerseys</label>
+                                <input id="cfg_tier_3_min" type="number" min="1" max="999" oninput="if(parseFloat(this.value)<1)this.value=1;" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-600 mb-1">Discount (%) [Max 99%]</label>
+                                <input id="cfg_tier_3_discount" type="number" step="0.5" min="0" max="99" oninput="if(parseFloat(this.value)>99)this.value=99;if(parseFloat(this.value)<0)this.value=0;" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm font-bold outline-none focus:border-indigo-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+
+        <div id="rosterModal" style="display:none"
+            class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+                <div class="flex justify-between items-start mb-6 pb-4 border-b">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md" id="rosterModalOrderId">#0</span>
+                            <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Production Sheet</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 mt-1" id="rosterModalTeamName">Team Roster</h3>
+                        <p class="text-xs text-slate-400" id="rosterModalCustomer">-</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="printRosterSheet()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                            <span>🖨️</span> Print Sheet
+                        </button>
+                        <button onclick="closeRosterModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+                    </div>
+                </div>
+
+                <div id="rosterSizeSummary" class="flex flex-wrap gap-2 mb-4"></div>
+
+                <div class="flex-1 overflow-y-auto border border-slate-200 rounded-2xl mb-4">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 font-black uppercase text-slate-400 border-b sticky top-0">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">Player Name</th>
+                                <th class="p-3">Player Number</th>
+                                <th class="p-3">Size</th>
+                                <th class="p-3">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rosterTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-slate-500 pt-3 border-t">
+                    <span id="rosterModalTotalQty">0 jerseys total</span>
+                    <button onclick="closeRosterModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -341,6 +509,7 @@
                 }
 
                 const allData = await res.json();
+                window.adminOrdersData = allData;
                 const query = $('orderSearch')?.value.trim().toLowerCase();
                 const data = allData.filter(o => {
                     const isPaid = o.payment_status === 'Paid';
@@ -359,8 +528,9 @@
                 $('table').innerHTML = data.length ? data.map(o => {
                     const total = Number(o.price || 0);
                     const shippingFee = Number(o.shipping_fee || 0);
-                    const subtotal = Math.max(total - shippingFee, 0);
+                    const subtotal = o.subtotal ? Number(o.subtotal) : Math.max(total - shippingFee, 0);
                     const shippingAddress = [o.shipping_address, o.shipping_city, o.shipping_state, o.shipping_zip, o.shipping_country].filter(Boolean).join(', ');
+                    const isTeamOrder = o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null');
                     return `
                     <tr class="glass-row transition">
                         <td class="p-6 font-mono font-bold text-indigo-600">#${o.id}</td>
@@ -369,6 +539,16 @@
                             <div class="text-[10px] text-slate-400">${o.user?.email || ''}</div>
                         </td>
                         <td class="p-6 min-w-[260px]">
+                            ${isTeamOrder ? `
+                                <div class="mb-2 flex items-center gap-1.5 flex-wrap">
+                                    <span class="inline-flex items-center gap-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                        👥 Team Roster (${o.quantity || 1} pcs)
+                                    </span>
+                                    <button type="button" onclick="openRosterModal(${o.id})" class="inline-flex items-center gap-1 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition">
+                                        📋 View Roster Sheet
+                                    </button>
+                                </div>
+                            ` : ''}
                             <p class="font-black text-slate-900">#${o.player_number || '00'} ${o.team_name || 'Design'}</p>
                             <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
                                 <div>
@@ -392,6 +572,12 @@
                                 </div>
                             </div>
                             <div class="mt-3 rounded-2xl bg-slate-50 p-3 text-xs space-y-1">
+                                ${(o.discount_amount && Number(o.discount_amount) > 0) ? `
+                                    <div class="flex justify-between text-emerald-600 font-bold">
+                                        <span>Team Volume Discount</span>
+                                        <strong>-₱${Number(o.discount_amount).toLocaleString()}</strong>
+                                    </div>
+                                ` : ''}
                                 <div class="flex justify-between text-slate-500">
                                     <span>Shipping Fee</span>
                                     <strong class="text-slate-700">₱${shippingFee.toLocaleString()}</strong>
@@ -638,7 +824,8 @@
                     },
                     body: JSON.stringify({ reason: reason || 'Cancelled by admin' })
                 });
-                const data = await res.json();
+                const raw = await res.json();
+                const data = raw.pricing || raw;
                 if (res.ok) {
                     render();
                 } else {
@@ -647,6 +834,213 @@
             } catch (err) {
                 alert('Server error. Try again.');
             }
+        };
+
+        window.switchAdminTab = function(tab) {
+            const ordersView = $('ordersTabView');
+            const pricingView = $('pricingTabView');
+            const ordersBtn = $('navOrdersBtn');
+            const pricingBtn = $('navPricingBtn');
+
+            if (tab === 'pricing') {
+                if (ordersView) ordersView.classList.add('hidden');
+                if (pricingView) pricingView.classList.remove('hidden');
+                if (ordersBtn) {
+                    ordersBtn.className = 'w-full flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-400';
+                }
+                if (pricingBtn) {
+                    pricingBtn.className = 'w-full flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 text-left cursor-pointer transition';
+                }
+                loadAdminPricing();
+            } else {
+                if (pricingView) pricingView.classList.add('hidden');
+                if (ordersView) ordersView.classList.remove('hidden');
+                if (ordersBtn) {
+                    ordersBtn.className = 'w-full flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 text-left cursor-pointer transition';
+                }
+                if (pricingBtn) {
+                    pricingBtn.className = 'w-full flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-400';
+                }
+                render();
+            }
+        };
+
+        window.loadAdminPricing = async function() {
+            try {
+                const res = await fetch('/pricing/config');
+                if (!res.ok) throw new Error('Failed to fetch pricing config');
+                const raw = await res.json();
+                const data = raw.pricing || raw;
+                
+                const parsePercent = v => {
+                    const n = parseFloat(v) || 0;
+                    return (n <= 1.0 && n > 0) ? Math.round(n * 1000) / 10 : Math.max(0, Math.min(99, n));
+                };
+
+                if ($('cfg_sleeveless_base')) $('cfg_sleeveless_base').value = data.sleeveless_base ?? 850;
+                if ($('cfg_tshirt_base')) $('cfg_tshirt_base').value = data.tshirt_base ?? 950;
+                if ($('cfg_shorts_addon')) $('cfg_shorts_addon').value = data.shorts_addon ?? 350;
+                if ($('cfg_tier_1_min')) $('cfg_tier_1_min').value = data.tier_1_min ?? 5;
+                if ($('cfg_tier_1_discount')) $('cfg_tier_1_discount').value = parsePercent(data.tier_1_discount ?? 8);
+                if ($('cfg_tier_2_min')) $('cfg_tier_2_min').value = data.tier_2_min ?? 12;
+                if ($('cfg_tier_2_discount')) $('cfg_tier_2_discount').value = parsePercent(data.tier_2_discount ?? 15);
+                if ($('cfg_tier_3_min')) $('cfg_tier_3_min').value = data.tier_3_min ?? 20;
+                if ($('cfg_tier_3_discount')) $('cfg_tier_3_discount').value = parsePercent(data.tier_3_discount ?? 20);
+                if ($('cfg_shipping_flat')) $('cfg_shipping_flat').value = data.shipping_flat ?? 120;
+                if ($('cfg_free_shipping_min_qty')) $('cfg_free_shipping_min_qty').value = data.free_shipping_min_qty ?? 10;
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        window.saveAdminPricing = async function() {
+            const notice = $('pricingNotice');
+            try {
+                const parseInputPercent = v => {
+                    const n = parseFloat(v) || 0;
+                    return Math.max(0, Math.min(99, n));
+                };
+
+                const payload = {
+                    sleeveless_base: Math.max(0, parseFloat($('cfg_sleeveless_base').value) || 0),
+                    tshirt_base: Math.max(0, parseFloat($('cfg_tshirt_base').value) || 0),
+                    shorts_addon: Math.max(0, parseFloat($('cfg_shorts_addon').value) || 0),
+                    finish_satin: 0,
+                    finish_metallic: 0,
+                    finish_carbon: 0,
+                    tier_1_min: Math.max(1, parseInt($('cfg_tier_1_min').value) || 5),
+                    tier_1_discount: parseInputPercent($('cfg_tier_1_discount').value),
+                    tier_2_min: Math.max(1, parseInt($('cfg_tier_2_min').value) || 12),
+                    tier_2_discount: parseInputPercent($('cfg_tier_2_discount').value),
+                    tier_3_min: Math.max(1, parseInt($('cfg_tier_3_min').value) || 20),
+                    tier_3_discount: parseInputPercent($('cfg_tier_3_discount').value),
+                    shipping_flat: Math.max(0, parseFloat($('cfg_shipping_flat').value) || 0),
+                    free_shipping_min_qty: Math.max(1, parseInt($('cfg_free_shipping_min_qty').value) || 10)
+                };
+
+                const res = await fetch('/pricing/admin', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Failed to update pricing rules');
+                }
+
+                if (notice) {
+                    notice.className = 'p-4 rounded-2xl text-xs font-bold bg-green-50 text-green-700 border border-green-200 block';
+                    notice.textContent = 'Dynamic pricing and team tier rules updated successfully.';
+                    setTimeout(() => { notice.className = 'hidden'; }, 4000);
+                }
+            } catch (err) {
+                if (notice) {
+                    notice.className = 'p-4 rounded-2xl text-xs font-bold bg-red-50 text-red-700 border border-red-200 block';
+                    notice.textContent = err.message || 'Error saving pricing rules';
+                }
+            }
+        };
+
+        window.openRosterModal = function(orderId) {
+            const list = window.adminOrdersData || [];
+            const order = list.find(o => o.id === orderId);
+            if (!order) return;
+
+            let roster = [];
+            if (order.roster_data) {
+                try {
+                    roster = typeof order.roster_data === 'string' ? JSON.parse(order.roster_data) : order.roster_data;
+                } catch (e) {
+                    roster = [];
+                }
+            }
+
+            $('rosterModalOrderId').textContent = `#${order.id}`;
+            $('rosterModalTeamName').textContent = order.team_name || 'Team Roster';
+            $('rosterModalCustomer').textContent = `Customer: ${order.user?.name || 'Customer'} (${order.user?.email || '-'})`;
+            $('rosterModalTotalQty').textContent = `${roster.length || order.quantity || 1} jerseys total`;
+
+            const sizeCounts = {};
+            roster.forEach(item => {
+                const s = (item.size || 'M').toUpperCase();
+                sizeCounts[s] = (sizeCounts[s] || 0) + 1;
+            });
+
+            const sizeSummaryHtml = Object.keys(sizeCounts).map(s => `
+                <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-xl font-bold text-xs">
+                    Size ${s}: ${sizeCounts[s]} pcs
+                </span>
+            `).join('');
+            $('rosterSizeSummary').innerHTML = sizeSummaryHtml || '<span class="text-xs text-slate-400">No size breakdown available</span>';
+
+            const rowsHtml = roster.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-mono font-bold text-slate-400">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-900">${item.player_name || '-'}</td>
+                    <td class="p-3 font-mono font-black text-indigo-600">${item.player_number || '-'}</td>
+                    <td class="p-3 font-bold text-slate-800">${(item.size || 'M').toUpperCase()}</td>
+                    <td class="p-3 text-slate-400">${item.notes || '-'}</td>
+                </tr>
+            `).join('');
+            $('rosterTableBody').innerHTML = rowsHtml || '<tr><td colspan="5" class="p-6 text-center text-slate-400">No player roster records found.</td></tr>';
+
+            $('rosterModal').style.display = 'flex';
+        };
+
+        window.closeRosterModal = function() {
+            $('rosterModal').style.display = 'none';
+        };
+
+        window.printRosterSheet = function() {
+            const orderId = $('rosterModalOrderId').textContent;
+            const teamName = $('rosterModalTeamName').textContent;
+            const customer = $('rosterModalCustomer').textContent;
+            const sizes = $('rosterSizeSummary').innerHTML;
+            const body = $('rosterTableBody').innerHTML;
+
+            const printWin = window.open('', '', 'width=800,height=600');
+            printWin.document.write(`
+                <html>
+                    <head>
+                        <title>Production Roster Sheet - ${teamName}</title>
+                        <style>
+                            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; }
+                            h1 { margin: 0 0 4px 0; font-size: 22px; }
+                            p { margin: 0 0 16px 0; color: #64748b; font-size: 13px; }
+                            .badges { margin-bottom: 20px; }
+                            .badges span { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; margin-right: 6px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
+                            th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
+                            th { background: #f8fafc; font-weight: bold; }
+                        </style>
+                    </head>
+                    <body>
+                        <h1>Order ${orderId} — ${teamName} Production Sheet</h1>
+                        <p>${customer}</p>
+                        <div class="badges">${sizes}</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Player Name</th>
+                                    <th>Player Number</th>
+                                    <th>Size</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>${body}</tbody>
+                        </table>
+                    </body>
+                </html>
+            `);
+            printWin.document.close();
+            printWin.focus();
+            printWin.print();
+            printWin.close();
         };
     </script>
 </body>

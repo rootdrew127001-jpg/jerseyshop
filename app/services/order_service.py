@@ -1,19 +1,47 @@
+import json
 from sqlalchemy.orm import Session, joinedload
-from app.models.models import Order
+from app.models.models import Order, OrderItem
 from app.schemas.schemas import OrderCreate
-from app.services import notification_service
+from app.services import notification_service, pricing_service
 
 def place_order(db: Session, user_id: int, payload: OrderCreate):
+    pricing = pricing_service.get_pricing_dict(db)
+    
+    roster_list = payload.roster or []
+    is_team_order = payload.order_type == "team" or len(roster_list) > 1
+    order_type = "team" if is_team_order else "single"
+    
+    qty = len(roster_list) if (is_team_order and len(roster_list) > 0) else max(int(payload.quantity or 1), 1)
+    
+    breakdown = pricing_service.calculate_order_pricing(
+        jersey_type=payload.jersey_type or "sleeveless",
+        finish=payload.finish or "matte",
+        has_shorts=bool(payload.has_shorts),
+        quantity=qty,
+        pricing=pricing
+    )
+    
+    roster_json = json.dumps([item.dict() for item in roster_list]) if roster_list else None
+    breakdown_json = json.dumps(breakdown)
+    
+    first_player_name = roster_list[0].player_name if roster_list and roster_list[0].player_name else payload.team_name
+    first_player_number = roster_list[0].player_number if roster_list and roster_list[0].player_number else payload.player_number
+
     order = Order(
         user_id=user_id,
-        team_name=payload.team_name,
-        player_number=payload.player_number,
+        team_name=payload.team_name or first_player_name or "TEAM",
+        player_number=first_player_number or "00",
         base_color=payload.base_color,
         accent_color=payload.accent_color,
         pattern=payload.pattern,
-        quantity=payload.quantity or 1,
-        price=payload.price or 0.0,
-        shipping_fee=payload.shipping_fee or 0.0,
+        order_type=order_type,
+        quantity=qty,
+        price=breakdown["total"],
+        subtotal=breakdown["discounted_subtotal"],
+        discount_amount=breakdown["discount_amount"],
+        roster_data=roster_json,
+        pricing_breakdown=breakdown_json,
+        shipping_fee=breakdown["shipping_fee"],
         shipping_name=payload.shipping_name,
         shipping_phone=payload.shipping_phone,
         shipping_address=payload.shipping_address,
@@ -30,6 +58,32 @@ def place_order(db: Session, user_id: int, payload: OrderCreate):
     db.add(order)
     db.commit()
     db.refresh(order)
+
+    effective_unit_price = breakdown["effective_unit_price"]
+    if roster_list:
+        for item in roster_list:
+            order_item = OrderItem(
+                order_id=order.id,
+                player_name=item.player_name or "",
+                player_number=item.player_number or "",
+                size=item.size or "M",
+                item_price=effective_unit_price,
+                notes=item.notes or ""
+            )
+            db.add(order_item)
+    else:
+        single_item = OrderItem(
+            order_id=order.id,
+            player_name=payload.team_name or "",
+            player_number=payload.player_number or "",
+            size=payload.size or "M",
+            item_price=effective_unit_price,
+            notes=""
+        )
+        db.add(single_item)
+    db.commit()
+    db.refresh(order)
+
     return order
 
 def get_my_orders(db: Session, user_id: int):

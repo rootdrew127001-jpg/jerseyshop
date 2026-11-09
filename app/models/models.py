@@ -56,10 +56,41 @@ class Order(Base):
     payment_status = Column(String(50), default="Unpaid")
     paypal_order_id = Column(String(255), nullable=True)
     notes = Column(Text, nullable=True)
+    order_type = Column(String(20), default="single")
+    subtotal = Column(Float, default=0.0)
+    discount_amount = Column(Float, default=0.0)
+    roster_data = Column(Text, nullable=True)
+    pricing_breakdown = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     cancelled_reason = Column(Text, nullable=True)
 
     user = relationship("User", back_populates="orders")
+    items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
+
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
+    player_name = Column(String(100), nullable=True)
+    player_number = Column(String(10), nullable=True)
+    size = Column(String(10), nullable=False)
+    item_price = Column(Float, default=0.0)
+    notes = Column(String(255), nullable=True)
+
+    order = relationship("Order", back_populates="items")
+
+
+class PricingSetting(Base):
+    __tablename__ = "pricing_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    category = Column(String(50), nullable=False, default="general")
+    key_name = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(Text, nullable=False)
+    description = Column(String(255), nullable=True)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     
     
 class Notification(Base):

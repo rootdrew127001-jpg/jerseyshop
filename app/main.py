@@ -5,7 +5,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.core.database import engine, Base, ensure_order_shipping_columns, get_db
 from app.models.models import User
-from app.routers import auth, notifications, orders, ai, payments, geo, admin_staff
+from app.routers import auth, notifications, orders, ai, payments, geo, admin_staff, pricing
 from app.core.config import ALLOWED_ORIGINS, ENV, SECRET_KEY, ALGORITHM
 from jose import jwt
 import os
@@ -15,9 +15,11 @@ try:
     ensure_order_shipping_columns()
     from app.core.database import SessionLocal
     from app.services.user_service import ensure_default_admin, ensure_dev_accounts
+    from app.services.pricing_service import ensure_default_pricing
     with SessionLocal() as db_session:
         ensure_default_admin(db_session)
         ensure_dev_accounts(db_session)
+        ensure_default_pricing(db_session)
 except Exception as e:
     print(f"Table sync / admin bootstrap delayed: {e}", flush=True)
 
@@ -52,6 +54,7 @@ app.include_router(payments.router)
 app.include_router(notifications.router)
 app.include_router(geo.router)
 app.include_router(admin_staff.router)
+app.include_router(pricing.router)
 @app.get("/api")
 def root():
     return {
