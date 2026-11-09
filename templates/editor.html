@@ -2460,9 +2460,9 @@
             tshirt_base: 950.0,
             shorts_addon: 350.0,
             finish_matte: 0.0,
-            finish_satin: 50.0,
-            finish_metallic: 100.0,
-            finish_carbon: 150.0,
+            finish_satin: 0.0,
+            finish_metallic: 0.0,
+            finish_carbon: 0.0,
             tier_1_min: 5,
             tier_1_discount: 0.08,
             tier_2_min: 12,
@@ -2786,9 +2786,8 @@
                 document.getElementById('successTotal').textContent = peso(context.total);
                 document.getElementById('successModal').style.display = 'flex';
 
-                // Load PayPal and render button
                 await loadPayPal();
-                renderPayPalButton(data.id, context.total);
+                renderPayPalButton(data.id, Number(data.price) || context.total);
             } else {
                 const errEl = document.getElementById('reviewError');
                 errEl.textContent = data.detail || 'Order failed. Try again.';

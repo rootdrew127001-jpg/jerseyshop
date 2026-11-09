@@ -15,35 +15,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
     <script src="/static/js/orderPreview.js?v=2.5"></script>
+    <script src="/static/js/adminNav.js"></script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
-    <aside class="w-64 bg-slate-900 text-slate-400 flex flex-col p-6 shadow-2xl">
-        <h1 class="text-xl font-black text-white italic mb-10 tracking-tighter">ADMIN <span class="text-indigo-500">PORTAL</span></h1>
-        <nav class="flex-1 space-y-2">
-            <a href="/admin.html" class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-width="2"/></svg>
-                <span>Orders</span>
-            </a>
-            <a href="/cancelled.html" class="flex items-center space-x-3 p-3 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-500/20">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round"/></svg>
-                <span>Cancelled Orders</span>
-            </a>
-            <a id="navStaffLink" href="/staff.html"
-                class="flex items-center space-x-3 p-3 hover:bg-white/5 hover:text-white rounded-xl font-bold transition">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span>Staff & Sub-Admins</span>
-            </a>
-            <button onclick="window.ModelyxTheme && window.ModelyxTheme.openThemeModal()"
-                class="w-full flex items-center space-x-3 p-3 hover:bg-white/10 hover:text-white rounded-xl font-bold transition text-left cursor-pointer text-slate-300">
-                <span class="text-base">🎨</span>
-                <span>Theme & Settings</span>
-            </button>
-        </nav>
-        <button onclick="logout()" class="mt-auto p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition font-bold text-sm">Logout</button>
-    </aside>
+    <div id="adminNavMount"></div>
 
     <main class="flex-1 overflow-y-auto p-8">
         <header class="mb-8 space-y-6">
