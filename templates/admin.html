@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/static/styles.css">
     <script src="/static/js/orderPreview.js?v=2.5"></script>
     <script src="/static/js/adminNav.js"></script>
+    <script src="/static/js/deliveryTracker.js?v=3.2"></script>
 </head>
 
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
@@ -487,7 +488,10 @@
                 $('table').innerHTML = data.length ? data.map(o => {
                     const total = Number(o.price || 0);
                     const shippingFee = Number(o.shipping_fee || 0);
-                    const subtotal = o.subtotal ? Number(o.subtotal) : Math.max(total - shippingFee, 0);
+                    const discount = Number(o.discount_amount || 0);
+                    const subtotal = o.subtotal
+                        ? (Number(o.subtotal) + (Number(o.subtotal) === total && discount > 0 ? discount : 0))
+                        : Math.max(total - shippingFee + discount, 0);
                     const shippingAddress = [o.shipping_address, o.shipping_city, o.shipping_state, o.shipping_zip, o.shipping_country].filter(Boolean).join(', ');
                     const isTeamOrder = o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null');
                     return `
@@ -557,11 +561,18 @@
                             ${o.delivery_notes ? `<p class="mt-1 text-xs text-slate-400">${o.delivery_notes}</p>` : ''}
                             ${o.latitude && o.longitude ? `<p class="mt-1 font-mono text-[10px] text-slate-400">${Number(o.latitude).toFixed(8)}, ${Number(o.longitude).toFixed(8)}</p>` : ''}
                             ${o.latitude && o.longitude ? `
-                                <a href="https://www.google.com/maps/search/?api=1&query=${o.latitude},${o.longitude}"
-                                    target="_blank" rel="noopener"
-                                    class="text-[10px] font-bold text-indigo-600 hover:underline">
-                                    View pin
-                                </a>` : ''}
+                                <div class="mt-1 flex items-center gap-2">
+                                    <a href="https://www.google.com/maps/search/?api=1&query=${o.latitude},${o.longitude}"
+                                        target="_blank" rel="noopener"
+                                        class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition">
+                                        Pin
+                                    </a>
+                                    <button type="button" onclick="window.cachedOrders = window.allData; window.DeliveryTracker && window.DeliveryTracker.openModal(${o.id})"
+                                        class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold transition cursor-pointer flex items-center gap-1">
+                                        <span>🛵</span>
+                                        <span>Route</span>
+                                    </button>
+                                </div>` : ''}
                         </td>
                         <td class="p-6">
                             <select onchange="updateOrder(${o.id}, this.value)"

@@ -83,6 +83,62 @@ async def _fetch_nominatim(client: httpx.AsyncClient, q: str):
         return raw
     return []
 
+@router.get("/config")
+def get_geo_config():
+    return {
+        "google_maps_api_key": GOOGLE_MAPS_API_KEY,
+        "default_hub": {
+            "name": "Modelyx Production & Outfitter Hub",
+            "address": "EDSA / Ortigas Center, Mandaluyong, Metro Manila",
+            "lat": 14.5866,
+            "lng": 121.0592
+        }
+    }
+
+@router.get("/route")
+async def get_driving_route(
+    start_lat: float = Query(...),
+    start_lng: float = Query(...),
+    end_lat: float = Query(...),
+    end_lng: float = Query(...)
+):
+    url = f"https://router.project-osrm.org/route/v1/driving/{start_lng},{start_lat};{end_lng},{end_lat}?overview=full&geometries=geojson"
+    try:
+        async with httpx.AsyncClient(timeout=8) as client:
+            res = await client.get(url, headers={"User-Agent": "ModelyxThesis/1.0"})
+            if res.status_code == 200:
+                data = res.json()
+                routes = data.get("routes")
+                if routes and len(routes) > 0:
+                    r = routes[0]
+                    coords = r.get("geometry", {}).get("coordinates", [])
+                    if len(coords) >= 2:
+                        return {
+                            "status": "success",
+                            "provider": "osrm",
+                            "distance_km": round((r.get("distance") or 0) / 1000, 2),
+                            "duration_mins": round((r.get("duration") or 0) / 60, 1),
+                            "coordinates": [{"lat": pt[1], "lng": pt[0]} for pt in coords]
+                        }
+    except Exception:
+        pass
+
+    num_pts = 30
+    fallback_coords = []
+    for i in range(num_pts + 1):
+        t = i / num_pts
+        fallback_coords.append({
+            "lat": round(start_lat + (end_lat - start_lat) * t, 6),
+            "lng": round(start_lng + (end_lng - start_lng) * t, 6)
+        })
+    return {
+        "status": "fallback",
+        "provider": "linear",
+        "distance_km": 5.0,
+        "duration_mins": 15.0,
+        "coordinates": fallback_coords
+    }
+
 @router.get("/ip-lookup")
 async def ip_lookup():
     async with httpx.AsyncClient(timeout=4) as client:

@@ -15,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
     <script src="/static/js/orderPreview.js?v=2.5"></script>
+    <script src="/static/js/deliveryTracker.js?v=3.2"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
@@ -168,6 +169,14 @@
 
                 const orders = await res.json();
                 cachedOrders = orders;
+                window.cachedOrders = orders;
+                window.openDeliveryTracker = function(orderId) {
+                    const list = window.cachedOrders || cachedOrders || [];
+                    const found = list.find(o => String(o.id) === String(orderId));
+                    if (window.DeliveryTracker) {
+                        window.DeliveryTracker.openModal(found || orderId);
+                    }
+                };
                 document.getElementById('loadingState').style.display = 'none';
 
                 if (!orders.length) {
@@ -188,7 +197,10 @@
                         });
                         const total = Number(order.price || 0);
                         const shippingFee = Number(order.shipping_fee || 0);
-                        const subtotal = order.subtotal ? Number(order.subtotal) : Math.max(total - shippingFee, 0);
+                        const discount = Number(order.discount_amount || 0);
+                        const subtotal = order.subtotal
+                            ? (Number(order.subtotal) + (Number(order.subtotal) === total && discount > 0 ? discount : 0))
+                            : Math.max(total - shippingFee + discount, 0);
                         const shippingAddress = [order.shipping_address, order.shipping_city, order.shipping_state, order.shipping_zip, order.shipping_country].filter(Boolean).join(', ');
                         const isTeam = order.order_type === 'team' || (order.roster_data && order.roster_data !== '[]' && order.roster_data !== 'null');
                         let rosterItems = [];
@@ -321,11 +333,19 @@
                                     <p class="text-xs text-slate-500">${shippingAddress || 'No shipping address saved.'}</p>
                                     ${order.delivery_notes ? `<p class="text-xs text-slate-400 mt-1">${order.delivery_notes}</p>` : ''}
                                     ${order.latitude && order.longitude ? `
-                                        <a href="https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}"
-                                            target="_blank" rel="noopener"
-                                            class="text-xs font-bold text-indigo-600 hover:underline mt-2 inline-block">
-                                            View delivery pin
-                                        </a>` : ''}
+                                        <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                                            <a href="https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}"
+                                                target="_blank" rel="noopener"
+                                                class="text-xs font-bold text-slate-500 hover:text-indigo-600 transition flex items-center gap-1">
+                                                <span>📍</span>
+                                                <span>Google Pin</span>
+                                            </a>
+                                            <button type="button" onclick="window.openDeliveryTracker ? window.openDeliveryTracker(${order.id}) : (window.DeliveryTracker && window.DeliveryTracker.openModal(${order.id}))"
+                                                class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer flex items-center gap-1.5">
+                                                <span>🛵</span>
+                                                <span>Track Live Route</span>
+                                            </button>
+                                        </div>` : ''}
                                 </div>
                             </div>
 
@@ -377,6 +397,8 @@
             await loadPayPal();
             document.getElementById('paypal-now-container').innerHTML = '';
 
+            const safePrice = Number(price) || 0;
+
             paypal.Buttons({
                 style: { layout: 'vertical', color: 'blue', shape: 'pill', label: 'pay' },
                 createOrder: (data, actions) => {
@@ -384,16 +406,9 @@
                         application_context: {
                             shipping_preference: 'NO_SHIPPING'
                         },
-                        payment_source: {
-                            paypal: {
-                                experience_context: {
-                                    shipping_preference: 'NO_SHIPPING'
-                                }
-                            }
-                        },
                         purchase_units: [{
                             amount: {
-                                value: Number(price).toFixed(2),
+                                value: safePrice.toFixed(2),
                                 currency_code: 'PHP'
                             },
                             description: `Modelyx Jersey Order #${orderId}`
@@ -422,7 +437,8 @@
                 },
                 onError: (err) => {
                     console.error('PayPal error:', err);
-                    alert('Payment failed. Try again.');
+                    const msg = err && (err.message || (typeof err === 'string' ? err : ''));
+                    alert('Payment failed' + (msg ? ': ' + msg : '. Please try again.'));
                 }
             }).render('#paypal-now-container');
         };

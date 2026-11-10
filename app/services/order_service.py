@@ -37,7 +37,7 @@ def place_order(db: Session, user_id: int, payload: OrderCreate):
         order_type=order_type,
         quantity=qty,
         price=breakdown["total"],
-        subtotal=breakdown["discounted_subtotal"],
+        subtotal=breakdown["raw_subtotal"],
         discount_amount=breakdown["discount_amount"],
         roster_data=roster_json,
         pricing_breakdown=breakdown_json,
