@@ -397,11 +397,23 @@ def create_admin_account(db: Session, email: str, password: str, name: str = "Ad
     return user, None
 
 def ensure_default_admin(db: Session):
-    """
-    Ensures all admin accounts configured in .env (ADMIN_EMAIL, GMAIL_USER, GMAIL_USER_2..20)
-    are provisioned and kept updated in MySQL as verified Owners.
-    """
     accounts = get_all_admin_accounts()
+    owner_emails = {(acc.get("email") or "").strip().lower() for acc in accounts if acc.get("email")}
+
+    if owner_emails:
+        try:
+            previous_owners = db.query(User).filter(User.role == "owner").all()
+            demoted = 0
+            for prev in previous_owners:
+                if (prev.email or "").strip().lower() not in owner_emails:
+                    prev.role = "customer"
+                    demoted += 1
+            if demoted:
+                db.commit()
+                print(f"[BOOTSTRAP] Demoted {demoted} previous owner account(s) not matching OWNER_EMAIL", flush=True)
+        except Exception as e:
+            print(f"[BOOTSTRAP] Error demoting previous owners: {e}", flush=True)
+
     for acc in accounts:
         email = acc["email"]
         name = acc.get("name", "Store Administrator")

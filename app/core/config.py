@@ -11,10 +11,9 @@ def load_env_files():
     app_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     app_env = os.path.join(app_dir, ".env")
     root_env = os.path.abspath(os.path.join(app_dir, "../.env"))
-    for p in [root_env, app_env]:
+    for p in [app_env, root_env]:
         if os.path.exists(p):
             load_dotenv(p, override=True)
-    load_dotenv(override=True)
 
     if IS_DOCKER or saved_db_host == "db":
         os.environ["DB_HOST"] = "db"
@@ -101,8 +100,7 @@ GMAIL_ACCOUNTS = parse_gmail_accounts()
 def get_all_admin_accounts() -> list[dict]:
     load_env_files()
     admin_accounts = []
-    
-    # Store Owner Credentials (support both OWNER_EMAIL and legacy ADMIN_EMAIL)
+
     owner_email_env = (os.getenv("OWNER_EMAIL") or os.getenv("ADMIN_EMAIL", "")).strip().lower()
     owner_pass_env = (os.getenv("OWNER_PASSWORD") or os.getenv("ADMIN_PASSWORD", "")).strip()
 
@@ -112,37 +110,16 @@ def get_all_admin_accounts() -> list[dict]:
             "passwords": [p for p in [owner_pass_env] if p],
             "name": "Store Owner"
         })
+        return admin_accounts
 
     def_email = os.getenv("DEFAULT_ADMIN_EMAIL", "admin@modelyx.com").strip().lower()
     def_pass = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123").strip()
-    if def_email and not any(a["email"] == def_email for a in admin_accounts):
+    if def_email:
         admin_accounts.append({
             "email": def_email,
             "passwords": [def_pass],
             "name": "Default Administrator"
         })
-
-    gmail_pool = parse_gmail_accounts()
-    for g in gmail_pool:
-        u = g.get("user", "").strip().lower()
-        p = g.get("password", "").strip()
-        if not u:
-            continue
-        existing = next((a for a in admin_accounts if a["email"] == u), None)
-        if existing:
-            if p and p not in existing["passwords"]:
-                existing["passwords"].append(p)
-        else:
-            admin_accounts.append({
-                "email": u,
-                "passwords": [p] if p else [],
-                "name": u.split("@")[0].capitalize() + " (Owner)"
-            })
-
-    if owner_pass_env:
-        for a in admin_accounts:
-            if owner_pass_env not in a["passwords"]:
-                a["passwords"].append(owner_pass_env)
 
     return admin_accounts
 

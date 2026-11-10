@@ -32,6 +32,7 @@ def get_current_user(
             user_email = payload.get("email")
             user_id = int(payload.get("sub")) if payload.get("sub") and str(payload.get("sub")).isdigit() else None
 
+            db_user = None
             if user_id:
                 db_user = db.query(User).filter(User.id == user_id).first()
                 if db_user and getattr(db_user, "is_active", 1) == 0:
@@ -49,10 +50,14 @@ def get_current_user(
                     )
                 if is_admin_email(session.get("email")):
                     session["role"] = "owner"
+                elif db_user:
+                    session["role"] = db_user.role
                 return session
 
             if is_admin_email(user_email):
                 user_role = "owner"
+            elif db_user:
+                user_role = db_user.role
 
             return {
                 "id": user_id,
