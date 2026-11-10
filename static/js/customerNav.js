@@ -1,4 +1,15 @@
 (function () {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((reg) => reg.unregister());
+        }).catch(() => {});
+    }
+    if ('caches' in window) {
+        caches.keys().then((names) => {
+            names.forEach((name) => caches.delete(name));
+        }).catch(() => {});
+    }
+
     if (!window.ModelyxTheme && !document.querySelector('script[src*="theme.js"]')) {
         const script = document.createElement('script');
         script.src = '/static/js/theme.js';

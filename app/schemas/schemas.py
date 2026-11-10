@@ -113,6 +113,9 @@ class OrderResponse(BaseModel):
     payment_status: Optional[str] = "Unpaid"
     paypal_order_id: Optional[str] = None
     cancelled_reason: Optional[str] = None
+    is_deleted: Optional[int] = 0
+    deleted_at: Optional[datetime] = None
+    deleted_by: Optional[str] = None
 
     class Config:
         from_attributes = True

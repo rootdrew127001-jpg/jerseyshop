@@ -305,6 +305,54 @@ body[data-theme] {
     color: var(--theme-text) !important;
 }
 
+html[data-theme] .order-preview-card {
+    background-color: #070b14 !important;
+    border-color: #1e293b !important;
+    color: #ffffff !important;
+}
+html[data-theme] .order-preview-card .bg-slate-900,
+html[data-theme] .order-preview-card .bg-slate-900\/90,
+html[data-theme] .order-preview-card .bg-slate-900\/80,
+html[data-theme] .order-preview-card .bg-slate-950,
+html[data-theme] .order-preview-card .bg-slate-950\/70 {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+}
+html[data-theme] .order-preview-card .bg-slate-800\/50,
+html[data-theme] .order-preview-card .bg-slate-800\/40 {
+    background-color: #162033 !important;
+    border-color: #26354f !important;
+}
+html[data-theme] .order-preview-card .border-slate-800,
+html[data-theme] .order-preview-card .border-slate-800\/80,
+html[data-theme] .order-preview-card .border-slate-700\/50 {
+    border-color: #1e293b !important;
+}
+html[data-theme] .order-preview-card p.text-white,
+html[data-theme] .order-preview-card span.text-white,
+html[data-theme] .order-preview-card div.text-white,
+html[data-theme] .order-preview-card .text-white {
+    color: #ffffff !important;
+}
+html[data-theme] .order-preview-card .text-slate-300 {
+    color: #e2e8f0 !important;
+}
+html[data-theme] .order-preview-card .text-slate-400 {
+    color: #94a3b8 !important;
+}
+html[data-theme] .order-preview-card .text-slate-500 {
+    color: #94a3b8 !important;
+}
+html[data-theme] .order-preview-card .text-indigo-400 {
+    color: #818cf8 !important;
+}
+html[data-theme] .order-preview-card .text-indigo-300 {
+    color: #a5b4fc !important;
+}
+html[data-theme] .order-preview-card .text-emerald-400 {
+    color: #34d399 !important;
+}
+
 /* 10. Table row hover */
 [data-theme] tbody tr:hover {
     background-color: var(--theme-surface-sub) !important;

@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelyx Admin | Rejected &amp; Deleted Orders</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
+    <script src="/static/js/theme.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css?v=2.0">
+    <script src="/static/js/orderPreview.js?v=2.6"></script>
+    <script src="/static/js/adminNav.js?v=2.2"></script>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
+    <div id="adminNavMount"></div>
+
+    <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+        <header class="mb-6 space-y-5">
+            <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <p class="text-[10px] font-black text-red-500 uppercase tracking-widest">Order Archive</p>
+                    <h2 class="text-3xl font-black">Rejected &amp; Deleted Orders</h2>
+                    <p class="text-slate-500 text-sm">Review removed or rejected orders, restore them to the pipeline, or permanently erase them.</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <div class="relative">
+                        <button id="adminThemeBtn" onclick="toggleAdminThemeDropdown(event)"
+                            class="flex items-center gap-2 bg-white border px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition shadow-sm cursor-pointer"
+                            title="Choose Modelyx Theme">
+                            <span id="adminThemeIcon">☀️</span>
+                            <span id="adminThemeName" class="hidden sm:inline">Theme</span>
+                            <span class="text-[10px] opacity-60">▾</span>
+                        </button>
+                        <div id="adminThemeMenu"
+                            class="hidden absolute right-0 top-11 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
+                    </div>
+                    <button onclick="render()" class="bg-red-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-red-700 transition cursor-pointer">Refresh</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Rejected / Deleted</p>
+                <h3 id="sDeletedCount" class="text-2xl font-black text-red-600 mt-1">0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Archived Value</p>
+                <h3 id="sDeletedValue" class="text-2xl font-black text-orange-600 mt-1">₱0</h3>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border shadow-sm">
+                <p class="text-[10px] font-black text-slate-400 uppercase">Paid Orders Archived</p>
+                <h3 id="sDeletedPaid" class="text-2xl font-black mt-1">0</h3>
+            </div>
+        </div>
+
+        <div class="bg-white border rounded-2xl p-3.5 shadow-sm mb-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div class="text-xs font-bold text-slate-500">
+                Showing <span id="deletedShowingCount" class="text-indigo-600 font-black">0</span> archived orders
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <select id="deletedTypeFilter" onchange="render()"
+                    class="px-3 py-2 border rounded-xl bg-white text-xs font-bold outline-none focus:border-red-500 cursor-pointer">
+                    <option value="ALL">All Types</option>
+                    <option value="team">👥 Team Roster</option>
+                    <option value="single">👤 Single</option>
+                </select>
+                <select id="deletedSortFilter" onchange="render()"
+                    class="px-3 py-2 border rounded-xl bg-white text-xs font-bold outline-none focus:border-red-500 cursor-pointer">
+                    <option value="recent">Recently Removed</option>
+                    <option value="newest">Newest Order #</option>
+                    <option value="highest">Highest Amount</option>
+                </select>
+                <input id="deletedSearch" type="search" placeholder="Search #ID, customer, team, reason..."
+                    class="w-full sm:w-64 px-3.5 py-2 border rounded-xl bg-white text-xs font-medium outline-none focus:border-red-500" />
+            </div>
+        </div>
+
+        <div class="bg-white border rounded-[1.5rem] shadow-sm overflow-x-auto mb-12">
+            <table class="w-full text-left text-sm min-w-[920px]">
+                <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
+                    <tr>
+                        <th class="px-5 py-3.5">Order</th>
+                        <th class="px-4 py-3.5">Customer</th>
+                        <th class="px-4 py-3.5">Design &amp; Price</th>
+                        <th class="px-4 py-3.5">Removed / Rejected By</th>
+                        <th class="px-4 py-3.5">Reason</th>
+                        <th class="px-5 py-3.5 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="table" class="divide-y divide-slate-100"></tbody>
+            </table>
+        </div>
+
+        <div id="rosterModal" style="display:none"
+            onclick="if(event.target===this) closeRosterModal()"
+            class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+                <div class="flex justify-between items-start mb-6 pb-4 border-b">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md" id="rosterModalOrderId">#0</span>
+                            <span class="text-xs font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Archived Roster</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 mt-1" id="rosterModalTeamName">Team Roster</h3>
+                        <p class="text-xs text-slate-400" id="rosterModalCustomer">-</p>
+                    </div>
+                    <button onclick="closeRosterModal()" class="text-slate-400 hover:text-slate-900 text-2xl leading-none cursor-pointer">&times;</button>
+                </div>
+                <div id="rosterSizeSummary" class="flex flex-wrap gap-2 mb-4"></div>
+                <div class="flex-1 overflow-y-auto border border-slate-200 rounded-2xl mb-4">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 font-black uppercase text-slate-400 border-b sticky top-0">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">Player Name</th>
+                                <th class="p-3">Player Number</th>
+                                <th class="p-3">Size</th>
+                                <th class="p-3">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rosterTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-500 pt-3 border-t">
+                    <span id="rosterModalTotalQty">0 jerseys total</span>
+                    <button onclick="closeRosterModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="designPreviewModal" style="display:none"
+            onclick="if(event.target===this) closeDesignModal()"
+            class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-4xl rounded-3xl p-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col">
+                <div class="flex justify-between items-center pb-4 border-b gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="designModalOrderId" class="text-xs font-mono font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-md">#0</span>
+                            <span class="text-xs font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Rejected / Deleted</span>
+                        </div>
+                        <h3 id="designModalTitle" class="text-xl font-black text-slate-900 mt-1">Order Design</h3>
+                        <p id="designModalSub" class="text-xs text-slate-400">-</p>
+                    </div>
+                    <button onclick="closeDesignModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-lg flex items-center justify-center cursor-pointer transition">&times;</button>
+                </div>
+                <div id="designModalBody" class="flex-1 overflow-y-auto pt-2 pr-1"></div>
+                <div class="flex justify-between items-center pt-4 mt-3 border-t text-xs text-slate-500">
+                    <span id="designModalReasonSummary">-</span>
+                    <button onclick="closeDesignModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const $ = id => document.getElementById(id);
+        const token = localStorage.getItem('modelyx_token');
+        const role = localStorage.getItem('modelyx_user_role');
+        if (!token || (role !== 'owner' && role !== 'admin')) location.href = '/index.html';
+
+        let cachedDeleted = [];
+        const formatPeso = value => `₱${Number(value || 0).toLocaleString()}`;
+        const formatDate = value => value ? new Date(value).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' }) : '-';
+
+        window.openDesignModal = function(orderId) {
+            const order = cachedDeleted.find(o => o.id === orderId);
+            if (!order) return;
+            $('designModalOrderId').textContent = `#${order.id}`;
+            $('designModalTitle').textContent = `#${order.player_number || '00'} ${order.team_name || 'Custom Jersey'}`;
+            $('designModalSub').textContent = `Customer: ${order.user?.name || 'Unknown'} (${order.user?.email || '-'}) • ${order.quantity || 1} pc${Number(order.quantity || 1) > 1 ? 's' : ''}`;
+            $('designModalReasonSummary').textContent = `${order.deleted_by || 'Admin'}: ${order.cancelled_reason || 'Removed / Rejected by Admin'}`;
+            const body = $('designModalBody');
+            if (body && window.OrderPreview) {
+                body.innerHTML = OrderPreview.renderCardHTML(order, 'del-modal');
+                setTimeout(() => OrderPreview.initCanvases(order, 'del-modal'), 30);
+            }
+            $('designPreviewModal').style.display = 'flex';
+        };
+
+        window.closeDesignModal = function() {
+            $('designPreviewModal').style.display = 'none';
+        };
+
+        window.openRosterModal = function(orderId) {
+            const order = cachedDeleted.find(o => o.id === orderId);
+            if (!order) return;
+            let roster = [];
+            if (order.roster_data) {
+                try {
+                    roster = typeof order.roster_data === 'string' ? JSON.parse(order.roster_data) : order.roster_data;
+                } catch (e) {
+                    roster = [];
+                }
+            }
+            $('rosterModalOrderId').textContent = `#${order.id}`;
+            $('rosterModalTeamName').textContent = order.team_name || 'Team Roster';
+            $('rosterModalCustomer').textContent = `Customer: ${order.user?.name || 'Customer'} (${order.user?.email || '-'})`;
+            $('rosterModalTotalQty').textContent = `${roster.length || order.quantity || 1} jerseys total`;
+
+            const sizeCounts = {};
+            roster.forEach(item => {
+                const s = (item.size || 'M').toUpperCase();
+                sizeCounts[s] = (sizeCounts[s] || 0) + 1;
+            });
+            $('rosterSizeSummary').innerHTML = Object.keys(sizeCounts).map(s => `
+                <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-xl font-bold text-xs">
+                    Size ${s}: ${sizeCounts[s]} pcs
+                </span>
+            `).join('') || '<span class="text-xs text-slate-400">No size breakdown available</span>';
+
+            $('rosterTableBody').innerHTML = roster.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-mono font-bold text-slate-400">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-900">${item.player_name || '-'}</td>
+                    <td class="p-3 font-mono font-black text-indigo-600">${item.player_number || '-'}</td>
+                    <td class="p-3 font-bold text-slate-900">${(item.size || 'M').toUpperCase()}</td>
+                    <td class="p-3 text-slate-400">${item.notes || '-'}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="p-6 text-center text-slate-400">No player roster records found.</td></tr>';
+            $('rosterModal').style.display = 'flex';
+        };
+
+        window.closeRosterModal = function() {
+            $('rosterModal').style.display = 'none';
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if ($('designPreviewModal') && $('designPreviewModal').style.display === 'flex') closeDesignModal();
+                if ($('rosterModal') && $('rosterModal').style.display === 'flex') closeRosterModal();
+            }
+        });
+
+        window.restoreOrder = async function(id) {
+            if (!confirm(`Restore Order #${id} back to active orders?`)) return;
+            try {
+                const res = await fetch(`/orders/${id}/restore`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.detail || 'Failed to restore order.');
+                    return;
+                }
+                render();
+            } catch (err) {
+                alert('Server error. Try again.');
+            }
+        };
+
+        window.permanentDeleteOrder = async function(id) {
+            if (!confirm(`Permanently delete Order #${id} from the database? This cannot be undone.`)) return;
+            try {
+                const res = await fetch(`/orders/${id}/permanent`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    const data = await res.json().catch(() => ({}));
+                    alert(data.detail || 'Failed to delete order.');
+                    return;
+                }
+                render();
+            } catch (err) {
+                alert('Server error. Try again.');
+            }
+        };
+
+        const render = async () => {
+            try {
+                const res = await fetch('/orders/all', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    if (res.status === 401) {
+                        localStorage.removeItem('modelyx_token');
+                        localStorage.removeItem('modelyx_user_role');
+                        localStorage.removeItem('modelyx_user_name');
+                        document.cookie = 'modelyx_token=; Max-Age=0; path=/;';
+                        window.location.href = '/index.html?error=expired';
+                    }
+                    return;
+                }
+
+                const allData = await res.json();
+                const deletedList = allData.filter(o => Number(o.is_deleted) === 1);
+                cachedDeleted = deletedList;
+
+                $('sDeletedCount').innerText = deletedList.length;
+                $('sDeletedValue').innerText = formatPeso(deletedList.reduce((s, o) => s + Number(o.price || 0), 0));
+                $('sDeletedPaid').innerText = deletedList.filter(o => o.payment_status === 'Paid').length;
+
+                const query = $('deletedSearch')?.value.trim().toLowerCase();
+                const typeFilterVal = $('deletedTypeFilter')?.value || 'ALL';
+                const sortVal = $('deletedSortFilter')?.value || 'recent';
+
+                let filtered = deletedList.filter(order => {
+                    const isTeam = order.order_type === 'team' || (order.roster_data && order.roster_data !== '[]' && order.roster_data !== 'null');
+                    if (typeFilterVal === 'team' && !isTeam) return false;
+                    if (typeFilterVal === 'single' && isTeam) return false;
+                    if (!query) return true;
+                    return [
+                        order.id,
+                        `#${order.id}`,
+                        order.user?.name,
+                        order.user?.email,
+                        order.team_name,
+                        order.player_number,
+                        order.pattern,
+                        order.deleted_by,
+                        order.cancelled_reason
+                    ].some(v => String(v || '').toLowerCase().includes(query));
+                });
+
+                filtered = [...filtered].sort((a, b) => {
+                    if (sortVal === 'newest') return Number(b.id) - Number(a.id);
+                    if (sortVal === 'highest') return Number(b.price || 0) - Number(a.price || 0);
+                    return new Date(b.deleted_at || b.created_at) - new Date(a.deleted_at || a.created_at);
+                });
+
+                if ($('deletedShowingCount')) $('deletedShowingCount').textContent = filtered.length;
+
+                $('table').innerHTML = filtered.length ? filtered.map(order => {
+                    const isTeamOrder = order.order_type === 'team' || (order.roster_data && order.roster_data !== '[]' && order.roster_data !== 'null');
+                    const total = Number(order.price || 0);
+                    const shippingFee = Number(order.shipping_fee || 0);
+                    const discount = Number(order.discount_amount || 0);
+                    const subtotal = order.subtotal
+                        ? (Number(order.subtotal) + (Number(order.subtotal) === total && discount > 0 ? discount : 0))
+                        : Math.max(total - shippingFee + discount, 0);
+
+                    return `
+                    <tr class="glass-row transition align-top">
+                        <td class="px-5 py-4 whitespace-nowrap">
+                            <div class="font-mono font-black text-red-600 text-base">#${order.id}</div>
+                            <span class="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${order.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                                ${order.payment_status || 'Unpaid'}
+                            </span>
+                            <div class="text-[10px] text-slate-400 mt-1">${order.status || 'Pending Review'}</div>
+                        </td>
+                        <td class="px-4 py-4">
+                            <div class="font-bold text-slate-900">${order.user?.name || 'Unknown'}</div>
+                            <div class="text-[11px] text-slate-400 break-all">${order.user?.email || ''}</div>
+                        </td>
+                        <td class="px-4 py-4 min-w-[340px]">
+                            <div class="flex items-start gap-3.5">
+                                <button type="button" onclick="openDesignModal(${order.id})" title="Click to inspect full design & specs"
+                                    class="shrink-0 w-16 h-16 rounded-2xl bg-[#070b14] border border-slate-700 p-1 shadow-sm hover:scale-105 transition cursor-pointer overflow-hidden flex items-center justify-center">
+                                    <canvas id="del-thumb-${order.id}" width="160" height="160" class="w-full h-full object-contain"></canvas>
+                                </button>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-black text-slate-900 text-sm">#${order.player_number || '00'} ${order.team_name || 'Design'}</span>
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${isTeamOrder ? 'bg-indigo-50 border border-indigo-200 text-indigo-700' : 'bg-slate-100 text-slate-600'}">
+                                            ${isTeamOrder ? `👥 Team (${order.quantity || 1})` : `👤 ${order.quantity || 1} pc`}
+                                        </span>
+                                    </div>
+                                    <div class="mt-1 flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                                        <span class="capitalize font-semibold">${order.pattern || 'None'}</span>
+                                        <span>•</span>
+                                        <div class="inline-flex items-center gap-1">
+                                            <span class="w-3.5 h-3.5 rounded border inline-block" style="background:${order.base_color || '#ddd'}"></span>
+                                            <span class="w-3.5 h-3.5 rounded border inline-block" style="background:${order.accent_color || '#ddd'}"></span>
+                                        </div>
+                                        <span>•</span>
+                                        <span>Sub: ${formatPeso(subtotal)}</span>
+                                        ${discount > 0 ? `<span class="text-emerald-600 font-bold">(-${formatPeso(discount)})</span>` : ''}
+                                        <span class="font-black text-red-600">${formatPeso(total)}</span>
+                                    </div>
+                                    <div class="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                                        <button type="button" onclick="openDesignModal(${order.id})"
+                                            class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition shadow-sm">
+                                            <span>🎨</span>
+                                            <span>Design &amp; Specs</span>
+                                        </button>
+                                        ${isTeamOrder ? `
+                                            <button type="button" onclick="openRosterModal(${order.id})"
+                                                class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition">
+                                                <span>📋</span>
+                                                <span>Roster Sheet (${order.quantity || 1})</span>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="text-xs font-black px-3 py-1 rounded-full bg-red-100 text-red-700">${order.deleted_by || 'Store Owner'}</span>
+                            <div class="text-[11px] text-slate-400 mt-1">${formatDate(order.deleted_at || order.created_at)}</div>
+                        </td>
+                        <td class="px-4 py-4 max-w-xs">
+                            <p class="text-xs font-medium text-slate-900">${order.cancelled_reason || 'Removed / Rejected by Admin'}</p>
+                        </td>
+                        <td class="px-5 py-4 text-right whitespace-nowrap space-y-1.5">
+                            ${role === 'owner' ? `
+                                <div>
+                                    <button onclick="restoreOrder(${order.id})"
+                                        class="text-emerald-600 hover:text-emerald-700 font-bold text-xs hover:underline cursor-pointer">♻️ Restore</button>
+                                </div>
+                                <div>
+                                    <button onclick="permanentDeleteOrder(${order.id})"
+                                        class="text-red-500 hover:text-red-600 font-bold text-xs hover:underline cursor-pointer">Delete Forever</button>
+                                </div>
+                            ` : '<span class="text-[11px] text-slate-400">Owner only</span>'}
+                        </td>
+                    </tr>
+                `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No rejected or deleted orders found.</td></tr>';
+
+                if (window.OrderPreview) {
+                    setTimeout(() => OrderPreview.initAllThumbs(filtered, 'del-thumb'), 30);
+                }
+            } catch (err) {
+                console.error('Failed to load deleted orders:', err);
+            }
+        };
+
+        window.toggleAdminThemeDropdown = function(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('adminThemeMenu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+                if (!menu.classList.contains('hidden') && window.ModelyxTheme) {
+                    window.ModelyxTheme.renderThemeList(menu, () => {
+                        menu.classList.add('hidden');
+                    });
+                }
+            }
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = document.getElementById('adminThemeBtn');
+            const menu = document.getElementById('adminThemeMenu');
+            if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        window.onload = () => {
+            render();
+        };
+
+        $('deletedSearch').addEventListener('input', render);
+    </script>
+</body>
+</html>

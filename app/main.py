@@ -78,13 +78,22 @@ base_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../'))
 static_path = os.path.join(base_path, "static")
 templates_path = os.path.join(base_path, "templates")
 
-# Static files
+NO_CACHE_HEADERS = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0"
+}
+
+@app.get("/static/sw.js", include_in_schema=False)
+@app.get("/sw.js", include_in_schema=False)
+def serve_sw():
+    return FileResponse(os.path.join(static_path, "sw.js"), media_type="application/javascript", headers=NO_CACHE_HEADERS)
+
 app.mount("/static", StaticFiles(directory=static_path), name="static")
 
-# HTML pages
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(templates_path, "index.html"))
+    return FileResponse(os.path.join(templates_path, "index.html"), headers=NO_CACHE_HEADERS)
 
 def is_profile_complete(user) -> bool:
     if not user:
@@ -201,8 +210,8 @@ def serve_editor_page(request: Request, db: Session = Depends(get_db)):
 
     file_path = os.path.join(templates_path, "editor.html")
     if os.path.exists(file_path):
-        return FileResponse(file_path)
-    return FileResponse(os.path.join(templates_path, "index.html"))
+        return FileResponse(file_path, headers=NO_CACHE_HEADERS)
+    return FileResponse(os.path.join(templates_path, "index.html"), headers=NO_CACHE_HEADERS)
 
 @app.get("/dashboard.html")
 @app.get("/dashboard")
@@ -229,22 +238,22 @@ def serve_dashboard_page(request: Request, db: Session = Depends(get_db)):
 
     file_path = os.path.join(templates_path, "dashboard.html")
     if os.path.exists(file_path):
-        return FileResponse(file_path)
-    return FileResponse(os.path.join(templates_path, "index.html"))
+        return FileResponse(file_path, headers=NO_CACHE_HEADERS)
+    return FileResponse(os.path.join(templates_path, "index.html"), headers=NO_CACHE_HEADERS)
 
 @app.get("/{page}.html")
 def serve_page(page: str):
     file_path = os.path.join(templates_path, f"{page}.html")
     if os.path.exists(file_path):
-        return FileResponse(file_path)
-    return FileResponse(os.path.join(templates_path, "index.html"))
+        return FileResponse(file_path, headers=NO_CACHE_HEADERS)
+    return FileResponse(os.path.join(templates_path, "index.html"), headers=NO_CACHE_HEADERS)
 
 @app.get("/{page}")
 def serve_page_no_ext(page: str):
     file_path = os.path.join(templates_path, f"{page}.html")
     if os.path.exists(file_path):
-        return FileResponse(file_path)
-    return FileResponse(os.path.join(templates_path, "index.html"))
+        return FileResponse(file_path, headers=NO_CACHE_HEADERS)
+    return FileResponse(os.path.join(templates_path, "index.html"), headers=NO_CACHE_HEADERS)
 
 
 

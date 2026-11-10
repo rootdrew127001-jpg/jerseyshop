@@ -1,4 +1,6 @@
 import json
+from datetime import datetime, timezone
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 from app.models.models import Order, OrderItem
 from app.schemas.schemas import OrderCreate
@@ -87,7 +89,12 @@ def place_order(db: Session, user_id: int, payload: OrderCreate):
     return order
 
 def get_my_orders(db: Session, user_id: int):
-    return db.query(Order).options(joinedload(Order.user)).filter(Order.user_id == user_id).all()
+    return (
+        db.query(Order)
+        .options(joinedload(Order.user))
+        .filter(Order.user_id == user_id, or_(Order.is_deleted == 0, Order.is_deleted.is_(None)))
+        .all()
+    )
 
 def get_all_orders(db: Session):
     return db.query(Order).options(joinedload(Order.user)).all()
@@ -104,7 +111,44 @@ def update_status(db: Session, order_id: int, status: str):
     db.refresh(order)
     return order
 
-def remove_order(db: Session, order_id: int):
+def remove_order(db: Session, order_id: int, actor_name: str = "Admin", reason: str = None, actor_id: int = None):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return None
+    resolved_actor = actor_name
+    if actor_id:
+        from app.models.models import User
+        actor_user = db.query(User).filter(User.id == actor_id).first()
+        if actor_user and actor_user.name:
+            resolved_actor = actor_user.name
+    order.is_deleted = 1
+    order.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    order.deleted_by = resolved_actor or "Admin"
+    if reason and reason.strip():
+        order.cancelled_reason = f"Admin Rejected: {reason.strip()}"
+    elif not order.cancelled_reason:
+        order.cancelled_reason = "Removed / Rejected by Admin"
+    db.commit()
+    db.refresh(order)
+    return order
+
+def restore_order(db: Session, order_id: int):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        return None
+    order.is_deleted = 0
+    order.deleted_at = None
+    order.deleted_by = None
+    if order.cancelled_reason and (
+        order.cancelled_reason.startswith("Admin Rejected:")
+        or order.cancelled_reason == "Removed / Rejected by Admin"
+    ):
+        order.cancelled_reason = None
+    db.commit()
+    db.refresh(order)
+    return order
+
+def permanent_delete_order(db: Session, order_id: int):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         return None

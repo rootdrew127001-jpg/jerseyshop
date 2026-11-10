@@ -13,24 +13,28 @@
     <script src="/static/js/theme.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="/static/js/orderPreview.js?v=2.5"></script>
-    <script src="/static/js/adminNav.js"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=2.0">
+    <script src="/static/js/orderPreview.js?v=2.6"></script>
+    <script src="/static/js/adminNav.js?v=2.2"></script>
 </head>
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
     <div id="adminNavMount"></div>
 
-    <main class="flex-1 overflow-y-auto p-8">
-        <header class="mb-8 space-y-6">
+    <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+        <header class="mb-6 space-y-5">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                     <p class="text-[10px] font-black text-red-500 uppercase tracking-widest">Cancellation Analytics</p>
                     <h2 class="text-3xl font-black">Cancelled Orders</h2>
-                    <p class="text-slate-500 text-sm">Track cancelled requests, reasons, and estimated lost revenue.</p>
+                    <p class="text-slate-500 text-sm">Track cancelled requests, reasons, and estimated lost revenue at a glance.</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <button id="exportCancelledCsvBtn" onclick="exportCancelledCSV()" class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export CSV</button>
-                    <!-- Admin Theme Switcher Dropdown -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button id="toggleCancelChartsBtn" type="button" onclick="toggleCancelledCharts()"
+                        class="bg-white border px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition flex items-center gap-1.5 cursor-pointer">
+                        <span>📊</span>
+                        <span id="toggleCancelChartsLabel">Show Charts</span>
+                    </button>
+                    <button id="exportCancelledCsvBtn" onclick="exportCancelledCSV()" class="bg-white border px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition cursor-pointer">Export CSV</button>
                     <div class="relative">
                         <button id="adminThemeBtn" onclick="toggleAdminThemeDropdown(event)"
                             class="flex items-center gap-2 bg-white border px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition shadow-sm cursor-pointer"
@@ -42,67 +46,156 @@
                         <div id="adminThemeMenu"
                             class="hidden absolute right-0 top-11 w-64 rounded-2xl p-2 shadow-2xl border z-50"></div>
                     </div>
-                    <button onclick="render()" class="bg-red-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-red-700 transition">Refresh</button>
+                    <button onclick="render()" class="bg-red-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-red-700 transition cursor-pointer">Refresh</button>
                 </div>
-            </div>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="rounded-3xl bg-slate-50 px-5 py-4 shadow-sm">
-                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Quick View</p>
-                    <p class="mt-2 text-sm text-slate-500">Search cancelled orders by customer, team, reason, or number.</p>
-                </div>
-                <input id="cancelSearch" type="search" placeholder="Search cancelled orders..."
-                    class="w-full sm:w-80 p-3 border rounded-2xl bg-white text-sm outline-none focus:border-red-500" />
             </div>
         </header>
 
-        <!-- Cancellation Analytics Section (Owner Only) -->
         <div id="ownerCancelledAnalyticsSection">
-            <div class="grid grid-cols-4 gap-4 mb-8">
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Cancelled</p>
                     <h3 id="sCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Revenue Lost</p>
                     <h3 id="sLost" class="text-2xl font-black text-orange-600 mt-1">₱0</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Cancel Rate</p>
                     <h3 id="sRate" class="text-2xl font-black mt-1">0%</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Admin Cancelled</p>
                     <h3 id="sAdminCancelled" class="text-2xl font-black text-red-600 mt-1">0</h3>
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-6 mb-8">
+            <div id="ownerCancelledChartsGrid" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <div class="bg-white border rounded-2xl p-6 shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled By</p>
                     <canvas id="cancelledByChart" height="200"></canvas>
                 </div>
-                <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
+                <div class="bg-white border rounded-2xl p-6 shadow-sm lg:col-span-2">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Cancelled Orders by Order Date</p>
                     <canvas id="cancelledTimeChart" height="100"></canvas>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border rounded-[2rem] shadow-sm overflow-hidden">
-            <table class="w-full text-left text-sm">
+        <div class="bg-white border rounded-2xl p-3.5 shadow-sm mb-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1.5" id="cancelActorFilterTabs">
+                <button type="button" onclick="setCancelActorFilter('ALL')" data-actor-tab="ALL"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-indigo-600 text-white">
+                    All Cancelled (<span id="cntCancelAll">0</span>)
+                </button>
+                <button type="button" onclick="setCancelActorFilter('Admin')" data-actor-tab="Admin"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    🛡️ Admin (<span id="cntCancelAdmin">0</span>)
+                </button>
+                <button type="button" onclick="setCancelActorFilter('Customer')" data-actor-tab="Customer"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    👤 Customer (<span id="cntCancelCustomer">0</span>)
+                </button>
+                <button type="button" onclick="setCancelActorFilter('Unspecified')" data-actor-tab="Unspecified"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ❔ Other (<span id="cntCancelOther">0</span>)
+                </button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <select id="cancelTypeFilter" onchange="render()"
+                    class="px-3 py-2 border rounded-xl bg-white text-xs font-bold outline-none focus:border-red-500 cursor-pointer">
+                    <option value="ALL">All Types</option>
+                    <option value="team">👥 Team Roster</option>
+                    <option value="single">👤 Single</option>
+                </select>
+                <select id="cancelSortFilter" onchange="render()"
+                    class="px-3 py-2 border rounded-xl bg-white text-xs font-bold outline-none focus:border-red-500 cursor-pointer">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="highest">Highest Amount</option>
+                </select>
+                <input id="cancelSearch" type="search" placeholder="Search #ID, customer, team, reason..."
+                    class="w-full sm:w-64 px-3.5 py-2 border rounded-xl bg-white text-xs font-medium outline-none focus:border-red-500" />
+            </div>
+        </div>
+
+        <div class="bg-white border rounded-[1.5rem] shadow-sm overflow-x-auto mb-12">
+            <table class="w-full text-left text-sm min-w-[900px]">
                 <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
                     <tr>
-                        <th class="p-6">ID</th>
-                        <th class="p-6">Customer</th>
-                        <th class="p-6">Design</th>
-                        <th class="p-6">Price</th>
-                        <th class="p-6">Cancelled By</th>
-                        <th class="p-6">Reason</th>
-                        <th class="p-6 text-right">Order Date</th>
+                        <th class="px-5 py-3.5">Order</th>
+                        <th class="px-4 py-3.5">Customer</th>
+                        <th class="px-4 py-3.5">Design &amp; Price</th>
+                        <th class="px-4 py-3.5">Cancelled By</th>
+                        <th class="px-4 py-3.5">Reason</th>
+                        <th class="px-5 py-3.5 text-right">Order Date</th>
                     </tr>
                 </thead>
-                <tbody id="table" class="divide-y divide-slate-50"></tbody>
+                <tbody id="table" class="divide-y divide-slate-100"></tbody>
             </table>
+        </div>
+
+        <div id="rosterModal" style="display:none"
+            onclick="if(event.target===this) closeRosterModal()"
+            class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-3xl rounded-3xl p-8 shadow-2xl border border-slate-200 max-h-[90vh] flex flex-col">
+                <div class="flex justify-between items-start mb-6 pb-4 border-b">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-mono font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md" id="rosterModalOrderId">#0</span>
+                            <span class="text-xs font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Cancelled Roster</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-slate-900 mt-1" id="rosterModalTeamName">Team Roster</h3>
+                        <p class="text-xs text-slate-400" id="rosterModalCustomer">-</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="closeRosterModal()" class="text-slate-400 hover:text-slate-900 text-2xl leading-none cursor-pointer">&times;</button>
+                    </div>
+                </div>
+                <div id="rosterSizeSummary" class="flex flex-wrap gap-2 mb-4"></div>
+                <div class="flex-1 overflow-y-auto border border-slate-200 rounded-2xl mb-4">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-50 font-black uppercase text-slate-400 border-b sticky top-0">
+                            <tr>
+                                <th class="p-3">#</th>
+                                <th class="p-3">Player Name</th>
+                                <th class="p-3">Player Number</th>
+                                <th class="p-3">Size</th>
+                                <th class="p-3">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rosterTableBody" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+                <div class="flex justify-between items-center text-xs text-slate-500 pt-3 border-t">
+                    <span id="rosterModalTotalQty">0 jerseys total</span>
+                    <button onclick="closeRosterModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="designPreviewModal" style="display:none"
+            onclick="if(event.target===this) closeDesignModal()"
+            class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-4xl rounded-3xl p-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col">
+                <div class="flex justify-between items-center pb-4 border-b gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="designModalOrderId" class="text-xs font-mono font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-md">#0</span>
+                            <span id="designModalCancelBadge" class="text-xs font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">Cancelled</span>
+                        </div>
+                        <h3 id="designModalTitle" class="text-xl font-black text-slate-900 mt-1">Order Design</h3>
+                        <p id="designModalSub" class="text-xs text-slate-400">-</p>
+                    </div>
+                    <button onclick="closeDesignModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold text-lg flex items-center justify-center cursor-pointer transition">&times;</button>
+                </div>
+                <div id="designModalBody" class="flex-1 overflow-y-auto pt-2 pr-1"></div>
+                <div class="flex justify-between items-center pt-4 mt-3 border-t text-xs text-slate-500">
+                    <span id="designModalReasonSummary">-</span>
+                    <button onclick="closeDesignModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -118,6 +211,9 @@
             const analyticsSec = $('ownerCancelledAnalyticsSection');
             if (analyticsSec) analyticsSec.style.display = 'none';
 
+            const chartsBtn = $('toggleCancelChartsBtn');
+            if (chartsBtn) chartsBtn.style.display = 'none';
+
             const exportBtn = $('exportCancelledCsvBtn');
             if (exportBtn) exportBtn.style.display = 'none';
         }
@@ -125,6 +221,98 @@
         let cancelledByChartInst = null;
         let cancelledTimeChartInst = null;
         let cachedCancelled = [];
+        let cancelActorFilter = 'ALL';
+
+        window.toggleCancelledCharts = function() {
+            const grid = $('ownerCancelledChartsGrid');
+            const lbl = $('toggleCancelChartsLabel');
+            if (!grid) return;
+            const isHidden = grid.classList.toggle('hidden');
+            if (lbl) lbl.textContent = isHidden ? 'Show Charts' : 'Hide Charts';
+            if (!isHidden && cachedCancelled.length) {
+                renderCharts(cachedCancelled);
+            }
+        };
+
+        window.setCancelActorFilter = function(actor) {
+            cancelActorFilter = actor;
+            document.querySelectorAll('#cancelActorFilterTabs button').forEach(btn => {
+                const isActive = btn.getAttribute('data-actor-tab') === actor;
+                btn.className = isActive
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-indigo-600 text-white'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200';
+            });
+            render();
+        };
+
+        window.openDesignModal = function(orderId) {
+            const order = (window.cachedCancelled || cachedCancelled).find(o => o.id === orderId);
+            if (!order) return;
+            $('designModalOrderId').textContent = `#${order.id}`;
+            $('designModalTitle').textContent = `#${order.player_number || '00'} ${order.team_name || 'Custom Jersey'}`;
+            $('designModalSub').textContent = `Customer: ${order.user?.name || 'Unknown'} (${order.user?.email || '-'}) • ${order.quantity || 1} pc${Number(order.quantity || 1) > 1 ? 's' : ''}`;
+            $('designModalReasonSummary').textContent = `Cancelled By ${inferCancelledBy(order)}: ${order.cancelled_reason || 'No reason provided.'}`;
+            const body = $('designModalBody');
+            if (body && window.OrderPreview) {
+                body.innerHTML = OrderPreview.renderCardHTML(order, 'cancel-modal');
+                setTimeout(() => OrderPreview.initCanvases(order, 'cancel-modal'), 30);
+            }
+            $('designPreviewModal').style.display = 'flex';
+        };
+
+        window.closeDesignModal = function() {
+            $('designPreviewModal').style.display = 'none';
+        };
+
+        window.openRosterModal = function(orderId) {
+            const order = (window.cachedCancelled || cachedCancelled).find(o => o.id === orderId);
+            if (!order) return;
+            let roster = [];
+            if (order.roster_data) {
+                try {
+                    roster = typeof order.roster_data === 'string' ? JSON.parse(order.roster_data) : order.roster_data;
+                } catch (e) {
+                    roster = [];
+                }
+            }
+            $('rosterModalOrderId').textContent = `#${order.id}`;
+            $('rosterModalTeamName').textContent = order.team_name || 'Team Roster';
+            $('rosterModalCustomer').textContent = `Customer: ${order.user?.name || 'Customer'} (${order.user?.email || '-'})`;
+            $('rosterModalTotalQty').textContent = `${roster.length || order.quantity || 1} jerseys total`;
+
+            const sizeCounts = {};
+            roster.forEach(item => {
+                const s = (item.size || 'M').toUpperCase();
+                sizeCounts[s] = (sizeCounts[s] || 0) + 1;
+            });
+            $('rosterSizeSummary').innerHTML = Object.keys(sizeCounts).map(s => `
+                <span class="bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-xl font-bold text-xs">
+                    Size ${s}: ${sizeCounts[s]} pcs
+                </span>
+            `).join('') || '<span class="text-xs text-slate-400">No size breakdown available</span>';
+
+            $('rosterTableBody').innerHTML = roster.map((item, idx) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3 font-mono font-bold text-slate-400">${idx + 1}</td>
+                    <td class="p-3 font-bold text-slate-900">${item.player_name || '-'}</td>
+                    <td class="p-3 font-mono font-black text-indigo-600">${item.player_number || '-'}</td>
+                    <td class="p-3 font-bold text-slate-900">${(item.size || 'M').toUpperCase()}</td>
+                    <td class="p-3 text-slate-400">${item.notes || '-'}</td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="p-6 text-center text-slate-400">No player roster records found.</td></tr>';
+            $('rosterModal').style.display = 'flex';
+        };
+
+        window.closeRosterModal = function() {
+            $('rosterModal').style.display = 'none';
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if ($('designPreviewModal') && $('designPreviewModal').style.display === 'flex') closeDesignModal();
+                if ($('rosterModal') && $('rosterModal').style.display === 'flex') closeRosterModal();
+            }
+        });
 
         const formatPeso = value => `₱${Number(value || 0).toLocaleString()}`;
         const formatDate = value => new Date(value).toLocaleDateString('en-PH', {
@@ -213,69 +401,143 @@
                 }
 
                 const allData = await res.json();
-                const cancelled = allData.filter(order => order.status === 'Cancelled');
+                const cancelled = allData.filter(order => Number(order.is_deleted) !== 1 && order.status === 'Cancelled');
                 cachedCancelled = cancelled;
+                window.cachedCancelled = cancelled;
 
                 const totalCancelled = cancelled.length;
                 const revenueLost = cancelled.reduce((sum, order) => sum + Number(order.price || 0), 0);
                 const adminCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Admin').length;
+                const customerCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Customer').length;
+                const otherCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Unspecified').length;
                 const cancelRate = allData.length ? Math.round((totalCancelled / allData.length) * 100) : 0;
+
+                if ($('cntCancelAll')) $('cntCancelAll').textContent = totalCancelled;
+                if ($('cntCancelAdmin')) $('cntCancelAdmin').textContent = adminCancelled;
+                if ($('cntCancelCustomer')) $('cntCancelCustomer').textContent = customerCancelled;
+                if ($('cntCancelOther')) $('cntCancelOther').textContent = otherCancelled;
 
                 if (role === 'owner') {
                     if ($('sCancelled')) $('sCancelled').innerText = totalCancelled;
                     if ($('sLost')) $('sLost').innerText = formatPeso(revenueLost);
                     if ($('sRate')) $('sRate').innerText = `${cancelRate}%`;
                     if ($('sAdminCancelled')) $('sAdminCancelled').innerText = adminCancelled;
-                    renderCharts(cancelled);
+                    if ($('ownerCancelledChartsGrid') && !$('ownerCancelledChartsGrid').classList.contains('hidden')) {
+                        renderCharts(cancelled);
+                    }
                 }
 
                 const query = $('cancelSearch')?.value.trim().toLowerCase();
-                const filtered = cancelled.filter(order => {
+                const typeFilterVal = $('cancelTypeFilter')?.value || 'ALL';
+                const sortVal = $('cancelSortFilter')?.value || 'newest';
+
+                let filtered = cancelled.filter(order => {
+                    const actor = inferCancelledBy(order);
+                    if (cancelActorFilter !== 'ALL' && actor !== cancelActorFilter) return false;
+                    const isTeam = order.order_type === 'team' || (order.roster_data && order.roster_data !== '[]' && order.roster_data !== 'null');
+                    if (typeFilterVal === 'team' && !isTeam) return false;
+                    if (typeFilterVal === 'single' && isTeam) return false;
                     if (!query) return true;
                     return [
                         order.id,
+                        `#${order.id}`,
                         order.user?.name,
                         order.user?.email,
                         order.team_name,
                         order.player_number,
+                        order.pattern,
                         order.cancelled_reason,
-                        inferCancelledBy(order)
+                        actor
                     ].some(value => String(value || '').toLowerCase().includes(query));
                 });
 
-                $('table').innerHTML = filtered.length ? filtered.map(order => `
-                    <tr class="glass-row transition">
-                        <td class="p-6 font-mono font-bold text-red-600">#${order.id}</td>
-                        <td class="p-6">
-                            <div class="font-bold">${order.user?.name || 'Unknown'}</div>
-                            <div class="text-[10px] text-slate-400">${order.user?.email || ''}</div>
-                        </td>
-                        <td class="p-6 font-bold">#${order.player_number || '00'} ${order.team_name || 'Design'}</td>
-                        <td class="p-6">
-                            <p class="font-bold text-slate-900">${formatPeso(order.price)}</p>
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${order.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
+                filtered = [...filtered].sort((a, b) => {
+                    if (sortVal === 'oldest') return Number(a.id) - Number(b.id);
+                    if (sortVal === 'highest') return Number(b.price || 0) - Number(a.price || 0);
+                    return Number(b.id) - Number(a.id);
+                });
+
+                $('table').innerHTML = filtered.length ? filtered.map(order => {
+                    const actor = inferCancelledBy(order);
+                    const isTeamOrder = order.order_type === 'team' || (order.roster_data && order.roster_data !== '[]' && order.roster_data !== 'null');
+                    const actorBadgeClass = actor === 'Admin'
+                        ? 'bg-red-100 text-red-700'
+                        : (actor === 'Customer' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-600');
+                    const total = Number(order.price || 0);
+                    const shippingFee = Number(order.shipping_fee || 0);
+                    const discount = Number(order.discount_amount || 0);
+                    const subtotal = order.subtotal
+                        ? (Number(order.subtotal) + (Number(order.subtotal) === total && discount > 0 ? discount : 0))
+                        : Math.max(total - shippingFee + discount, 0);
+
+                    return `
+                    <tr class="glass-row transition align-top">
+                        <td class="px-5 py-4 whitespace-nowrap">
+                            <div class="font-mono font-black text-red-600 text-base">#${order.id}</div>
+                            <span class="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full ${order.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
                                 ${order.payment_status || 'Unpaid'}
                             </span>
                         </td>
-                        <td class="p-6">
-                            <span class="text-xs font-black px-3 py-1 rounded-full ${inferCancelledBy(order) === 'Admin' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}">
-                                ${inferCancelledBy(order)}
+                        <td class="px-4 py-4">
+                            <div class="font-bold text-slate-900">${order.user?.name || 'Unknown'}</div>
+                            <div class="text-[11px] text-slate-400 break-all">${order.user?.email || ''}</div>
+                        </td>
+                        <td class="px-4 py-4 min-w-[340px]">
+                            <div class="flex items-start gap-3.5">
+                                <button type="button" onclick="openDesignModal(${order.id})" title="Click to inspect full design & specs"
+                                    class="shrink-0 w-16 h-16 rounded-2xl bg-[#070b14] border border-slate-700 p-1 shadow-sm hover:scale-105 transition cursor-pointer overflow-hidden flex items-center justify-center">
+                                    <canvas id="cancel-thumb-${order.id}" width="160" height="160" class="w-full h-full object-contain"></canvas>
+                                </button>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-black text-slate-900 text-sm">#${order.player_number || '00'} ${order.team_name || 'Design'}</span>
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${isTeamOrder ? 'bg-indigo-50 border border-indigo-200 text-indigo-700' : 'bg-slate-100 text-slate-600'}">
+                                            ${isTeamOrder ? `👥 Team (${order.quantity || 1})` : `👤 ${order.quantity || 1} pc`}
+                                        </span>
+                                    </div>
+                                    <div class="mt-1 flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                                        <span class="capitalize font-semibold">${order.pattern || 'None'}</span>
+                                        <span>•</span>
+                                        <div class="inline-flex items-center gap-1">
+                                            <span class="w-3.5 h-3.5 rounded border inline-block" style="background:${order.base_color || '#ddd'}"></span>
+                                            <span class="w-3.5 h-3.5 rounded border inline-block" style="background:${order.accent_color || '#ddd'}"></span>
+                                        </div>
+                                        <span>•</span>
+                                        <span>Sub: ${formatPeso(subtotal)}</span>
+                                        ${discount > 0 ? `<span class="text-emerald-600 font-bold">(-${formatPeso(discount)})</span>` : ''}
+                                        <span class="font-black text-red-600">${formatPeso(total)}</span>
+                                    </div>
+                                    <div class="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                                        <button type="button" onclick="openDesignModal(${order.id})"
+                                            class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition shadow-sm">
+                                            <span>🎨</span>
+                                            <span>Design &amp; Specs</span>
+                                        </button>
+                                        ${isTeamOrder ? `
+                                            <button type="button" onclick="openRosterModal(${order.id})"
+                                                class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition">
+                                                <span>📋</span>
+                                                <span>Roster Sheet (${order.quantity || 1})</span>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            <span class="text-xs font-black px-3 py-1 rounded-full ${actorBadgeClass}">
+                                ${actor}
                             </span>
                         </td>
-                        <td class="p-6 max-w-xs">
-                            <p class="text-sm text-slate-700">${order.cancelled_reason || 'No reason provided.'}</p>
+                        <td class="px-4 py-4 max-w-xs">
+                            <p class="text-xs font-medium text-slate-900">${order.cancelled_reason || 'No reason provided.'}</p>
                         </td>
-                        <td class="p-6 text-right text-xs font-bold text-slate-500">${formatDate(order.created_at)}</td>
+                        <td class="px-5 py-4 text-right whitespace-nowrap text-xs font-bold text-slate-500">${formatDate(order.created_at)}</td>
                     </tr>
-                    <tr class="bg-slate-900/5 border-b border-slate-200">
-                        <td colspan="7" class="px-6 py-2">
-                            ${window.OrderPreview ? OrderPreview.renderCardHTML(order, 'cancel-ord') : ''}
-                        </td>
-                    </tr>
-                `).join('') : '<tr><td colspan="7" class="p-12 text-center text-slate-400 font-bold">No cancelled orders found.</td></tr>';
+                `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No matching cancelled orders found.</td></tr>';
 
                 if (window.OrderPreview) {
-                    setTimeout(() => OrderPreview.initAllCanvases(filtered, 'cancel-ord'), 50);
+                    setTimeout(() => OrderPreview.initAllThumbs(filtered, 'cancel-thumb'), 30);
                 }
             } catch (err) {
                 console.error('Failed to load cancelled orders:', err);

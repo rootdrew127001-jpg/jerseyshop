@@ -2,6 +2,17 @@
     if (window.__modelyxAdminNavLoaded) return;
     window.__modelyxAdminNavLoaded = true;
 
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((reg) => reg.unregister());
+        }).catch(() => {});
+    }
+    if ('caches' in window) {
+        caches.keys().then((names) => {
+            names.forEach((name) => caches.delete(name));
+        }).catch(() => {});
+    }
+
     if (!window.ModelyxTheme && !document.querySelector('script[src*="theme.js"]')) {
         const themeScript = document.createElement('script');
         themeScript.src = '/static/js/theme.js';
@@ -34,6 +45,11 @@
         return;
     }
 
+    if ((currentPath === '/admin.html' || currentPath === '/admin' || currentPath === '/') && activeTab === 'pricing' && role !== 'owner') {
+        window.location.replace('/admin.html');
+        return;
+    }
+
     window.adminLogout = async function () {
         const t = localStorage.getItem('modelyx_token');
         if (t) {
@@ -58,10 +74,11 @@
     const buildSidebar = () => {
         const isOrdersPage = currentPath === '/admin.html' || currentPath === '/admin' || currentPath === '/';
         const isCancelledPage = currentPath === '/cancelled.html' || currentPath === '/cancelled';
+        const isDeletedPage = currentPath === '/deleted.html' || currentPath === '/deleted';
         const isStaffPage = currentPath === '/staff.html' || currentPath === '/staff';
 
         const isOrdersTabActive = isOrdersPage && activeTab !== 'pricing';
-        const isPricingTabActive = isOrdersPage && activeTab === 'pricing';
+        const isPricingTabActive = isOrdersPage && activeTab === 'pricing' && role === 'owner';
 
         const activeIndigoClass = 'w-full flex items-center space-x-3 p-3 bg-indigo-600 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/20 text-left cursor-pointer transition';
         const activeRedClass = 'w-full flex items-center space-x-3 p-3 bg-red-600 text-white rounded-xl font-bold shadow-lg shadow-red-500/20 text-left cursor-pointer transition';
@@ -83,7 +100,7 @@
                     </svg>
                     <span>Orders</span>
                 </button>
-                <button type="button" id="navPricingBtn" class="${isPricingTabActive ? activeIndigoClass : inactiveClass}">
+                <button type="button" id="navPricingBtn" class="${isPricingTabActive ? activeIndigoClass : inactiveClass}" style="${role !== 'owner' ? 'display: none;' : ''}">
                     <span class="text-base shrink-0">🏷️</span>
                     <span>Pricing & Team Tiers</span>
                 </button>
@@ -92,6 +109,12 @@
                         <path d="M18.364 18.364A9 9 0 115.636 5.636m12.728 12.728L5.636 5.636" stroke-width="2" stroke-linecap="round" />
                     </svg>
                     <span>Cancelled Orders</span>
+                </button>
+                <button type="button" id="navDeletedLink" class="${isDeletedPage ? activeRedClass : inactiveClass}">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Rejected / Deleted</span>
                 </button>
                 <button type="button" id="navStaffLink" class="${isStaffPage ? activeIndigoClass : inactiveClass}" style="${role !== 'owner' ? 'display: none;' : ''}">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,6 +146,7 @@
         });
 
         aside.querySelector('#navPricingBtn').addEventListener('click', () => {
+            if (role !== 'owner') return;
             if (isOrdersPage) {
                 activeTab = 'pricing';
                 if (typeof window.switchAdminTab === 'function') {
@@ -138,6 +162,12 @@
         aside.querySelector('#navCancelledLink').addEventListener('click', () => {
             if (!isCancelledPage) {
                 window.location.href = '/cancelled.html';
+            }
+        });
+
+        aside.querySelector('#navDeletedLink').addEventListener('click', () => {
+            if (!isDeletedPage) {
+                window.location.href = '/deleted.html';
             }
         });
 
@@ -189,8 +219,8 @@
                 if (typeof window.switchAdminTab === 'function' && !window._adminNavSwitchHooked) {
                     const origSwitch = window.switchAdminTab;
                     window.switchAdminTab = function(tab) {
-                        activeTab = tab;
-                        const res = origSwitch.apply(this, arguments);
+                        activeTab = (tab === 'pricing' && role !== 'owner') ? 'orders' : tab;
+                        const res = origSwitch.apply(this, [activeTab]);
                         updateTabButtonStyles();
                         return res;
                     };
@@ -200,7 +230,7 @@
             hookSwitch();
             window.addEventListener('load', hookSwitch);
 
-            if (activeTab === 'pricing') {
+            if (activeTab === 'pricing' && role === 'owner') {
                 const checkAndSwitch = () => {
                     if (typeof window.switchAdminTab === 'function') {
                         window.switchAdminTab('pricing');

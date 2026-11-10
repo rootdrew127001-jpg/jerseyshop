@@ -63,6 +63,9 @@ class Order(Base):
     pricing_breakdown = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     cancelled_reason = Column(Text, nullable=True)
+    is_deleted = Column(Integer, default=0)
+    deleted_at = Column(DateTime, nullable=True)
+    deleted_by = Column(String(100), nullable=True)
 
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")

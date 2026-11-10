@@ -1051,7 +1051,7 @@ window.OrderPreview = (function () {
         const currentPiece = ordersPieceCache[pieceKey];
 
         return `
-        <div class="bg-[#070b14] border border-slate-800 rounded-3xl p-5 shadow-2xl my-4 text-white font-sans">
+        <div class="order-preview-card bg-[#070b14] border border-slate-800 rounded-3xl p-5 shadow-2xl my-2 text-white font-sans">
             <!-- Section Header -->
             <div class="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4 flex-wrap gap-2">
                 <div class="flex items-center gap-2">
@@ -1254,6 +1254,18 @@ window.OrderPreview = (function () {
         ordersArray.forEach(order => initOrderCanvases(order, prefix));
     }
 
+    function initAllThumbs(ordersArray = [], prefix = 'thumb') {
+        ordersArray.forEach(order => {
+            if (!order) return;
+            ordersCache[order.id] = order;
+            const canvas = document.getElementById(`${prefix}-${order.id}`);
+            if (canvas) {
+                const specs = parseOrderNotes(order.notes, order);
+                renderView2D(canvas, specs, false, 'full');
+            }
+        });
+    }
+
     function toggleSpecs(elementId, btn) {
         const el = document.getElementById(elementId);
         if (!el) return;
@@ -1275,6 +1287,7 @@ window.OrderPreview = (function () {
         renderCardHTML: renderOrderPreviewCardHTML,
         initCanvases: initOrderCanvases,
         initAllCanvases: initAllCanvases,
+        initAllThumbs: initAllThumbs,
         switchPiece: switchPiece,
         toggleSpecs: toggleSpecs
     };

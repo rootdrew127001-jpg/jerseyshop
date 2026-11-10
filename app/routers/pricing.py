@@ -4,7 +4,7 @@ from typing import Dict, Any, Optional
 from pydantic import BaseModel
 from app.core.database import get_db
 from app.services import pricing_service
-from app.routers.deps import require_admin
+from app.routers.deps import require_owner
 
 router = APIRouter(prefix="/pricing", tags=["Pricing"])
 
@@ -27,7 +27,7 @@ def get_pricing_config(db: Session = Depends(get_db)):
 def update_pricing_config(
     payload: Dict[str, Any] = Body(...),
     db: Session = Depends(get_db),
-    admin_user = Depends(require_admin)
+    admin_user = Depends(require_owner)
 ):
     updated = pricing_service.update_pricing_dict(db, payload)
     return {

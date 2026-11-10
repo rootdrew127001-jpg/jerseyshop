@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from app.core.database import get_db
 from app.schemas.schemas import CancelOrderRequest, OrderCreate, OrderResponse
 from app.services import order_service
@@ -45,13 +45,37 @@ def update_status(
 @router.delete("/{order_id}")
 def delete_order(
     order_id: int,
+    reason: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     current_user = Depends(require_owner)
 ):
-    result = order_service.remove_order(db, order_id)
+    actor_name = current_user.get("name") or current_user.get("email") or "Store Owner"
+    result = order_service.remove_order(db, order_id, actor_name=actor_name, reason=reason, actor_id=current_user.get("id"))
     if not result:
         raise HTTPException(status_code=404, detail="Order not found")
-    return {"message": "Order deleted"}
+    return {"message": "Order archived to Deleted / Rejected list", "order_id": order_id}
+
+@router.post("/{order_id}/restore")
+def restore_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_owner)
+):
+    order = order_service.restore_order(db, order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": "Order restored", "order_id": order_id}
+
+@router.delete("/{order_id}/permanent")
+def permanent_delete_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_owner)
+):
+    result = order_service.permanent_delete_order(db, order_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"message": "Order permanently deleted"}
 
 
 

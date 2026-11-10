@@ -16,29 +16,32 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="/static/js/orderPreview.js?v=2.5"></script>
-    <script src="/static/js/adminNav.js"></script>
+    <link rel="stylesheet" href="/static/styles.css?v=2.0">
+    <script src="/static/js/orderPreview.js?v=2.6"></script>
+    <script src="/static/js/adminNav.js?v=2.2"></script>
     <script src="/static/js/deliveryTracker.js?v=3.2"></script>
 </head>
 
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
     <div id="adminNavMount"></div>
 
-    <main class="flex-1 overflow-y-auto p-8">
+    <main class="flex-1 overflow-y-auto p-6 lg:p-8">
         <div id="ordersTabView">
-        <header class="mb-8 space-y-6">
+        <header class="mb-6 space-y-5">
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                 <div>
                     <p class="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Outfitter Dashboard</p>
                     <h2 class="text-3xl font-black">Pipeline</h2>
-                    <p class="text-slate-500 text-sm">Showing paid orders ready for production.</p>
+                    <p class="text-slate-500 text-sm">Manage paid orders ready for production at a glance.</p>
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <button id="toggleChartsBtn" type="button" onclick="toggleOwnerCharts()"
+                        class="bg-white border px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition flex items-center gap-1.5 cursor-pointer">
+                        <span>📊</span>
+                        <span id="toggleChartsLabel">Show Charts</span>
+                    </button>
                     <button id="exportCsvBtn" onclick="exportCSV()"
-                        class="bg-white border px-5 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition">Export
-                        CSV</button>
-                    <!-- Notification Bell -->
+                        class="bg-white border px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-50 transition cursor-pointer">Export CSV</button>
                     <div class="relative">
                         <button onclick="toggleAdminNotifications()"
                             class="relative p-2 rounded-xl bg-white border hover:bg-slate-50 transition">
@@ -67,7 +70,6 @@
                         </div>
                     </div>
 
-                    <!-- Admin Theme Switcher Dropdown -->
                     <div class="relative">
                         <button id="adminThemeBtn" onclick="toggleAdminThemeDropdown(event)"
                             class="flex items-center gap-2 bg-white border px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-slate-50 transition shadow-sm cursor-pointer"
@@ -81,83 +83,106 @@
                     </div>
 
                     <button onclick="render()"
-                        class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition">Refresh</button>
+                        class="bg-indigo-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-lg hover:bg-indigo-700 transition cursor-pointer">Refresh</button>
                 </div>
-            </div>
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="rounded-3xl bg-slate-50 px-5 py-4 shadow-sm">
-                    <p class="text-[10px] uppercase tracking-widest text-slate-400">Quick View</p>
-                    <p class="mt-2 text-sm text-slate-500">Search orders by customer, team, or status.</p>
-                </div>
-                <input id="orderSearch" type="search" placeholder="Search orders..."
-                    class="w-full sm:w-80 p-3 border rounded-2xl bg-white text-sm outline-none focus:border-indigo-500" />
             </div>
         </header>
 
-        <!-- Stats Cards & Analytics (Store Owner Only) -->
         <div id="ownerAnalyticsSection">
-            <!-- Stats Cards -->
-            <div class="grid grid-cols-4 gap-4 mb-8">
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Requests</p>
                     <h3 id="sNew" class="text-2xl font-black text-indigo-600 mt-1">0</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Revenue</p>
                     <h3 id="sRev" class="text-2xl font-black text-emerald-600 mt-1">₱0</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">In Production</p>
                     <h3 id="sPro" class="text-2xl font-black mt-1">0</h3>
                 </div>
-                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <div class="bg-white p-4 rounded-2xl border shadow-sm">
                     <p class="text-[10px] font-black text-slate-400 uppercase">Done</p>
                     <h3 id="sDone" class="text-2xl font-black text-green-600 mt-1">0</h3>
                 </div>
             </div>
 
-            <!-- Analytics Charts -->
-            <div class="grid grid-cols-3 gap-6 mb-8">
-                <!-- Status Breakdown -->
-                <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status Breakdown</p>
-                    <canvas id="statusChart" height="200"></canvas>
+            <div id="ownerChartsGrid" class="hidden space-y-6 mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white border rounded-2xl p-6 shadow-sm">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status Breakdown</p>
+                        <canvas id="statusChart" height="200"></canvas>
+                    </div>
+                    <div class="bg-white border rounded-2xl p-6 shadow-sm lg:col-span-2">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Orders Over Time</p>
+                        <canvas id="ordersChart" height="100"></canvas>
+                    </div>
                 </div>
-                <!-- Revenue Chart -->
-                <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Orders Over Time</p>
-                    <canvas id="ordersChart" height="100"></canvas>
-                </div>
-            </div>
 
-            <!-- Top Patterns -->
-            <div class="grid grid-cols-3 gap-6 mb-8">
-                <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Top Patterns</p>
-                    <canvas id="patternChart" height="200"></canvas>
-                </div>
-                <!-- Recent Activity -->
-                <div class="bg-white border rounded-2xl p-6 shadow-sm col-span-2">
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</p>
-                    <div id="recentActivity" class="space-y-3"></div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white border rounded-2xl p-6 shadow-sm">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Top Patterns</p>
+                        <canvas id="patternChart" height="200"></canvas>
+                    </div>
+                    <div class="bg-white border rounded-2xl p-6 shadow-sm lg:col-span-2">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</p>
+                        <div id="recentActivity" class="space-y-3"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Orders Table -->
-        <div class="bg-white border rounded-[2rem] shadow-sm overflow-hidden mb-12">
-            <table class="w-full text-left text-sm">
+        <div class="bg-white border rounded-2xl p-3.5 shadow-sm mb-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1.5" id="statusFilterTabs">
+                <button type="button" onclick="setAdminStatusFilter('ALL')" data-status-tab="ALL"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-indigo-600 text-white">
+                    All Active (<span id="cntAll">0</span>)
+                </button>
+                <button type="button" onclick="setAdminStatusFilter('Pending Review')" data-status-tab="Pending Review"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ⏳ Pending Review (<span id="cntPending">0</span>)
+                </button>
+                <button type="button" onclick="setAdminStatusFilter('In Production')" data-status-tab="In Production"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ⚙️ In Production (<span id="cntProd">0</span>)
+                </button>
+                <button type="button" onclick="setAdminStatusFilter('Completed')" data-status-tab="Completed"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    ✅ Completed (<span id="cntDone">0</span>)
+                </button>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <select id="typeFilter" onchange="render()"
+                    class="px-3 py-2 border rounded-xl bg-white text-xs font-bold outline-none focus:border-indigo-500 cursor-pointer">
+                    <option value="ALL">All Types</option>
+                    <option value="team">👥 Team Roster</option>
+                    <option value="single">👤 Single</option>
+                </select>
+                <select id="sortFilter" onchange="render()"
+                    class="px-3 py-2 border rounded-xl bg-white text-xs font-bold outline-none focus:border-indigo-500 cursor-pointer">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="highest">Highest Total</option>
+                </select>
+                <input id="orderSearch" type="search" placeholder="Search #ID, customer, team, city..."
+                    class="w-full sm:w-64 px-3.5 py-2 border rounded-xl bg-white text-xs font-medium outline-none focus:border-indigo-500" />
+            </div>
+        </div>
+
+        <div class="bg-white border rounded-[1.5rem] shadow-sm overflow-x-auto mb-12">
+            <table class="w-full text-left text-sm min-w-[920px]">
                 <thead class="bg-slate-50 text-[10px] font-black uppercase text-slate-400 border-b">
                     <tr>
-                        <th class="p-6">ID</th>
-                        <th class="p-6">Customer</th>
-                        <th class="p-6">Order Summary</th>
-                        <th class="p-6">Shipping Location</th>
-                        <th class="p-6">Status</th>
-                        <th class="p-6 text-right">Actions</th>
+                        <th class="px-5 py-3.5">Order</th>
+                        <th class="px-4 py-3.5">Customer</th>
+                        <th class="px-4 py-3.5">Design &amp; Pricing</th>
+                        <th class="px-4 py-3.5">Shipping &amp; Route</th>
+                        <th class="px-4 py-3.5">Status</th>
+                        <th class="px-5 py-3.5 text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody id="table" class="divide-y divide-slate-50"></tbody>
+                <tbody id="table" class="divide-y divide-slate-100"></tbody>
             </table>
         </div>
         </div>
@@ -292,10 +317,7 @@
                         <p class="text-xs text-slate-400" id="rosterModalCustomer">-</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="printRosterSheet()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer">
-                            <span>🖨️</span> Print Sheet
-                        </button>
-                        <button onclick="closeRosterModal()" class="text-slate-400 hover:text-slate-700 text-2xl leading-none">&times;</button>
+                        <button onclick="closeRosterModal()" class="text-slate-400 hover:text-slate-900 text-2xl leading-none cursor-pointer">&times;</button>
                     </div>
                 </div>
 
@@ -318,7 +340,38 @@
 
                 <div class="flex justify-between items-center text-xs text-slate-500 pt-3 border-t">
                     <span id="rosterModalTotalQty">0 jerseys total</span>
-                    <button onclick="closeRosterModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                    <button onclick="closeRosterModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="designPreviewModal" style="display:none"
+            onclick="if(event.target===this) closeDesignModal()"
+            class="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-4xl rounded-3xl p-6 shadow-2xl border border-slate-200 max-h-[92vh] flex flex-col">
+                <div class="flex justify-between items-center pb-4 border-b gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span id="designModalOrderId" class="text-xs font-mono font-bold bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md">#0</span>
+                            <span id="designModalPaidBadge" class="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Paid</span>
+                        </div>
+                        <h3 id="designModalTitle" class="text-xl font-black text-slate-900 mt-1">Order Design</h3>
+                        <p id="designModalSub" class="text-xs text-slate-400">-</p>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <select id="designModalStatusSelect" onchange="updateOrderFromModal(this.value)"
+                            class="text-xs font-bold border rounded-xl px-3 py-1.5 bg-white cursor-pointer">
+                            <option value="Pending Review">⏳ Pending Review</option>
+                            <option value="In Production">⚙️ In Production</option>
+                            <option value="Completed">✅ Completed</option>
+                        </select>
+                        <button onclick="closeDesignModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 font-bold text-lg flex items-center justify-center cursor-pointer transition">&times;</button>
+                    </div>
+                </div>
+                <div id="designModalBody" class="flex-1 overflow-y-auto pt-2 pr-1"></div>
+                <div class="flex justify-between items-center pt-4 mt-3 border-t text-xs text-slate-500">
+                    <span id="designModalAddress">-</span>
+                    <button onclick="closeDesignModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2 rounded-xl font-bold cursor-pointer transition">Close</button>
                 </div>
             </div>
         </div>
@@ -326,7 +379,6 @@
 
     <script>
         const $ = id => document.getElementById(id);
-        // Sync cookies from OAuth / Dev bypass if token is not yet in localStorage
         if (!localStorage.getItem('modelyx_token')) {
             const cToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
             if (cToken) {
@@ -344,19 +396,96 @@
             const staffLink = $('navStaffLink');
             if (staffLink) staffLink.style.display = 'none';
 
+            const pricingLink = $('navPricingBtn');
+            if (pricingLink) pricingLink.style.display = 'none';
+
+            const pricingView = $('pricingTabView');
+            if (pricingView) pricingView.remove();
+
+            if (window.location.search.includes('tab=pricing')) {
+                history.replaceState(null, '', '/admin.html');
+            }
+
             const analyticsSec = $('ownerAnalyticsSection');
             if (analyticsSec) analyticsSec.style.display = 'none';
+
+            const chartsBtn = $('toggleChartsBtn');
+            if (chartsBtn) chartsBtn.style.display = 'none';
 
             const exportBtn = $('exportCsvBtn');
             if (exportBtn) exportBtn.style.display = 'none';
         }
+
+        let adminStatusFilter = 'ALL';
+        let activeDesignModalOrderId = null;
+
+        window.toggleOwnerCharts = function() {
+            const grid = $('ownerChartsGrid');
+            const lbl = $('toggleChartsLabel');
+            if (!grid) return;
+            const isHidden = grid.classList.toggle('hidden');
+            if (lbl) lbl.textContent = isHidden ? 'Show Charts' : 'Hide Charts';
+            if (!isHidden && window.allData) {
+                renderCharts(window.allData);
+            }
+        };
+
+        window.setAdminStatusFilter = function(st) {
+            adminStatusFilter = st;
+            document.querySelectorAll('#statusFilterTabs button').forEach(btn => {
+                const isActive = btn.getAttribute('data-status-tab') === st;
+                btn.className = isActive
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-indigo-600 text-white'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200';
+            });
+            render();
+        };
+
+        window.openDesignModal = function(orderId) {
+            const list = window.adminOrdersData || window.allData || [];
+            const order = list.find(o => o.id === orderId);
+            if (!order) return;
+            activeDesignModalOrderId = order.id;
+
+            $('designModalOrderId').textContent = `#${order.id}`;
+            $('designModalTitle').textContent = `#${order.player_number || '00'} ${order.team_name || 'Custom Jersey'}`;
+            $('designModalSub').textContent = `Customer: ${order.user?.name || 'Unknown'} (${order.user?.email || '-'}) • ${order.quantity || 1} pc${Number(order.quantity || 1) > 1 ? 's' : ''}`;
+            const statusSel = $('designModalStatusSelect');
+            if (statusSel) statusSel.value = order.status || 'Pending Review';
+            const addr = [order.shipping_address, order.shipping_city, order.shipping_state].filter(Boolean).join(', ');
+            $('designModalAddress').textContent = addr ? `Ship To: ${order.shipping_name || order.user?.name || ''} — ${addr}` : '';
+
+            const body = $('designModalBody');
+            if (body && window.OrderPreview) {
+                body.innerHTML = OrderPreview.renderCardHTML(order, 'admin-modal');
+                setTimeout(() => OrderPreview.initCanvases(order, 'admin-modal'), 30);
+            }
+            $('designPreviewModal').style.display = 'flex';
+        };
+
+        window.closeDesignModal = function() {
+            $('designPreviewModal').style.display = 'none';
+            activeDesignModalOrderId = null;
+        };
+
+        window.updateOrderFromModal = async function(newStatus) {
+            if (!activeDesignModalOrderId) return;
+            await updateOrder(activeDesignModalOrderId, newStatus);
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if ($('designPreviewModal') && $('designPreviewModal').style.display === 'flex') closeDesignModal();
+                if ($('rosterModal') && $('rosterModal').style.display === 'flex') closeRosterModal();
+            }
+        });
 
         let statusChartInst = null;
         let ordersChartInst = null;
         let patternChartInst = null;
 
         const renderCharts = (data) => {
-            const activeData = data.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid');
+            const activeData = data.filter(o => Number(o.is_deleted) !== 1 && o.status !== 'Cancelled' && o.payment_status === 'Paid');
             const pending = activeData.filter(o => o.status === 'Pending Review').length;
             const production = activeData.filter(o => o.status === 'In Production').length;
             const completed = activeData.filter(o => o.status === 'Completed').length;
@@ -469,19 +598,37 @@
                 }
 
                 const allData = await res.json();
+                window.allData = allData;
                 window.adminOrdersData = allData;
+
+                const activePaid = allData.filter(o => Number(o.is_deleted) !== 1 && o.payment_status === 'Paid' && o.status !== 'Cancelled');
+                if ($('cntAll')) $('cntAll').textContent = activePaid.length;
+                if ($('cntPending')) $('cntPending').textContent = activePaid.filter(o => o.status === 'Pending Review').length;
+                if ($('cntProd')) $('cntProd').textContent = activePaid.filter(o => o.status === 'In Production').length;
+                if ($('cntDone')) $('cntDone').textContent = activePaid.filter(o => o.status === 'Completed').length;
+
                 const query = $('orderSearch')?.value.trim().toLowerCase();
-                const data = allData.filter(o => {
-                    const isPaid = o.payment_status === 'Paid';
-                    if (!isPaid) return false;
-                    if (o.status === 'Cancelled') return false;
+                const typeFilterVal = $('typeFilter')?.value || 'ALL';
+                const sortVal = $('sortFilter')?.value || 'newest';
+
+                let data = activePaid.filter(o => {
+                    if (adminStatusFilter !== 'ALL' && o.status !== adminStatusFilter) return false;
+                    const isTeam = o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null');
+                    if (typeFilterVal === 'team' && !isTeam) return false;
+                    if (typeFilterVal === 'single' && isTeam) return false;
                     if (!query) return true;
-                    return [o.team_name, o.player_number, o.status, o.user?.name].some(v =>
+                    return [o.id, `#${o.id}`, o.team_name, o.player_number, o.status, o.pattern, o.user?.name, o.user?.email, o.shipping_city, o.shipping_address].some(v =>
                         String(v || '').toLowerCase().includes(query)
                     );
                 });
 
-                if (role === 'owner') {
+                data = [...data].sort((a, b) => {
+                    if (sortVal === 'oldest') return Number(a.id) - Number(b.id);
+                    if (sortVal === 'highest') return Number(b.price || 0) - Number(a.price || 0);
+                    return Number(b.id) - Number(a.id);
+                });
+
+                if (role === 'owner' && $('ownerChartsGrid') && !$('ownerChartsGrid').classList.contains('hidden')) {
                     renderCharts(allData);
                 }
 
@@ -494,118 +641,111 @@
                         : Math.max(total - shippingFee + discount, 0);
                     const shippingAddress = [o.shipping_address, o.shipping_city, o.shipping_state, o.shipping_zip, o.shipping_country].filter(Boolean).join(', ');
                     const isTeamOrder = o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null');
+                    const orderDate = o.created_at ? new Date(o.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) : '';
+                    const statusColor = o.status === 'Completed'
+                        ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
+                        : (o.status === 'In Production' ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-amber-300 bg-amber-50 text-amber-700');
+
                     return `
-                    <tr class="glass-row transition">
-                        <td class="p-6 font-mono font-bold text-indigo-600">#${o.id}</td>
-                        <td class="p-6">
-                            <div class="font-bold">${o.user?.name || 'Unknown'}</div>
-                            <div class="text-[10px] text-slate-400">${o.user?.email || ''}</div>
+                    <tr class="glass-row transition align-top">
+                        <td class="px-5 py-4 whitespace-nowrap">
+                            <div class="font-mono font-black text-indigo-600 text-base">#${o.id}</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">${orderDate}</div>
+                            <span class="inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">✓ Paid</span>
                         </td>
-                        <td class="p-6 min-w-[260px]">
-                            ${isTeamOrder ? `
-                                <div class="mb-2 flex items-center gap-1.5 flex-wrap">
-                                    <span class="inline-flex items-center gap-1 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded-full">
-                                        👥 Team Roster (${o.quantity || 1} pcs)
-                                    </span>
-                                    <button type="button" onclick="openRosterModal(${o.id})" class="inline-flex items-center gap-1 bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition">
-                                        📋 View Roster Sheet
-                                    </button>
-                                </div>
-                            ` : ''}
-                            <p class="font-black text-slate-900">#${o.player_number || '00'} ${o.team_name || 'Design'}</p>
-                            <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
-                                <div>
-                                    <p class="text-slate-400">Pattern</p>
-                                    <p class="font-bold capitalize">${o.pattern || 'None'}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-400">Quantity</p>
-                                    <p class="font-bold">${o.quantity || 1} jersey${Number(o.quantity || 1) > 1 ? 's' : ''}</p>
-                                </div>
-                                <div>
-                                    <p class="text-slate-400">Colors</p>
-                                    <div class="flex items-center gap-1 mt-1">
-                                        <div class="w-5 h-5 rounded-md border" style="background:${o.base_color || '#ddd'}"></div>
-                                        <div class="w-5 h-5 rounded-md border" style="background:${o.accent_color || '#ddd'}"></div>
+                        <td class="px-4 py-4">
+                            <div class="font-bold text-slate-900">${o.user?.name || 'Unknown'}</div>
+                            <div class="text-[11px] text-slate-400 break-all">${o.user?.email || ''}</div>
+                        </td>
+                        <td class="px-4 py-4 min-w-[340px]">
+                            <div class="flex items-start gap-3.5">
+                                <button type="button" onclick="openDesignModal(${o.id})" title="Click to inspect full design & specs"
+                                    class="shrink-0 w-16 h-16 rounded-2xl bg-[#070b14] border border-slate-700 p-1 shadow-sm hover:scale-105 transition cursor-pointer overflow-hidden flex items-center justify-center">
+                                    <canvas id="admin-thumb-${o.id}" width="160" height="160" class="w-full h-full object-contain"></canvas>
+                                </button>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-black text-slate-900 text-sm">#${o.player_number || '00'} ${o.team_name || 'Design'}</span>
+                                        <span class="text-[10px] font-black px-2 py-0.5 rounded-full ${isTeamOrder ? 'bg-indigo-50 border border-indigo-200 text-indigo-700' : 'bg-slate-100 text-slate-600'}">
+                                            ${isTeamOrder ? `👥 Team (${o.quantity || 1})` : `👤 ${o.quantity || 1} pc`}
+                                        </span>
+                                    </div>
+                                    <div class="mt-1 flex items-center gap-2 text-xs text-slate-500 flex-wrap">
+                                        <span class="capitalize font-semibold">${o.pattern || 'None'}</span>
+                                        <span>•</span>
+                                        <div class="inline-flex items-center gap-1">
+                                            <span class="w-3.5 h-3.5 rounded border inline-block" style="background:${o.base_color || '#ddd'}"></span>
+                                            <span class="w-3.5 h-3.5 rounded border inline-block" style="background:${o.accent_color || '#ddd'}"></span>
+                                        </div>
+                                        <span>•</span>
+                                        <span>Sub: ₱${subtotal.toLocaleString()}</span>
+                                        ${discount > 0 ? `<span class="text-emerald-600 font-bold">(-₱${discount.toLocaleString()})</span>` : ''}
+                                        <span class="font-black text-indigo-600">Total: ₱${total.toLocaleString()}</span>
+                                    </div>
+                                    <div class="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                                        <button type="button" onclick="openDesignModal(${o.id})"
+                                            class="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition shadow-sm">
+                                            <span>🎨</span>
+                                            <span>Design &amp; Specs</span>
+                                        </button>
+                                        ${isTeamOrder ? `
+                                            <button type="button" onclick="openRosterModal(${o.id})"
+                                                class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg cursor-pointer transition">
+                                                <span>📋</span>
+                                                <span>Roster Sheet (${o.quantity || 1})</span>
+                                            </button>
+                                        ` : ''}
                                     </div>
                                 </div>
-                                <div>
-                                    <p class="text-slate-400">Subtotal</p>
-                                    <p class="font-bold">₱${subtotal.toLocaleString()}</p>
-                                </div>
-                            </div>
-                            <div class="mt-3 rounded-2xl bg-slate-50 p-3 text-xs space-y-1">
-                                ${(o.discount_amount && Number(o.discount_amount) > 0) ? `
-                                    <div class="flex justify-between text-emerald-600 font-bold">
-                                        <span>Team Volume Discount</span>
-                                        <strong>-₱${Number(o.discount_amount).toLocaleString()}</strong>
-                                    </div>
-                                ` : ''}
-                                <div class="flex justify-between text-slate-500">
-                                    <span>Shipping Fee</span>
-                                    <strong class="text-slate-700">₱${shippingFee.toLocaleString()}</strong>
-                                </div>
-                                <div class="flex justify-between text-sm">
-                                    <span class="font-black text-slate-900">Total</span>
-                                    <strong class="text-indigo-600">₱${total.toLocaleString()}</strong>
-                                </div>
-                                <span class="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full ${o.payment_status === 'Paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}">
-                                    ${o.payment_status === 'Paid' ? 'Paid' : 'Unpaid'}
-                                </span>
                             </div>
                         </td>
-                        <td class="p-6 max-w-sm">
-                            <p class="font-bold">${o.shipping_name || o.user?.name || 'Recipient'}</p>
-                            <p class="text-[10px] text-slate-400">${o.shipping_phone || ''}</p>
-                            <p class="text-xs text-slate-500">${shippingAddress || 'No shipping address'}</p>
-                            ${o.delivery_notes ? `<p class="mt-1 text-xs text-slate-400">${o.delivery_notes}</p>` : ''}
-                            ${o.latitude && o.longitude ? `<p class="mt-1 font-mono text-[10px] text-slate-400">${Number(o.latitude).toFixed(8)}, ${Number(o.longitude).toFixed(8)}</p>` : ''}
+                        <td class="px-4 py-4 max-w-[260px]">
+                            <p class="font-bold text-slate-900 text-xs">${o.shipping_name || o.user?.name || 'Recipient'}</p>
+                            <p class="text-[11px] text-slate-400">${o.shipping_phone || ''}</p>
+                            <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">${shippingAddress || 'No shipping address'}</p>
                             ${o.latitude && o.longitude ? `
-                                <div class="mt-1 flex items-center gap-2">
+                                <div class="mt-2 flex items-center gap-2">
                                     <a href="https://www.google.com/maps/search/?api=1&query=${o.latitude},${o.longitude}"
                                         target="_blank" rel="noopener"
-                                        class="text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition">
-                                        Pin
+                                        class="text-[11px] font-bold text-slate-500 hover:text-indigo-600 transition">
+                                        📍 Pin
                                     </a>
-                                    <button type="button" onclick="window.cachedOrders = window.allData; window.DeliveryTracker && window.DeliveryTracker.openModal(${o.id})"
-                                        class="px-2 py-0.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold transition cursor-pointer flex items-center gap-1">
+                                    <button type="button" onclick="window.cachedOrders = window.adminOrdersData || window.allData; window.DeliveryTracker && window.DeliveryTracker.openModal(${o.id})"
+                                        class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1">
                                         <span>🛵</span>
                                         <span>Route</span>
                                     </button>
                                 </div>` : ''}
                         </td>
-                        <td class="p-6">
+                        <td class="px-4 py-4 whitespace-nowrap">
                             <select onchange="updateOrder(${o.id}, this.value)"
-                                class="text-xs font-bold border rounded p-1 bg-white">
+                                class="text-xs font-bold border rounded-xl px-2.5 py-1.5 cursor-pointer outline-none ${statusColor}">
                                 <option ${o.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
                                 <option ${o.status === 'In Production' ? 'selected' : ''}>In Production</option>
                                 <option ${o.status === 'Completed' ? 'selected' : ''}>Completed</option>
                             </select>
                         </td>
-                    <td class="p-6 text-right space-y-2">
-                        <div>
-                            <button onclick="adminCancelOrder(${o.id})"
-                                class="text-orange-400 font-bold text-xs hover:underline block">Cancel</button>
-                        </div>
-                        <div>
-                            <button onclick="deleteOrder(${o.id})"
-                                class="text-red-400 font-bold text-xs hover:underline block">Remove</button>
-                        </div>
-                    </td>
-                    </tr>
-                    <tr class="bg-slate-900/5 border-b border-slate-200">
-                        <td colspan="6" class="px-6 py-2">
-                            ${window.OrderPreview ? OrderPreview.renderCardHTML(o, 'admin-ord') : ''}
+                        <td class="px-5 py-4 text-right whitespace-nowrap space-y-1.5">
+                            <div>
+                                <button onclick="adminCancelOrder(${o.id})"
+                                    class="text-orange-500 hover:text-orange-600 font-bold text-xs hover:underline cursor-pointer">Cancel</button>
+                            </div>
+                            ${role === 'owner' ? `
+                                <div>
+                                    <button onclick="deleteOrder(${o.id})"
+                                        class="text-red-500 hover:text-red-600 font-bold text-xs hover:underline cursor-pointer">Remove</button>
+                                </div>
+                            ` : ''}
                         </td>
                     </tr>
-                `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No active orders found.</td></tr>';
+                `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No matching orders found.</td></tr>';
 
                 if (window.OrderPreview) {
-                    setTimeout(() => OrderPreview.initAllCanvases(data, 'admin-ord'), 50);
+                    setTimeout(() => OrderPreview.initAllThumbs(data, 'admin-thumb'), 30);
                 }
 
                 if (role === 'owner') {
-                    const stats = allData.filter(o => o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
+                    const stats = allData.filter(o => Number(o.is_deleted) !== 1 && o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
                         a.new += o.status === 'Pending Review' ? 1 : 0;
                         a.prod += o.status === 'In Production' ? 1 : 0;
                         a.done += o.status === 'Completed' ? 1 : 0;
@@ -637,15 +777,25 @@
         };
 
         const deleteOrder = async (id) => {
-            if (!confirm('Delete this order?')) return;
+            const reason = prompt(`Reason for rejecting / removing Order #${id} (leave blank for default):`, '');
+            if (reason === null) return;
             try {
-                await fetch(`/orders/${id}`, {
+                const url = reason.trim()
+                    ? `/orders/${id}?reason=${encodeURIComponent(reason.trim())}`
+                    : `/orders/${id}`;
+                const res = await fetch(url, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(errData.detail || 'Failed to remove order.');
+                    return;
+                }
                 render();
             } catch (err) {
                 console.error('Failed to delete:', err);
+                alert('Server error. Try again.');
             }
         };
 
@@ -807,6 +957,12 @@
         };
 
         window.switchAdminTab = function(tab) {
+            if (tab === 'pricing' && role !== 'owner') {
+                tab = 'orders';
+                if (window.location.search.includes('tab=pricing')) {
+                    history.replaceState(null, '', '/admin.html');
+                }
+            }
             const ordersView = $('ordersTabView');
             const pricingView = $('pricingTabView');
             const ordersBtn = $('navOrdersBtn');
@@ -836,6 +992,7 @@
         };
 
         window.loadAdminPricing = async function() {
+            if (role !== 'owner') return;
             try {
                 const res = await fetch('/pricing/config');
                 if (!res.ok) throw new Error('Failed to fetch pricing config');
@@ -864,6 +1021,7 @@
         };
 
         window.saveAdminPricing = async function() {
+            if (role !== 'owner') return;
             const notice = $('pricingNotice');
             try {
                 const parseInputPercent = v => {
@@ -952,7 +1110,7 @@
                     <td class="p-3 font-mono font-bold text-slate-400">${idx + 1}</td>
                     <td class="p-3 font-bold text-slate-900">${item.player_name || '-'}</td>
                     <td class="p-3 font-mono font-black text-indigo-600">${item.player_number || '-'}</td>
-                    <td class="p-3 font-bold text-slate-800">${(item.size || 'M').toUpperCase()}</td>
+                    <td class="p-3 font-bold text-slate-900">${(item.size || 'M').toUpperCase()}</td>
                     <td class="p-3 text-slate-400">${item.notes || '-'}</td>
                 </tr>
             `).join('');
@@ -963,54 +1121,6 @@
 
         window.closeRosterModal = function() {
             $('rosterModal').style.display = 'none';
-        };
-
-        window.printRosterSheet = function() {
-            const orderId = $('rosterModalOrderId').textContent;
-            const teamName = $('rosterModalTeamName').textContent;
-            const customer = $('rosterModalCustomer').textContent;
-            const sizes = $('rosterSizeSummary').innerHTML;
-            const body = $('rosterTableBody').innerHTML;
-
-            const printWin = window.open('', '', 'width=800,height=600');
-            printWin.document.write(`
-                <html>
-                    <head>
-                        <title>Production Roster Sheet - ${teamName}</title>
-                        <style>
-                            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 24px; color: #1e293b; }
-                            h1 { margin: 0 0 4px 0; font-size: 22px; }
-                            p { margin: 0 0 16px 0; color: #64748b; font-size: 13px; }
-                            .badges { margin-bottom: 20px; }
-                            .badges span { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 4px 10px; border-radius: 8px; font-weight: bold; font-size: 12px; margin-right: 6px; }
-                            table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 13px; }
-                            th, td { border: 1px solid #cbd5e1; padding: 8px 12px; text-align: left; }
-                            th { background: #f8fafc; font-weight: bold; }
-                        </style>
-                    </head>
-                    <body>
-                        <h1>Order ${orderId} — ${teamName} Production Sheet</h1>
-                        <p>${customer}</p>
-                        <div class="badges">${sizes}</div>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Player Name</th>
-                                    <th>Player Number</th>
-                                    <th>Size</th>
-                                    <th>Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody>${body}</tbody>
-                        </table>
-                    </body>
-                </html>
-            `);
-            printWin.document.close();
-            printWin.focus();
-            printWin.print();
-            printWin.close();
         };
     </script>
 </body>
