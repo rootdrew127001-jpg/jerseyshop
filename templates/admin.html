@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="/static/styles.css?v=2.0">
     <script src="/static/js/orderPreview.js?v=2.6"></script>
     <script src="/static/js/adminNav.js?v=2.2"></script>
-    <script src="/static/js/deliveryTracker.js?v=3.2"></script>
+    <script src="/static/js/deliveryTracker.js?v=3.3"></script>
 </head>
 
 <body class="bg-gray-50 flex h-screen overflow-hidden text-slate-900">
@@ -146,6 +146,10 @@
                 <button type="button" onclick="setAdminStatusFilter('In Production')" data-status-tab="In Production"
                     class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
                     ⚙️ In Production (<span id="cntProd">0</span>)
+                </button>
+                <button type="button" onclick="setAdminStatusFilter('Ready to Ship')" data-status-tab="Ready to Ship"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    📦 Ready to Ship (<span id="cntReady">0</span>)
                 </button>
                 <button type="button" onclick="setAdminStatusFilter('Completed')" data-status-tab="Completed"
                     class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
@@ -363,6 +367,7 @@
                             class="text-xs font-bold border rounded-xl px-3 py-1.5 bg-white cursor-pointer">
                             <option value="Pending Review">⏳ Pending Review</option>
                             <option value="In Production">⚙️ In Production</option>
+                            <option value="Ready to Ship">📦 Ready to Ship</option>
                             <option value="Completed">✅ Completed</option>
                         </select>
                         <button onclick="closeDesignModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 font-bold text-lg flex items-center justify-center cursor-pointer transition">&times;</button>
@@ -488,16 +493,17 @@
             const activeData = data.filter(o => Number(o.is_deleted) !== 1 && o.status !== 'Cancelled' && o.payment_status === 'Paid');
             const pending = activeData.filter(o => o.status === 'Pending Review').length;
             const production = activeData.filter(o => o.status === 'In Production').length;
+            const readyToShip = activeData.filter(o => o.status === 'Ready to Ship').length;
             const completed = activeData.filter(o => o.status === 'Completed').length;
 
             if (statusChartInst) statusChartInst.destroy();
             statusChartInst = new Chart($('statusChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: ['Pending', 'In Production', 'Completed'],
+                    labels: ['Pending', 'In Production', 'Ready to Ship', 'Completed'],
                     datasets: [{
-                        data: [pending, production, completed],
-                        backgroundColor: ['#F59E0B', '#3B82F6', '#10B981'],
+                        data: [pending, production, readyToShip, completed],
+                        backgroundColor: ['#F59E0B', '#3B82F6', '#8B5CF6', '#10B981'],
                         borderWidth: 0
                     }]
                 },
@@ -605,6 +611,7 @@
                 if ($('cntAll')) $('cntAll').textContent = activePaid.length;
                 if ($('cntPending')) $('cntPending').textContent = activePaid.filter(o => o.status === 'Pending Review').length;
                 if ($('cntProd')) $('cntProd').textContent = activePaid.filter(o => o.status === 'In Production').length;
+                if ($('cntReady')) $('cntReady').textContent = activePaid.filter(o => o.status === 'Ready to Ship').length;
                 if ($('cntDone')) $('cntDone').textContent = activePaid.filter(o => o.status === 'Completed').length;
 
                 const query = $('orderSearch')?.value.trim().toLowerCase();
@@ -644,7 +651,9 @@
                     const orderDate = o.created_at ? new Date(o.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' }) : '';
                     const statusColor = o.status === 'Completed'
                         ? 'border-emerald-300 bg-emerald-50 text-emerald-700'
-                        : (o.status === 'In Production' ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-amber-300 bg-amber-50 text-amber-700');
+                        : (o.status === 'Ready to Ship'
+                            ? 'border-violet-300 bg-violet-50 text-violet-700'
+                            : (o.status === 'In Production' ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-amber-300 bg-amber-50 text-amber-700'));
 
                     return `
                     <tr class="glass-row transition align-top">
@@ -704,17 +713,19 @@
                             <p class="text-[11px] text-slate-400">${o.shipping_phone || ''}</p>
                             <p class="text-xs text-slate-500 line-clamp-2 mt-0.5">${shippingAddress || 'No shipping address'}</p>
                             ${o.latitude && o.longitude ? `
-                                <div class="mt-2 flex items-center gap-2">
+                                <div class="mt-2 flex items-center gap-2 flex-wrap">
                                     <a href="https://www.google.com/maps/search/?api=1&query=${o.latitude},${o.longitude}"
                                         target="_blank" rel="noopener"
                                         class="text-[11px] font-bold text-slate-500 hover:text-indigo-600 transition">
                                         📍 Pin
                                     </a>
-                                    <button type="button" onclick="window.cachedOrders = window.adminOrdersData || window.allData; window.DeliveryTracker && window.DeliveryTracker.openModal(${o.id})"
-                                        class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1">
-                                        <span>🛵</span>
-                                        <span>Route</span>
-                                    </button>
+                                    ${(o.status === 'Ready to Ship' || o.status === 'Completed') ? `
+                                        <button type="button" onclick="window.cachedOrders = window.adminOrdersData || window.allData; window.DeliveryTracker && window.DeliveryTracker.openModal(${o.id})"
+                                            class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-[11px] font-bold transition cursor-pointer flex items-center gap-1">
+                                            <span>🛵</span>
+                                            <span>Route</span>
+                                        </button>
+                                    ` : ''}
                                 </div>` : ''}
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap">
@@ -722,6 +733,7 @@
                                 class="text-xs font-bold border rounded-xl px-2.5 py-1.5 cursor-pointer outline-none ${statusColor}">
                                 <option ${o.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
                                 <option ${o.status === 'In Production' ? 'selected' : ''}>In Production</option>
+                                <option ${o.status === 'Ready to Ship' ? 'selected' : ''}>Ready to Ship</option>
                                 <option ${o.status === 'Completed' ? 'selected' : ''}>Completed</option>
                             </select>
                         </td>

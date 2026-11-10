@@ -513,10 +513,11 @@
         animFrameId = requestAnimationFrame(runAnimationLoop);
     }
 
-    async function openModal(orderOrId) {
-        const modal = ensureModalDOM();
-        modal.classList.remove('hidden');
+    function isRouteAvailable(status) {
+        return status === 'Ready to Ship' || status === 'Completed';
+    }
 
+    async function openModal(orderOrId) {
         let order = null;
         if (orderOrId && typeof orderOrId === 'object') {
             order = orderOrId;
@@ -534,6 +535,7 @@
             const first = (window.cachedOrders && window.cachedOrders[0]) || (window.allData && window.allData[0]);
             order = {
                 id: (first && first.id) || (orderOrId && String(orderOrId) !== 'undefined' ? orderOrId : 101),
+                status: (first && first.status) || 'Ready to Ship',
                 team_name: (first && first.team_name) || 'Custom Jersey',
                 player_number: (first && first.player_number) || '23',
                 shipping_name: (first && first.shipping_name) || localStorage.getItem('modelyx_user_name') || 'Customer',
@@ -542,6 +544,14 @@
                 longitude: (first && first.longitude) || localStorage.getItem('modelyx_shipping_longitude') || 121.0244
             };
         }
+
+        if (order.status && !isRouteAvailable(order.status)) {
+            alert('Delivery route is only available once the order is Ready to Ship or Completed.');
+            return;
+        }
+
+        const modal = ensureModalDOM();
+        modal.classList.remove('hidden');
 
         activeOrder = order;
 
@@ -580,6 +590,7 @@
 
     window.DeliveryTracker = {
         openModal: openModal,
-        closeModal: closeModal
+        closeModal: closeModal,
+        isRouteAvailable: isRouteAvailable
     };
 })();

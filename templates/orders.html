@@ -15,7 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css?v=2.0">
     <script src="/static/js/orderPreview.js?v=2.6"></script>
-    <script src="/static/js/deliveryTracker.js?v=3.2"></script>
+    <script src="/static/js/deliveryTracker.js?v=3.3"></script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 min-h-screen text-slate-900 dark:text-slate-100 transition-colors duration-200">
 
@@ -97,10 +97,15 @@
                 icon: '🏭',
                 desc: 'Your jersey is currently being produced.'
             },
+            'Ready to Ship': {
+                color: 'bg-violet-100 text-violet-700',
+                icon: '📦',
+                desc: 'Your order is packed and ready to ship. Live delivery route tracking is now available.'
+            },
             'Completed': {
                 color: 'bg-green-100 text-green-700',
                 icon: '✅',
-                desc: 'Your order is complete and ready.'
+                desc: 'Your order is complete and delivered.'
             }
         };
 
@@ -173,6 +178,10 @@
                 window.openDeliveryTracker = function(orderId) {
                     const list = window.cachedOrders || cachedOrders || [];
                     const found = list.find(o => String(o.id) === String(orderId));
+                    if (found && found.status !== 'Ready to Ship' && found.status !== 'Completed') {
+                        alert('Live delivery route is available once your order is Ready to Ship or Completed.');
+                        return;
+                    }
                     if (window.DeliveryTracker) {
                         window.DeliveryTracker.openModal(found || orderId);
                     }
@@ -237,12 +246,14 @@
                             <!-- Status Timeline -->
                             <div class="flex items-center gap-2 mb-2">
                                 <div class="flex-1 h-1.5 rounded-full bg-indigo-500"></div>
-                                <div class="flex-1 h-1.5 rounded-full ${order.status === 'In Production' || order.status === 'Completed' ? 'bg-indigo-500' : 'bg-slate-200'}"></div>
+                                <div class="flex-1 h-1.5 rounded-full ${order.status === 'In Production' || order.status === 'Ready to Ship' || order.status === 'Completed' ? 'bg-indigo-500' : 'bg-slate-200'}"></div>
+                                <div class="flex-1 h-1.5 rounded-full ${order.status === 'Ready to Ship' || order.status === 'Completed' ? 'bg-violet-500' : 'bg-slate-200'}"></div>
                                 <div class="flex-1 h-1.5 rounded-full ${order.status === 'Completed' ? 'bg-green-500' : 'bg-slate-200'}"></div>
                             </div>
                             <div class="flex justify-between text-[10px] text-slate-400 font-bold uppercase mb-4">
                                 <span>Pending</span>
                                 <span>Production</span>
+                                <span>Ready to Ship</span>
                                 <span>Completed</span>
                             </div>
 
@@ -340,11 +351,15 @@
                                                 <span>📍</span>
                                                 <span>Google Pin</span>
                                             </a>
-                                            <button type="button" onclick="window.openDeliveryTracker ? window.openDeliveryTracker(${order.id}) : (window.DeliveryTracker && window.DeliveryTracker.openModal(${order.id}))"
-                                                class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer flex items-center gap-1.5">
-                                                <span>🛵</span>
-                                                <span>Track Live Route</span>
-                                            </button>
+                                            ${(order.status === 'Ready to Ship' || order.status === 'Completed') ? `
+                                                <button type="button" onclick="window.openDeliveryTracker ? window.openDeliveryTracker(${order.id}) : (window.DeliveryTracker && window.DeliveryTracker.openModal(${order.id}))"
+                                                    class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer flex items-center gap-1.5">
+                                                    <span>🛵</span>
+                                                    <span>Track Live Route</span>
+                                                </button>
+                                            ` : `
+                                                <span class="text-[11px] font-semibold text-slate-400">Route unlocks at Ready to Ship</span>
+                                            `}
                                         </div>` : ''}
                                 </div>
                             </div>

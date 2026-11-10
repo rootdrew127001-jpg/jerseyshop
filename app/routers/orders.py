@@ -30,6 +30,8 @@ def all_orders(
 ):
     return order_service.get_all_orders(db)
 
+ALLOWED_ORDER_STATUSES = ("Pending Review", "In Production", "Ready to Ship", "Completed")
+
 @router.patch("/{order_id}/status")
 def update_status(
     order_id: int,
@@ -37,6 +39,8 @@ def update_status(
     db: Session = Depends(get_db),
     current_user = Depends(require_admin)
 ):
+    if status not in ALLOWED_ORDER_STATUSES:
+        raise HTTPException(status_code=400, detail="Invalid order status")
     order = order_service.update_status(db, order_id, status)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
