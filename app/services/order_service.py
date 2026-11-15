@@ -271,20 +271,25 @@ def cancel_order_by_admin(db: Session, order_id: int, admin_id: int, reason: str
         return None, "Order already cancelled"
 
     order.status = "Cancelled"
-    order.cancelled_reason = f"Admin: {reason}" if reason else "Cancelled by admin"
+    if reason and (reason.startswith("Admin:") or reason.startswith("Admin Rejected:") or reason.startswith("Cancelled by")):
+        order.cancelled_reason = reason
+    elif reason:
+        order.cancelled_reason = f"Admin Rejected: {reason}"
+    else:
+        order.cancelled_reason = "Rejected by admin"
     db.commit()
     db.refresh(order)
 
     notification_service.create_notification(
         db, order.user_id,
-        "Order Cancelled by Admin",
-        f"Your order #{order.id} ({order.team_name} #{order.player_number}) was cancelled. Reason: {order.cancelled_reason}"
+        "Order Rejected by Admin",
+        f"Your order #{order.id} ({order.team_name} #{order.player_number}) was rejected. Reason: {order.cancelled_reason}"
     )
 
     notification_service.create_notification(
         db, admin_id,
-        "Order Cancelled",
-        f"You cancelled order #{order.id} ({order.team_name} #{order.player_number})."
+        "Order Rejected",
+        f"You rejected order #{order.id} ({order.team_name} #{order.player_number})."
     )
 
     return order, None

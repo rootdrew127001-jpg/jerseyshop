@@ -749,14 +749,16 @@
                             `}
                         </td>
                         <td class="px-5 py-4 text-right whitespace-nowrap space-y-1.5">
-                            <div>
-                                <button onclick="adminCancelOrder(${o.id})"
-                                    class="text-orange-500 hover:text-orange-600 font-bold text-xs hover:underline cursor-pointer">Cancel</button>
-                            </div>
+                            ${o.status !== 'Completed' && o.status !== 'Cancelled' ? `
+                                <div>
+                                    <button onclick="adminRejectOrder(${o.id})"
+                                        class="text-red-500 hover:text-red-600 font-bold text-xs hover:underline cursor-pointer">Reject</button>
+                                </div>
+                            ` : ''}
                             ${role === 'owner' ? `
                                 <div>
                                     <button onclick="deleteOrder(${o.id})"
-                                        class="text-red-500 hover:text-red-600 font-bold text-xs hover:underline cursor-pointer">Remove</button>
+                                        class="text-slate-400 hover:text-slate-600 font-bold text-xs hover:underline cursor-pointer">Archive</button>
                                 </div>
                             ` : ''}
                         </td>
@@ -805,7 +807,7 @@
         };
 
         const deleteOrder = async (id) => {
-            const reason = prompt(`Reason for rejecting / removing Order #${id} (leave blank for default):`, '');
+            const reason = prompt(`Reason for archiving Order #${id} to Deleted records (leave blank for default):`, '');
             if (reason === null) return;
             try {
                 const url = reason.trim()
@@ -817,7 +819,7 @@
                 });
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
-                    alert(errData.detail || 'Failed to remove order.');
+                    alert(errData.detail || 'Failed to archive order.');
                     return;
                 }
                 render();
@@ -959,10 +961,10 @@
             }
         });
 
-        const adminCancelOrder = async (id) => {
-            const reason = prompt('Reason for cancellation:');
+        const adminRejectOrder = async (id) => {
+            const reason = prompt(`Reason for rejecting Order #${id} (e.g. invalid design, out of fabric):`);
             if (reason === null) return;
-            if (!confirm(`Cancel order #${id}?`)) return;
+            if (!confirm(`Reject order #${id}? The customer will be notified with this reason.`)) return;
             try {
                 const res = await fetch(`/orders/${id}/admin-cancel`, {
                     method: 'POST',
@@ -970,19 +972,20 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ reason: reason || 'Cancelled by admin' })
+                    body: JSON.stringify({ reason: reason.trim() || 'Rejected by shop operator' })
                 });
                 const raw = await res.json();
                 const data = raw.pricing || raw;
                 if (res.ok) {
                     render();
                 } else {
-                    alert(data.detail || 'Failed to cancel order.');
+                    alert(data.detail || 'Failed to reject order.');
                 }
             } catch (err) {
                 alert('Server error. Try again.');
             }
         };
+        const adminCancelOrder = adminRejectOrder;
 
         window.switchAdminTab = function(tab) {
             if (tab === 'pricing' && role !== 'owner') {
