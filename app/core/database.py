@@ -79,6 +79,9 @@ ORDER_COLUMN_DEFINITIONS = {
     "is_deleted": "INT DEFAULT 0",
     "deleted_at": "DATETIME NULL",
     "deleted_by": "VARCHAR(100) NULL",
+    "shipped_at": "DATETIME NULL",
+    "received_at": "DATETIME NULL",
+    "auto_completed": "INT DEFAULT 0",
 }
 
 USER_COLUMN_DEFINITIONS = {

@@ -722,13 +722,31 @@
                                 </div>` : ''}
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap">
-                            <select onchange="updateOrder(${o.id}, this.value)"
-                                class="text-xs font-bold border rounded-xl px-2.5 py-1.5 cursor-pointer outline-none ${statusColor}">
-                                <option ${o.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
-                                <option ${o.status === 'In Production' ? 'selected' : ''}>In Production</option>
-                                <option ${o.status === 'Ready to Ship' ? 'selected' : ''}>Ready to Ship</option>
-                                <option ${o.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                            </select>
+                            ${o.status === 'Completed' ? `
+                                <div class="space-y-1">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span>✓ Completed</span>
+                                    </span>
+                                    <p class="text-[10px] font-bold ${o.auto_completed ? 'text-amber-600' : 'text-emerald-600'}">
+                                        ${o.auto_completed ? '🤖 Auto-completed (5d)' : '👤 Customer Confirmed'}
+                                    </p>
+                                </div>
+                            ` : `
+                                <div>
+                                    <select onchange="updateOrder(${o.id}, this.value)"
+                                        class="text-xs font-bold border rounded-xl px-2.5 py-1.5 cursor-pointer outline-none ${statusColor}">
+                                        <option value="Pending Review" ${o.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
+                                        <option value="In Production" ${o.status === 'In Production' ? 'selected' : ''}>In Production</option>
+                                        <option value="Ready to Ship" ${o.status === 'Ready to Ship' ? 'selected' : ''}>Ready to Ship</option>
+                                    </select>
+                                    ${o.status === 'Ready to Ship' ? `
+                                        <p class="text-[10px] font-bold text-violet-600 mt-1 flex items-center gap-1">
+                                            <span>⏳</span>
+                                            <span>Awaiting Customer (5d timer)</span>
+                                        </p>
+                                    ` : ''}
+                                </div>
+                            `}
                         </td>
                         <td class="px-5 py-4 text-right whitespace-nowrap space-y-1.5">
                             <div>
@@ -771,13 +789,18 @@
 
         const updateOrder = async (id, status) => {
             try {
-                await fetch(`/orders/${id}/status?status=${encodeURIComponent(status)}`, {
+                const res = await fetch(`/orders/${id}/status?status=${encodeURIComponent(status)}`, {
                     method: 'PATCH',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    alert(errData.detail || 'Failed to update status');
+                }
                 render();
             } catch (err) {
                 console.error('Failed to update:', err);
+                alert('Network error updating status');
             }
         };
 

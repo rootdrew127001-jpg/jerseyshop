@@ -225,6 +225,14 @@
                             }
                         }
 
+                        const shippedDate = order.shipped_at ? new Date(order.shipped_at.endsWith('Z') ? order.shipped_at : order.shipped_at + 'Z') : new Date(order.created_at);
+                        const expireDate = new Date(shippedDate.getTime() + 5 * 24 * 60 * 60 * 1000);
+                        const msRemaining = Math.max(0, expireDate.getTime() - Date.now());
+                        const daysRemaining = Math.floor(msRemaining / (24 * 60 * 60 * 1000));
+                        const hoursRemaining = Math.floor((msRemaining % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+                        const timeText = daysRemaining > 0 ? `${daysRemaining}d ${hoursRemaining}h` : `${hoursRemaining}h remaining`;
+                        const receivedDateText = order.received_at ? new Date(order.received_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) : '';
+
                         return `
                         <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
                             <div class="flex items-start justify-between mb-4">
@@ -265,6 +273,42 @@
                             <p class="text-xs text-slate-500 bg-slate-50 rounded-xl px-4 py-3 mb-4">
                                 ${status.desc}
                             </p>
+
+                            ${order.status === 'Ready to Ship' ? `
+                                <div class="bg-violet-50 border border-violet-200 rounded-2xl p-4 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+                                    <div class="flex items-start gap-3">
+                                        <span class="text-2xl">📦</span>
+                                        <div>
+                                            <p class="text-xs font-black text-violet-950 flex items-center gap-1.5">
+                                                <span>Package Shipped & On The Way!</span>
+                                            </p>
+                                            <p class="text-xs text-violet-700 mt-0.5">
+                                                Please click <strong class="text-violet-900">Confirm Order Received</strong> once your delivery arrives.
+                                                <span class="block sm:inline sm:ml-1 text-[11px] text-violet-600 font-medium">Auto-completes in <span class="font-bold text-violet-900">${timeText}</span>.</span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="confirmOrderReceived(${order.id})"
+                                        class="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer flex items-center justify-center gap-1.5 shrink-0">
+                                        <span>✓</span>
+                                        <span>Confirm Order Received</span>
+                                    </button>
+                                </div>
+                            ` : ''}
+
+                            ${order.status === 'Completed' ? `
+                                <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-emerald-600 text-sm">✅</span>
+                                        <span class="text-xs font-bold text-emerald-900">
+                                            ${order.auto_completed ? 'Completed (Auto-confirmed after 5-day delivery window)' : 'Order Received & Completed by Customer'}${receivedDateText ? ` on ${receivedDateText}` : ''}
+                                        </span>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${order.auto_completed ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}">
+                                        ${order.auto_completed ? 'Auto-Completed' : 'Customer Confirmed'}
+                                    </span>
+                                </div>
+                            ` : ''}
 
                             <!-- Checkout Summary -->
                             <div class="bg-slate-50 rounded-2xl p-4 mb-4">
@@ -490,6 +534,27 @@
         });
 
         loadOrders();
+
+        window.confirmOrderReceived = async function(orderId) {
+            if (!confirm('Have you received your jerseys in good condition? Clicking OK will mark this order as Completed.')) {
+                return;
+            }
+            try {
+                const res = await fetch(`/orders/${orderId}/confirm-received`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    alert(data.detail || 'Failed to confirm receipt.');
+                    return;
+                }
+                alert('Order confirmed as received! Thank you for ordering with Modelyx Jersey Studio.');
+                loadOrders();
+            } catch (err) {
+                alert('Network error. Please try again.');
+            }
+        };
 
         window.cancelOrder = async function(orderId) {
     const reason = prompt('Reason for cancellation (optional):');

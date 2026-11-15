@@ -117,6 +117,9 @@ class OrderResponse(BaseModel):
     is_deleted: Optional[int] = 0
     deleted_at: Optional[datetime] = None
     deleted_by: Optional[str] = None
+    shipped_at: Optional[datetime] = None
+    received_at: Optional[datetime] = None
+    auto_completed: Optional[int] = 0
 
     class Config:
         from_attributes = True

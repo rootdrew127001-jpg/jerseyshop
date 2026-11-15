@@ -30,7 +30,18 @@ def all_orders(
 ):
     return order_service.get_all_orders(db)
 
-ALLOWED_ORDER_STATUSES = ("Pending Review", "In Production", "Ready to Ship", "Completed")
+ALLOWED_ORDER_STATUSES = ("Pending Review", "In Production", "Ready to Ship")
+
+@router.post("/{order_id}/confirm-received")
+def confirm_received(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user)
+):
+    order, error = order_service.confirm_order_received(db, order_id, current_user["id"])
+    if error:
+        raise HTTPException(status_code=400, detail=error)
+    return {"message": "Order receipt confirmed successfully", "order_id": order_id, "status": "Completed"}
 
 @router.patch("/{order_id}/status")
 def update_status(
@@ -39,6 +50,11 @@ def update_status(
     db: Session = Depends(get_db),
     current_user = Depends(require_admin)
 ):
+    if status == "Completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Orders cannot be marked Completed by admins. The customer must confirm receipt, or the 5-day grace period will automatically complete it."
+        )
     if status not in ALLOWED_ORDER_STATUSES:
         raise HTTPException(status_code=400, detail="Invalid order status")
     order = order_service.update_status(db, order_id, status)

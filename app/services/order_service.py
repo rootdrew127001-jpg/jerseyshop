@@ -1,5 +1,5 @@
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 from app.models.models import Order, OrderItem
@@ -88,7 +88,72 @@ def place_order(db: Session, user_id: int, payload: OrderCreate):
 
     return order
 
+def apply_auto_completion(db: Session):
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    cutoff = now - timedelta(days=5)
+    expired_orders = db.query(Order).filter(
+        Order.status == "Ready to Ship",
+        Order.shipped_at.isnot(None),
+        Order.shipped_at <= cutoff,
+        or_(Order.is_deleted == 0, Order.is_deleted.is_(None))
+    ).all()
+    if not expired_orders:
+        return 0
+    from app.models.models import User
+    admins = db.query(User).filter(User.role == 'owner').all()
+    for order in expired_orders:
+        order.status = "Completed"
+        order.received_at = now
+        order.auto_completed = 1
+        notification_service.create_notification(
+            db, order.user_id,
+            "Order Automatically Completed",
+            f"Order #{order.id} ({order.team_name} #{order.player_number}) was automatically marked as Completed after the 5-day delivery grace period."
+        )
+        for admin in admins:
+            notification_service.create_notification(
+                db, admin.id,
+                "Order Auto-Completed (5-Day Grace Period)",
+                f"Order #{order.id} ({order.team_name} #{order.player_number}) was automatically marked as Completed after 5 days in Ready to Ship."
+            )
+    db.commit()
+    return len(expired_orders)
+
+def confirm_order_received(db: Session, order_id: int, user_id: int):
+    order = db.query(Order).filter(
+        Order.id == order_id,
+        Order.user_id == user_id,
+        or_(Order.is_deleted == 0, Order.is_deleted.is_(None))
+    ).first()
+    if not order:
+        return None, "Order not found"
+    if order.status == "Completed":
+        return order, None
+    if order.status != "Ready to Ship":
+        return None, f"Cannot confirm receipt for order in '{order.status}' stage. Order must be 'Ready to Ship'."
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    order.status = "Completed"
+    order.received_at = now
+    order.auto_completed = 0
+    db.commit()
+    db.refresh(order)
+    notification_service.create_notification(
+        db, user_id,
+        "Order Completed",
+        f"Thank you! You confirmed receipt of Order #{order.id} ({order.team_name} #{order.player_number})."
+    )
+    from app.models.models import User
+    admins = db.query(User).filter(User.role == 'owner').all()
+    for admin in admins:
+        notification_service.create_notification(
+            db, admin.id,
+            "Order Confirmed by Customer",
+            f"Customer confirmed receipt for Order #{order.id} ({order.team_name} #{order.player_number}). Order is now Completed."
+        )
+    return order, None
+
 def get_my_orders(db: Session, user_id: int):
+    apply_auto_completion(db)
     return (
         db.query(Order)
         .options(joinedload(Order.user))
@@ -97,6 +162,7 @@ def get_my_orders(db: Session, user_id: int):
     )
 
 def get_all_orders(db: Session):
+    apply_auto_completion(db)
     return db.query(Order).options(joinedload(Order.user)).all()
 
 def get_order_by_id(db: Session, order_id: int):
@@ -106,7 +172,13 @@ def update_status(db: Session, order_id: int, status: str):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         return None
+    previous_status = order.status
     order.status = status
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    if status == "Ready to Ship" and (previous_status != "Ready to Ship" or not order.shipped_at):
+        order.shipped_at = now
+    elif status != "Ready to Ship" and status != "Completed":
+        order.shipped_at = None
     db.commit()
     db.refresh(order)
     return order

@@ -66,6 +66,9 @@ class Order(Base):
     is_deleted = Column(Integer, default=0)
     deleted_at = Column(DateTime, nullable=True)
     deleted_by = Column(String(100), nullable=True)
+    shipped_at = Column(DateTime, nullable=True)
+    received_at = Column(DateTime, nullable=True)
+    auto_completed = Column(Integer, default=0)
 
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")
