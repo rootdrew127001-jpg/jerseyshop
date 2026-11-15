@@ -93,44 +93,75 @@
         </header>
 
         <div id="ownerAnalyticsSection">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Requests</p>
-                    <h3 id="sNew" class="text-2xl font-black text-indigo-600 mt-1">0</h3>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Total Sales Revenue</p>
+                        <span class="text-xs bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-md">₱ Net</span>
+                    </div>
+                    <h3 id="sRev" class="text-2xl font-black text-slate-900 mt-2">₱0</h3>
+                    <p id="sRevSub" class="text-xs text-slate-400 mt-1">Across 0 paid orders</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Revenue</p>
-                    <h3 id="sRev" class="text-2xl font-black text-emerald-600 mt-1">₱0</h3>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Avg Order Value</p>
+                        <span class="text-xs bg-indigo-50 text-indigo-600 font-bold px-2 py-0.5 rounded-md">AOV</span>
+                    </div>
+                    <h3 id="sAOV" class="text-2xl font-black text-indigo-600 mt-2">₱0</h3>
+                    <p id="sAOVSub" class="text-xs text-slate-400 mt-1">Per checkout spend</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">In Production</p>
-                    <h3 id="sPro" class="text-2xl font-black mt-1">0</h3>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Jerseys Produced</p>
+                        <span class="text-xs bg-violet-50 text-violet-600 font-bold px-2 py-0.5 rounded-md">Units</span>
+                    </div>
+                    <h3 id="sQty" class="text-2xl font-black text-violet-600 mt-2">0</h3>
+                    <p id="sQtySub" class="text-xs text-slate-400 mt-1">Total garments ordered</p>
                 </div>
-                <div class="bg-white p-4 rounded-2xl border shadow-sm">
-                    <p class="text-[10px] font-black text-slate-400 uppercase">Done</p>
-                    <h3 id="sDone" class="text-2xl font-black text-green-600 mt-1">0</h3>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="flex items-center justify-between">
+                        <p class="text-[11px] font-black text-slate-400 uppercase tracking-wider">Paid Checkouts</p>
+                        <span class="text-xs bg-amber-50 text-amber-600 font-bold px-2 py-0.5 rounded-md">Orders</span>
+                    </div>
+                    <h3 id="sPaidOrders" class="text-2xl font-black text-slate-900 mt-2">0</h3>
+                    <p id="sPaidOrdersSub" class="text-xs text-slate-400 mt-1">0 single &bull; 0 team</p>
                 </div>
             </div>
 
             <div id="ownerChartsGrid" class="hidden space-y-6 mb-6">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Status Breakdown</p>
-                        <canvas id="statusChart" height="200"></canvas>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Order Types</p>
+                            <span class="text-[10px] text-slate-400 font-bold">Single vs Team</span>
+                        </div>
+                        <canvas id="orderTypeChart" height="200"></canvas>
                     </div>
-                    <div class="bg-white border rounded-2xl p-6 shadow-sm lg:col-span-2">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Orders Over Time</p>
-                        <canvas id="ordersChart" height="100"></canvas>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Daily Revenue (₱)</p>
+                            <span class="text-xs text-slate-400 font-semibold">Last 7 Days</span>
+                        </div>
+                        <canvas id="revenueChart" height="100"></canvas>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="bg-white border rounded-2xl p-6 shadow-sm">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Top Patterns</p>
-                        <canvas id="patternChart" height="200"></canvas>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Pipeline</p>
+                            <span class="text-[10px] text-slate-400 font-bold">Status</span>
+                        </div>
+                        <canvas id="statusChart" height="200"></canvas>
                     </div>
-                    <div class="bg-white border rounded-2xl p-6 shadow-sm lg:col-span-2">
-                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Recent Activity</p>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm lg:col-span-2">
+                        <div class="flex items-center justify-between mb-4">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Recent Sales Activity</p>
+                            <span class="text-xs text-slate-400 font-semibold">Latest 5 Paid</span>
+                        </div>
                         <div id="recentActivity" class="space-y-3"></div>
                     </div>
                 </div>
@@ -479,8 +510,8 @@
         });
 
         let statusChartInst = null;
-        let ordersChartInst = null;
-        let patternChartInst = null;
+        let revenueChartInst = null;
+        let orderTypeChartInst = null;
 
         const renderCharts = (data) => {
             const activeData = data.filter(o => Number(o.is_deleted) !== 1 && o.status !== 'Cancelled' && o.payment_status === 'Paid');
@@ -506,76 +537,93 @@
                 }
             });
 
-            const ordersByDate = {};
+            const teamOrdersCount = activeData.filter(o => o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null') || Number(o.quantity) > 1).length;
+            const singleOrdersCount = Math.max(0, activeData.length - teamOrdersCount);
+
+            if (orderTypeChartInst) orderTypeChartInst.destroy();
+            orderTypeChartInst = new Chart($('orderTypeChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Single Jersey', 'Team Squad Kit'],
+                    datasets: [{
+                        data: [singleOrdersCount, teamOrdersCount],
+                        backgroundColor: ['#6366F1', '#EC4899'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+                    cutout: '65%'
+                }
+            });
+
+            const revenueByDate = {};
             activeData.forEach(o => {
                 const date = new Date(o.created_at).toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
-                ordersByDate[date] = (ordersByDate[date] || 0) + 1;
+                revenueByDate[date] = (revenueByDate[date] || 0) + Number(o.price || 0);
             });
-            const dateLabels = Object.keys(ordersByDate).slice(-7);
-            const dateCounts = dateLabels.map(d => ordersByDate[d]);
+            const dateLabels = Object.keys(revenueByDate).slice(-7);
+            const dateRevenues = dateLabels.map(d => revenueByDate[d]);
 
-            if (ordersChartInst) ordersChartInst.destroy();
-            ordersChartInst = new Chart($('ordersChart'), {
+            if (revenueChartInst) revenueChartInst.destroy();
+            revenueChartInst = new Chart($('revenueChart'), {
                 type: 'bar',
                 data: {
-                    labels: dateLabels.length ? dateLabels : ['No data'],
+                    labels: dateLabels.length ? dateLabels : ['No sales'],
                     datasets: [{
-                        label: 'Orders',
-                        data: dateCounts.length ? dateCounts : [0],
-                        backgroundColor: '#6366F1',
+                        label: 'Revenue (₱)',
+                        data: dateRevenues.length ? dateRevenues : [0],
+                        backgroundColor: '#10B981',
                         borderRadius: 8
                     }]
                 },
                 options: {
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` ₱${Number(ctx.raw || 0).toLocaleString()}`
+                            }
+                        }
+                    },
                     scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: (val) => `₱${val.toLocaleString()}`
+                            }
+                        },
                         x: { grid: { display: false } }
                     }
                 }
             });
 
-            const patternCount = {};
-            activeData.forEach(o => {
-                const p = o.pattern || 'none';
-                patternCount[p] = (patternCount[p] || 0) + 1;
-            });
-
-            if (patternChartInst) patternChartInst.destroy();
-            patternChartInst = new Chart($('patternChart'), {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(patternCount),
-                    datasets: [{
-                        data: Object.values(patternCount),
-                        backgroundColor: ['#6366F1', '#8B5CF6', '#EC4899', '#F59E0B', '#10B981'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } }
-                }
-            });
-
             const recent = [...activeData].reverse().slice(0, 5);
-            $('recentActivity').innerHTML = recent.length ? recent.map(o => `
-                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+            $('recentActivity').innerHTML = recent.length ? recent.map(o => {
+                const isTeam = o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null') || Number(o.quantity) > 1;
+                return `
+                <div class="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded-2xl">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-white text-xs font-black"
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-xs shrink-0"
                             style="background:${o.base_color || '#6366F1'}">
                             ${(o.team_name || 'T')[0]}
                         </div>
                         <div>
-                            <p class="text-sm font-bold">${o.team_name || 'Custom'} #${o.player_number || '00'}</p>
-                            <p class="text-xs text-slate-400">${o.user?.name || 'Customer'}</p>
+                            <div class="flex items-center gap-1.5">
+                                <p class="text-sm font-bold text-slate-900">${o.team_name || 'Custom'} #${o.player_number || '00'}</p>
+                                <span class="text-[10px] font-black px-1.5 py-0.2 rounded ${isTeam ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-200 text-slate-600'}">
+                                    ${isTeam ? `👥 Team (${o.quantity || 1})` : `👤 ${o.quantity || 1} pc`}
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">${o.user?.name || o.shipping_name || 'Customer'}</p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-sm font-black text-indigo-600">₱${Number(o.price || 0).toLocaleString()}</p>
-                        <p class="text-[10px] text-slate-400">${new Date(o.created_at).toLocaleDateString()}</p>
+                    <div class="text-right shrink-0">
+                        <p class="text-sm font-black text-emerald-600">₱${Number(o.price || 0).toLocaleString()}</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">${new Date(o.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>
-            `).join('') : '<p class="text-sm text-slate-400">No recent activity.</p>';
+            `}).join('') : '<p class="text-sm text-slate-400 py-4 text-center">No recent paid orders.</p>';
         };
 
         const render = async () => {
@@ -770,18 +818,22 @@
                 }
 
                 if (role === 'owner') {
-                    const stats = allData.filter(o => Number(o.is_deleted) !== 1 && o.status !== 'Cancelled' && o.payment_status === 'Paid').reduce((a, o) => {
-                        a.new += o.status === 'Pending Review' ? 1 : 0;
-                        a.prod += o.status === 'In Production' ? 1 : 0;
-                        a.done += o.status === 'Completed' ? 1 : 0;
-                        a.rev += Number(o.price || 0);
-                        return a;
-                    }, { new: 0, prod: 0, done: 0, rev: 0 });
+                    const paidOrders = allData.filter(o => Number(o.is_deleted) !== 1 && o.status !== 'Cancelled' && o.payment_status === 'Paid');
+                    const totalRevenue = paidOrders.reduce((acc, o) => acc + Number(o.price || 0), 0);
+                    const totalPieces = paidOrders.reduce((acc, o) => acc + Number(o.quantity || 1), 0);
+                    const totalCount = paidOrders.length;
+                    const aov = totalCount > 0 ? Math.round(totalRevenue / totalCount) : 0;
+                    const teamOrders = paidOrders.filter(o => o.order_type === 'team' || (o.roster_data && o.roster_data !== '[]' && o.roster_data !== 'null') || Number(o.quantity) > 1).length;
+                    const singleOrders = Math.max(0, totalCount - teamOrders);
 
-                    if ($('sNew')) $('sNew').innerText = stats.new;
-                    if ($('sPro')) $('sPro').innerText = stats.prod;
-                    if ($('sDone')) $('sDone').innerText = stats.done;
-                    if ($('sRev')) $('sRev').innerText = `₱${stats.rev.toLocaleString()}`;
+                    if ($('sRev')) $('sRev').innerText = `₱${totalRevenue.toLocaleString()}`;
+                    if ($('sRevSub')) $('sRevSub').innerText = `Across ${totalCount} paid order${totalCount === 1 ? '' : 's'}`;
+                    if ($('sAOV')) $('sAOV').innerText = `₱${aov.toLocaleString()}`;
+                    if ($('sAOVSub')) $('sAOVSub').innerText = `Per checkout spend`;
+                    if ($('sQty')) $('sQty').innerText = `${totalPieces.toLocaleString()} pcs`;
+                    if ($('sQtySub')) $('sQtySub').innerText = `Total garments ordered`;
+                    if ($('sPaidOrders')) $('sPaidOrders').innerText = totalCount;
+                    if ($('sPaidOrdersSub')) $('sPaidOrdersSub').innerText = `${singleOrders} single • ${teamOrders} team`;
                 }
 
             } catch (err) {
