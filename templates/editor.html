@@ -1017,7 +1017,7 @@
                     </span>
                     <div class="flex items-center gap-1">
                         <button type="button" onclick="window.toggleAIChatStream && window.toggleAIChatStream()" id="btnToggleChatStream" title="Fold / Unfold chat history"
-                                class="text-[9px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded-md hover:bg-slate-700/60 transition cursor-pointer">
+                                class="text-[9px] text-slate-400 hover:text-white px-1.5 py-0.5 rounded-md hover:bg-slate-700/60 transition cursor-pointer" style="display:none;">
                             − Fold
                         </button>
                         <button type="button" onclick="window.clearAIChat && window.clearAIChat()" title="Reset conversation"
@@ -1031,15 +1031,7 @@
                     </div>
                 </div>
 
-                <!-- Chat History Bubble Stream -->
-                <div id="aiChatStream" class="max-h-52 min-h-[90px] overflow-y-auto space-y-2 p-2 rounded-xl bg-slate-950/70 border border-slate-800/80 text-xs">
-                    <!-- Initial Welcome Greeting -->
-                    <div class="flex gap-2 items-start">
-                        <div class="w-5 h-5 rounded-full bg-violet-600/30 text-violet-300 flex items-center justify-center text-[10px] shrink-0 font-bold">AI</div>
-                        <div class="bg-slate-900 border border-slate-800 rounded-xl rounded-tl-sm p-2 text-slate-300 leading-relaxed text-[11px]">
-                            Hey! Tell me what to design, or request tweaks as we go (e.g. <em class="text-violet-300">"generate blue jersey"</em> then <em class="text-emerald-300">"rename player as drew"</em>).
-                        </div>
-                    </div>
+                <div id="aiChatStream" style="display:none;" class="max-h-52 overflow-y-auto space-y-2 p-2 rounded-xl bg-slate-950/70 border border-slate-800/80 text-xs">
                 </div>
 
                 <!-- Live Multi-Stage Status Indicator -->

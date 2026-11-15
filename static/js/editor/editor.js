@@ -599,6 +599,14 @@ function bindControls() {
     function appendAIChatBubble(role, text, deltaTag = null) {
         const stream = document.getElementById('aiChatStream');
         if (!stream) return;
+        if (stream.style.display === 'none') {
+            stream.style.display = 'block';
+            const btn = document.getElementById('btnToggleChatStream');
+            if (btn) {
+                btn.style.display = 'inline-block';
+                btn.textContent = '− Fold';
+            }
+        }
 
         const isLight = document.documentElement.getAttribute('data-theme') === 'light' || (!document.documentElement.classList.contains('dark') && document.documentElement.getAttribute('data-theme') !== 'cyber' && document.documentElement.getAttribute('data-theme') !== 'emerald' && document.documentElement.getAttribute('data-theme') !== 'cobalt' && document.documentElement.getAttribute('data-theme') !== 'gold' && document.documentElement.getAttribute('data-theme') !== 'crimson');
 
@@ -641,16 +649,11 @@ function bindControls() {
         aiChatHistory = [];
         const stream = document.getElementById('aiChatStream');
         if (stream) {
-            const isLight = document.documentElement.getAttribute('data-theme') === 'light' || (!document.documentElement.classList.contains('dark') && document.documentElement.getAttribute('data-theme') !== 'cyber' && document.documentElement.getAttribute('data-theme') !== 'emerald' && document.documentElement.getAttribute('data-theme') !== 'cobalt' && document.documentElement.getAttribute('data-theme') !== 'gold' && document.documentElement.getAttribute('data-theme') !== 'crimson');
-            stream.innerHTML = `
-                <div class="flex gap-2 items-start">
-                    <div class="w-5 h-5 rounded-full ${isLight ? 'bg-violet-100 text-violet-700' : 'bg-violet-600/30 text-violet-300'} flex items-center justify-center text-[10px] shrink-0 font-bold ai-avatar">AI</div>
-                    <div class="${isLight ? 'bg-slate-100 border border-slate-200 text-slate-900' : 'bg-slate-900 border border-slate-800 text-slate-300'} rounded-xl rounded-tl-sm p-2 leading-relaxed text-[11px] ai-bubble-card">
-                        Chat reset! Tell me what to design, or request tweaks as we go (e.g. <em class="${isLight ? 'text-violet-700 font-semibold' : 'text-violet-300'}">"generate blue jersey"</em> then <em class="${isLight ? 'text-emerald-700 font-semibold' : 'text-emerald-300'}">"rename player as drew"</em>).
-                    </div>
-                </div>
-            `;
+            stream.innerHTML = '';
+            stream.style.display = 'none';
         }
+        const btn = document.getElementById('btnToggleChatStream');
+        if (btn) btn.style.display = 'none';
         if (aiTeamInput) aiTeamInput.value = '';
     };
 
@@ -738,7 +741,7 @@ function bindControls() {
                     font: suggestion.font || currentDesign.font || 'athletic',
                     finish: suggestion.finish || currentDesign.finish || 'matte',
                     showroom: suggestion.showroom || currentDesign.showroom || 'cyber',
-                    frontText: suggestion.teamName || currentDesign.frontText || 'TEAM',
+                    frontText: suggestion.frontText || suggestion.teamName || currentDesign.frontText || 'TEAM',
                     backName: suggestion.backName || currentDesign.backName || 'PLAYER',
                     number: suggestion.number || currentDesign.number || '23',
                     sponsorText: (suggestion.sponsorText !== undefined && suggestion.sponsorText !== null) ? suggestion.sponsorText : currentDesign.sponsorText,
@@ -759,24 +762,29 @@ function bindControls() {
                 applyDesign(currentDesign);
                 changeEnvironment(currentDesign.showroom);
 
-                // Add to multi-turn memory
                 aiChatHistory.push({ role: 'user', content: promptText });
                 const replyText = suggestion.assistantReply || suggestion.reasoning || 'Design updated successfully!';
                 aiChatHistory.push({ role: 'assistant', content: replyText });
 
-                // Format delta badge
                 const appliedList = Array.isArray(suggestion.appliedChanges) && suggestion.appliedChanges.length > 0
                     ? suggestion.appliedChanges.join(', ')
-                    : (suggestion.backName && suggestion.backName !== currentDesignContext.backName ? 'backName' : null);
+                    : ([
+                        (suggestion.frontText && suggestion.frontText !== currentDesignContext.frontText ? 'frontText' : null),
+                        (suggestion.backName && suggestion.backName !== currentDesignContext.backName ? 'backName' : null)
+                      ].filter(Boolean).join(', ') || null);
 
                 appendAIChatBubble('assistant', replyText, appliedList);
 
-                // If back player name was updated or user requested back view, rotate camera to back!
-                const isBackRequested = /back|drew|name|player/i.test(promptText) || (appliedList && appliedList.includes('backName'));
+                const isBackRequested = /back|player\s+name|player\s+text/i.test(promptText) || (appliedList && appliedList.includes('backName'));
+                const isFrontRequested = /front|team|titan/i.test(promptText) || (appliedList && (appliedList.includes('frontText') || appliedList.includes('teamName')));
                 if (isBackRequested) {
                     setCameraAngle('back');
                     const btnCamBack = document.getElementById('btnCamBack');
                     if (btnCamBack && typeof setActiveCamBtn === 'function') setActiveCamBtn(btnCamBack);
+                } else if (isFrontRequested) {
+                    setCameraAngle('front');
+                    const btnCamFront = document.getElementById('btnCamFront');
+                    if (btnCamFront && typeof setActiveCamBtn === 'function') setActiveCamBtn(btnCamFront);
                 } else if (typeof triggerShowcaseSpin === 'function') {
                     triggerShowcaseSpin(2400);
                 }

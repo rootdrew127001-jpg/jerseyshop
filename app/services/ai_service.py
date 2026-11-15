@@ -335,6 +335,64 @@ def extract_color_intent(user_prompt: str) -> dict:
 
     return result
 
+def extract_text_intent(user_prompt: str, current_design: Optional[dict] = None) -> dict:
+    p = user_prompt.lower().strip()
+    result = {}
+
+    curr_team = ""
+    curr_back = ""
+    if current_design and isinstance(current_design, dict):
+        curr_team = str(current_design.get("frontText") or current_design.get("teamName") or "").lower().strip()
+        curr_back = str(current_design.get("backName") or "").lower().strip()
+
+    p_norm = re.sub(r'\b(?:tghe|teh)\b', 'the', p)
+
+    m_both = re.search(r'\b(?:both\s+(?:front\s+and\s+back|back\s+and\s+front)|all\s+text)\s+(?:to|as|is|=)?\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?', p_norm)
+    if m_both:
+        val = m_both.group(1).strip().upper()[:12]
+        if val.lower() not in ("text", "name", "jersey", "front", "back", "the", "to", "as"):
+            result["frontText"] = val
+            result["teamName"] = val
+            result["backName"] = val
+            return result
+
+    back_patterns = [
+        r'\b(?:rename|change|update|set|make|name)\s+(?:the\s+)?(?:back\s+text|back\s+name|player\s+text|player\s+name|name\s+on\s+back|player|back)\s+(?:to|as|is|=)?\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?',
+        r'\b(?:put|write)\s+[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?\s+on\s+(?:the\s+)?(?:back|jersey\s+back)\b',
+        r'\b(?:back\s+text|back\s+name|player\s+name|player\s+text|name\s+on\s+back)\s*(?::|to|is|=|\s)\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?\b'
+    ]
+    if curr_back and len(curr_back) >= 3 and curr_back != "player":
+        clean_back = re.escape(curr_back.rstrip('s'))
+        back_patterns.insert(0, r'\b(?:rename|change|update|set)\s+(?:the\s+)?' + clean_back + r'(?:s)?\s+(?:text|name)?\s*(?:to|as|is|=)?\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?')
+
+    for pat in back_patterns:
+        m = re.search(pat, p_norm)
+        if m:
+            val = m.group(1).strip()
+            if val.lower() not in ("text", "name", "jersey", "front", "back", "the", "to", "as"):
+                result["backName"] = val.upper()[:12]
+                break
+
+    team_patterns = [
+        r'\b(?:rename|change|update|set|make|name)\s+(?:the\s+)?(?:front\s+text|front\s+name|team\s+text|team\s+name|front|team)\s+(?:to|as|is|=)?\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?',
+        r'\b(?:put|write)\s+[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?\s+on\s+(?:the\s+)?(?:front|jersey\s+front)\b',
+        r'\b(?:front\s+text|front\s+name|team\s+name|team\s+text)\s*(?::|to|is|=|\s)\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?\b'
+    ]
+    if curr_team and len(curr_team) >= 3 and curr_team != "team":
+        clean_team = re.escape(curr_team.rstrip('s'))
+        team_patterns.insert(0, r'\b(?:rename|change|update|set)\s+(?:the\s+)?' + clean_team + r'(?:s)?\s+(?:text|name)?\s*(?:to|as|is|=)?\s*[\'\"]?([a-zA-Z0-9_\-]+)[\'\"]?')
+
+    for pat in team_patterns:
+        m = re.search(pat, p_norm)
+        if m:
+            val = m.group(1).strip()
+            if val.lower() not in ("text", "name", "jersey", "front", "back", "the", "to", "as"):
+                result["frontText"] = val.upper()[:12]
+                result["teamName"] = result["frontText"]
+                break
+
+    return result
+
 SYSTEM_DESIGN_PROMPT = f"""You are an elite, interactive 3D sports jersey art director and conversational design co-pilot.
 Your mission is to analyze the user's conversational prompt (which may be a team theme, color request, pattern request, or targeted incremental tweak like 'rename player as drew' or 'change number to 10') and return a validated 3D uniform configuration along with a friendly, conversational confirmation response.
 
@@ -504,16 +562,21 @@ def sanitize_design(design: dict, user_prompt: str, current_design: Optional[dic
     elif any(k in p_lower for k in ["men", "male", "boys", "nba", "man"]):
         design["gender"] = "male"
 
-    if not design.get("teamName"):
-        clean_name = re.sub(r"[^a-zA-Z0-9\s]", "", user_prompt).strip().upper()
-        design["teamName"] = clean_name[:10] if clean_name else (cd.get("frontText") or cd.get("teamName") or "STEALTH")
-
-    # Extract or preserve player backName
-    name_m = re.search(r'\b(?:rename\s+(?:the\s+)?player\s+(?:to|as)|player\s+(?:name|as|to)|back\s+name\s+(?:to|as)?|name\s+on\s+back\s+(?:to|as)?)\s+([a-zA-Z0-9_\-]+)', p_lower)
-    if name_m:
-        design["backName"] = name_m.group(1).upper()[:12]
+    text_intent = extract_text_intent(user_prompt, cd)
+    if "backName" in text_intent:
+        design["backName"] = text_intent["backName"]
     elif not design.get("backName"):
         design["backName"] = cd.get("backName") or "PLAYER"
+
+    if "teamName" in text_intent:
+        design["teamName"] = text_intent["teamName"]
+        design["frontText"] = text_intent["teamName"]
+    elif not design.get("teamName"):
+        clean_name = re.sub(r"[^a-zA-Z0-9\s]", "", user_prompt).strip().upper()
+        design["teamName"] = clean_name[:10] if clean_name else (cd.get("frontText") or cd.get("teamName") or "STEALTH")
+        design["frontText"] = design["teamName"]
+    else:
+        design["frontText"] = design.get("frontText") or design["teamName"]
 
     if not design.get("number"):
         design["number"] = str(cd.get("number") or random.randint(1, 99)).zfill(2)
@@ -606,20 +669,20 @@ def generate_smart_fallback(user_prompt: str, current_design: Optional[dict] = N
         applied = []
         assistant_reply = None
 
-        # Check for player rename (e.g. "rename player as drew", "player drew", "player name drew"):
-        name_m = re.search(r'\b(?:rename\s+(?:the\s+)?player\s+(?:to|as)|player\s+(?:name|as|to)|back\s+name\s+(?:to|as)?|name\s+on\s+back\s+(?:to|as)?)\s+([a-zA-Z0-9_\-]+)', p)
-        if name_m:
-            back_name = name_m.group(1).upper()[:12]
+        text_intent = extract_text_intent(user_prompt, current_design)
+        if "backName" in text_intent:
+            back_name = text_intent["backName"]
             applied.append("backName")
-            assistant_reply = f"Player name updated to '{back_name}' on the back! Kept your current kit colors and styling intact."
+            assistant_reply = f"Player name updated to '{back_name}' on the back!"
 
-        # Check for team rename:
-        team_m = re.search(r'\b(?:rename\s+(?:the\s+)?team\s+(?:to|as)|team\s+name\s+(?:to|as)?|front\s+text\s+(?:to|as)?)\s+([a-zA-Z0-9_\-]+)', p)
-        if team_m:
-            team = team_m.group(1).upper()[:12]
+        if "teamName" in text_intent:
+            team = text_intent["teamName"]
             applied.append("teamName")
+            applied.append("frontText")
             if not assistant_reply:
-                assistant_reply = f"Team name set to '{team}'!"
+                assistant_reply = f"Front team text updated to '{team}'!"
+            elif "backName" in applied:
+                assistant_reply = f"Updated front text to '{team}' and back name to '{back_name}'!"
 
         # Check for number change:
         num_m = re.search(r'\b(?:number|no\.?|#)\s*(?:to|is|as)?\s*(\d{1,2})\b', p)
@@ -709,6 +772,12 @@ def generate_smart_fallback(user_prompt: str, current_design: Optional[dict] = N
             elif "pattern" in applied:
                 pat_name = get_pattern_display_name(pat)
                 assistant_reply = f"Switched jersey pattern to {pat_name}!"
+            elif "teamName" in applied and "backName" in applied:
+                assistant_reply = f"Updated front text to '{team}' and back name to '{back_name}'!"
+            elif "teamName" in applied or "frontText" in applied:
+                assistant_reply = f"Front team text updated to '{team}'!"
+            elif "backName" in applied:
+                assistant_reply = f"Player name updated to '{back_name}' on the back!"
             elif applied:
                 assistant_reply = f"Applied targeted tweaks: {', '.join(applied)}. What would you like to edit next?"
             else:
@@ -725,6 +794,7 @@ def generate_smart_fallback(user_prompt: str, current_design: Optional[dict] = N
             "finish": finish,
             "showroom": showroom,
             "teamName": team,
+            "frontText": team,
             "backName": back_name,
             "number": number,
             "sponsorText": sponsor,
