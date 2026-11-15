@@ -11,6 +11,7 @@
         }
     </script>
     <script src="/static/js/theme.js"></script>
+    <script src="/static/js/sessionManager.js?v=1.0"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css">
 </head>
@@ -81,7 +82,7 @@
                 </div>
 
                 <!-- Google Login -->
-                <a href="/auth/google"
+                <a href="/auth/google" onclick="flushClientSession();"
                     class="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-900 font-bold py-3.5 rounded-2xl transition text-sm border border-slate-200">
                     <svg width="18" height="18" viewBox="0 0 48 48">
                         <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
@@ -463,38 +464,16 @@
         const remember = $('remember')?.checked;
 
         localStorage.setItem('modelyx_token', data.access_token);
-        localStorage.setItem('modelyx_user_role', data.role);
-        localStorage.setItem('modelyx_user_name', data.name);
-
-        const isManager = data.role === 'owner' || data.role === 'admin';
-        const hasShipping = data.has_shipping_setup === true;
-
-        if (data.shipping && hasShipping) {
-            if (data.shipping.address) localStorage.setItem('modelyx_shipping_address', data.shipping.address);
-            if (data.shipping.city) localStorage.setItem('modelyx_shipping_city', data.shipping.city);
-            if (data.shipping.state) localStorage.setItem('modelyx_shipping_state', data.shipping.state);
-            if (data.shipping.zip_code) localStorage.setItem('modelyx_shipping_zip', data.shipping.zip_code);
-            if (data.shipping.country) localStorage.setItem('modelyx_shipping_country', data.shipping.country);
-            if (data.shipping.phone) localStorage.setItem('modelyx_shipping_phone', data.shipping.phone);
-            if (data.shipping.latitude) localStorage.setItem('modelyx_shipping_latitude', data.shipping.latitude);
-            if (data.shipping.longitude) localStorage.setItem('modelyx_shipping_longitude', data.shipping.longitude);
-            localStorage.setItem('modelyx_shipping_setup', '1');
-            document.cookie = "modelyx_shipping_setup=1; path=/; max-age=2592000; SameSite=Lax";
-        } else {
-            [
-                'modelyx_shipping_address', 'modelyx_shipping_city', 'modelyx_shipping_state',
-                'modelyx_shipping_zip', 'modelyx_shipping_country', 'modelyx_shipping_phone',
-                'modelyx_shipping_notes', 'modelyx_shipping_latitude', 'modelyx_shipping_longitude'
-            ].forEach(k => localStorage.removeItem(k));
-            localStorage.setItem('modelyx_shipping_setup', '0');
-            document.cookie = "modelyx_shipping_setup=0; path=/; max-age=2592000; SameSite=Lax";
-        }
+        ModelyxSession.syncUserToStorage(data.user || data);
 
         if (remember) {
             localStorage.setItem('modelyx_remembered_email', $('lEmail').value.trim().toLowerCase());
         } else {
             localStorage.removeItem('modelyx_remembered_email');
         }
+
+        const isManager = data.role === 'owner' || data.role === 'admin';
+        const hasShipping = data.has_shipping_setup === true || data.has_shipping_setup === 1 || data.has_shipping_setup === '1';
 
         let nextPage = 'dashboard.html';
         if (isManager) {
@@ -507,61 +486,16 @@
         setTimeout(() => location.href = nextPage, 800);
     };
 
+    window.flushClientSession = function() {
+        ModelyxSession.clearAuthStorage();
+    };
+
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('logout')) {
-        ['modelyx_token', 'modelyx_role', 'modelyx_name'].forEach(name => {
-            document.cookie = `${name}=; Max-Age=0; path=/;`;
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        });
-        [
-            'modelyx_token', 'modelyx_user_role', 'modelyx_user_name',
-            'modelyx_shipping_address', 'modelyx_shipping_city', 'modelyx_shipping_state',
-            'modelyx_shipping_zip', 'modelyx_shipping_country', 'modelyx_shipping_phone',
-            'modelyx_shipping_notes', 'modelyx_shipping_setup', 'modelyx_shipping_latitude',
-            'modelyx_shipping_longitude'
-        ].forEach(k => localStorage.removeItem(k));
-        sessionStorage.clear();
+        ModelyxSession.clearAuthStorage();
         window.history.replaceState({}, document.title, window.location.pathname);
     } else {
-        const cookieToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
-        if (cookieToken) {
-            const token = cookieToken.split('=')[1];
-            if (token) {
-                const cookieRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
-                const cookieName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
-                const role = cookieRole ? cookieRole.split('=')[1] : 'customer';
-                const name = cookieName ? cookieName.split('=')[1] : '';
-                localStorage.setItem('modelyx_token', token);
-                localStorage.setItem('modelyx_user_role', role);
-                localStorage.setItem('modelyx_user_name', decodeURIComponent(name));
-                document.cookie = 'modelyx_token=; Max-Age=0; path=/;';
-                document.cookie = 'modelyx_role=; Max-Age=0; path=/;';
-                document.cookie = 'modelyx_name=; Max-Age=0; path=/;';
-                const isManager = role === 'owner' || role === 'admin';
-                const hasShipping = localStorage.getItem('modelyx_shipping_setup') === '1' && Boolean(localStorage.getItem('modelyx_shipping_address'));
-                if (isManager) {
-                    location.href = 'admin.html';
-                } else if (!hasShipping) {
-                    location.href = 'settings.html?setup=address&required=1';
-                } else {
-                    location.href = 'dashboard.html';
-                }
-            }
-        } else {
-            const token = localStorage.getItem('modelyx_token');
-            const role = localStorage.getItem('modelyx_user_role');
-            if (token && role) {
-                const isManager = role === 'owner' || role === 'admin';
-                const hasShipping = localStorage.getItem('modelyx_shipping_setup') === '1' && Boolean(localStorage.getItem('modelyx_shipping_address'));
-                if (isManager) {
-                    location.href = 'admin.html';
-                } else if (!hasShipping) {
-                    location.href = 'settings.html?setup=address&required=1';
-                } else {
-                    location.href = redirectTarget || 'dashboard.html';
-                }
-            }
-        }
+        ModelyxSession.guard({ publicOnly: true });
     }
 
     const rememberedEmail = localStorage.getItem('modelyx_remembered_email');

@@ -25,6 +25,11 @@
     ];
 
     const currentPath = window.location.pathname;
+    let token = localStorage.getItem('modelyx_token');
+    if (!token) {
+        const ct = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
+        if (ct) token = ct.split('=')[1];
+    }
     let role = localStorage.getItem('modelyx_user_role');
     if (!role) {
         const cr = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
@@ -46,10 +51,33 @@
     const lat = localStorage.getItem('modelyx_shipping_latitude');
     const lng = localStorage.getItem('modelyx_shipping_longitude');
     const hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-    const isProfileComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords;
+    const isProfileComplete = (setup === '1') || (Boolean(setup !== '0') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords);
+
+    if (token && role === 'customer' && setup === '1' && (!shipping || !phone || !email || !city || !lat || !lng)) {
+        fetch('/auth/profile', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).then(res => res.ok ? res.json() : null).then(prof => {
+            if (prof) {
+                if (prof.name) localStorage.setItem('modelyx_user_name', prof.name);
+                if (prof.email) localStorage.setItem('modelyx_user_email', prof.email);
+                if (prof.phone) {
+                    localStorage.setItem('modelyx_user_phone', prof.phone);
+                    localStorage.setItem('modelyx_shipping_phone', prof.phone);
+                }
+                if (prof.address) localStorage.setItem('modelyx_shipping_address', prof.address);
+                if (prof.city) localStorage.setItem('modelyx_shipping_city', prof.city);
+                if (prof.state) localStorage.setItem('modelyx_shipping_state', prof.state);
+                if (prof.zip_code) localStorage.setItem('modelyx_shipping_zip', prof.zip_code);
+                if (prof.country) localStorage.setItem('modelyx_shipping_country', prof.country);
+                if (prof.latitude) localStorage.setItem('modelyx_shipping_latitude', String(prof.latitude));
+                if (prof.longitude) localStorage.setItem('modelyx_shipping_longitude', String(prof.longitude));
+                localStorage.setItem('modelyx_shipping_setup', '1');
+            }
+        }).catch(() => {});
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const isSetupMode = urlParams.get('setup') === 'address' || urlParams.get('required') === '1' || (role === 'customer' && !isProfileComplete);
+    const isSetupMode = (urlParams.get('setup') === 'address' || urlParams.get('required') === '1') && !isProfileComplete;
 
     if (role === 'customer' && !isProfileComplete && currentPath !== '/settings.html') {
         window.location.replace('/settings.html?setup=address&required=1');
@@ -128,6 +156,10 @@
         });
 
         const performLogout = async () => {
+            if (window.ModelyxSession) {
+                await ModelyxSession.logout();
+                return;
+            }
             const token = localStorage.getItem('modelyx_token');
             if (token) {
                 try {
@@ -135,9 +167,7 @@
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + token }
                     });
-                } catch (e) {
-                    console.warn('Backend logout warning:', e);
-                }
+                } catch (e) {}
             }
             ['modelyx_token', 'modelyx_role', 'modelyx_name', 'modelyx_email', 'modelyx_shipping_setup'].forEach(name => {
                 document.cookie = `${name}=; Max-Age=0; path=/;`;

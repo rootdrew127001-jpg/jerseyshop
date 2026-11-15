@@ -1,4 +1,5 @@
 import httpx
+from urllib.parse import urlencode
 from app.core.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
 
 async def get_google_auth_url() -> str:
@@ -8,9 +9,10 @@ async def get_google_auth_url() -> str:
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
-        "prompt": "select_account"
+        "prompt": "select_account consent",
+        "include_granted_scopes": "true"
     }
-    query = "&".join(f"{k}={v}" for k, v in params.items())
+    query = urlencode(params)
     return f"https://accounts.google.com/o/oauth2/v2/auth?{query}"
 
 async def exchange_code_for_token(code: str) -> dict:

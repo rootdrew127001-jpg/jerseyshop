@@ -3,41 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Modelyx | T-Shirt Customizer Studio</title>
+    <script src="/static/js/sessionManager.js?v=1.0"></script>
     <script>
-        (function() {
-            var token = localStorage.getItem('modelyx_token');
-            var role = localStorage.getItem('modelyx_user_role');
-            var setup = localStorage.getItem('modelyx_shipping_setup');
-            if (!token) {
-                var ct = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_token='); });
-                if (ct) token = ct.split('=')[1];
-            }
-            if (!role) {
-                var cr = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_role='); });
-                if (cr) role = cr.split('=')[1];
-            }
-            if (!setup) {
-                var cs = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_shipping_setup='); });
-                if (cs) setup = cs.split('=')[1];
-            }
-            var name = (localStorage.getItem('modelyx_user_name') || '').trim();
-            var email = (localStorage.getItem('modelyx_user_email') || '').trim();
-            var phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
-            var addr = (localStorage.getItem('modelyx_shipping_address') || '').trim();
-            var city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
-            var state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
-            var zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
-            var country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
-            var lat = localStorage.getItem('modelyx_shipping_latitude');
-            var lng = localStorage.getItem('modelyx_shipping_longitude');
-            var hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-            var isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && addr && city && state && zip && country && hasCoords;
-
-            if (token && role === 'customer' && !isComplete) {
-                sessionStorage.setItem('modelyx_redirect_after_setup', 'editor');
-                window.location.replace('/settings.html?setup=address&required=1&from=editor');
-            }
-        })();
+        ModelyxSession.guard({ requireCustomer: true, allowGuest: true });
     </script>
     <script>
     (function() {
@@ -2621,7 +2589,7 @@
         const savedLat = localStorage.getItem('modelyx_shipping_latitude');
         const savedLng = localStorage.getItem('modelyx_shipping_longitude');
         const hasCoords = savedLat !== null && savedLng !== null && savedLat !== '' && savedLng !== '' && !isNaN(parseFloat(savedLat)) && !isNaN(parseFloat(savedLng));
-        const isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords;
+        const isComplete = (setup === '1') || (Boolean(setup !== '0') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords);
 
         if (role === 'customer' && !isComplete) {
             sessionStorage.setItem('modelyx_redirect_after_setup', 'editor');
@@ -2885,7 +2853,7 @@
         const lat = localStorage.getItem('modelyx_shipping_latitude');
         const lng = localStorage.getItem('modelyx_shipping_longitude');
         const hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-        const isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords;
+        const isComplete = (setup === '1') || (Boolean(setup !== '0') && name && email && email.includes('@') && phone.length >= 7 && shipping && city && state && zip && country && hasCoords);
 
         if (role === 'customer' && !isComplete) {
             sessionStorage.setItem('modelyx_redirect_after_setup', 'editor');

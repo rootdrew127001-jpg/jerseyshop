@@ -38,6 +38,22 @@ def verify_password(plain: str, hashed: str) -> bool:
     except Exception:
         return plain == hashed
 
+def is_profile_complete(user) -> bool:
+    if not user:
+        return False
+    if getattr(user, "role", "") != "customer":
+        return True
+    has_name = bool(user.name and user.name.strip())
+    has_email = bool(user.email and user.email.strip())
+    has_phone = bool(user.phone and sum(1 for c in user.phone if c.isdigit()) >= 7)
+    has_address = bool(user.address and user.address.strip())
+    has_city = bool(user.city and user.city.strip())
+    has_state = bool(user.state and user.state.strip())
+    has_zip = bool(user.zip_code and user.zip_code.strip())
+    has_country = bool(user.country and user.country.strip())
+    has_coords = bool(user.latitude is not None and user.longitude is not None)
+    return all([has_name, has_email, has_phone, has_address, has_city, has_state, has_zip, has_country, has_coords])
+
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -185,12 +201,13 @@ def login_user(db: Session, payload: LoginRequest):
             "email": existing_user.email,
             "role": existing_user.role
         })
-        has_shipping = bool(existing_user.address and existing_user.city) if existing_user.role == "customer" else True
+        has_shipping = is_profile_complete(existing_user)
         return {
             "access_token": token,
             "token_type": "bearer",
             "role": existing_user.role,
             "name": existing_user.name,
+            "email": existing_user.email,
             "has_shipping_setup": has_shipping,
             "shipping": {
                 "address": existing_user.address or "",

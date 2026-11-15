@@ -17,6 +17,10 @@
         href="https://fonts.googleapis.com/css2?family=Graduate&family=Bebas+Neue&family=Orbitron:wght@700&family=Teko:wght@600&family=Inter:wght@400;600;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="/static/styles.css?v=2.0">
+    <script src="/static/js/sessionManager.js?v=1.0"></script>
+    <script>
+        ModelyxSession.guard({ requireManager: true });
+    </script>
     <script src="/static/js/orderPreview.js?v=2.6"></script>
     <script src="/static/js/adminNav.js?v=2.2"></script>
     <script src="/static/js/deliveryTracker.js?v=3.3"></script>
@@ -384,19 +388,8 @@
 
     <script>
         const $ = id => document.getElementById(id);
-        if (!localStorage.getItem('modelyx_token')) {
-            const cToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
-            if (cToken) {
-                localStorage.setItem('modelyx_token', cToken.split('=')[1]);
-                const cRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
-                if (cRole) localStorage.setItem('modelyx_user_role', cRole.split('=')[1]);
-                const cName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
-                if (cName) localStorage.setItem('modelyx_user_name', decodeURIComponent(cName.split('=')[1]));
-            }
-        }
-        const token = localStorage.getItem('modelyx_token');
-        const role = localStorage.getItem('modelyx_user_role');
-        if (!token || (role !== 'owner' && role !== 'admin')) location.href = '/index.html';
+        const token = ModelyxSession.getToken();
+        const role = localStorage.getItem('modelyx_user_role') || 'owner';
         if (role !== 'owner') {
             const staffLink = $('navStaffLink');
             if (staffLink) staffLink.style.display = 'none';

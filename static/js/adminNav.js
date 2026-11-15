@@ -35,7 +35,9 @@
         if (cr) role = cr.split('=')[1];
     }
 
-    if (!token || (role !== 'owner' && role !== 'admin')) {
+    if (window.ModelyxSession) {
+        ModelyxSession.guard({ requireManager: true });
+    } else if (!token || (role !== 'owner' && role !== 'admin')) {
         window.location.replace('/index.html');
         return;
     }
@@ -51,6 +53,10 @@
     }
 
     window.adminLogout = async function () {
+        if (window.ModelyxSession) {
+            await ModelyxSession.logout();
+            return;
+        }
         const t = localStorage.getItem('modelyx_token');
         if (t) {
             try {

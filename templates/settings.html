@@ -11,6 +11,10 @@
         }
     </script>
     <script src="/static/js/theme.js"></script>
+    <script src="/static/js/sessionManager.js?v=1.0"></script>
+    <script>
+        ModelyxSession.guard({ requireCustomer: true });
+    </script>
     <script src="/static/js/customerNav.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -559,10 +563,12 @@
             const lat = localStorage.getItem('modelyx_shipping_latitude');
             const lng = localStorage.getItem('modelyx_shipping_longitude');
             const setup = localStorage.getItem('modelyx_shipping_setup');
+            if (setup === '1') return false;
+            if (setup === '0') return true;
             const hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-            return setup !== '1' || !name || !email || !email.includes('@') || phone.length < 7 || !addr || !city || !state || !zip || !country || !hasCoords;
+            return !name || !email || !email.includes('@') || phone.length < 7 || !addr || !city || !state || !zip || !country || !hasCoords;
         };
-        const isSetupRequired = urlParams.get('setup') === 'address' || urlParams.get('required') === '1' || isCustomerProfileIncomplete();
+        const isSetupRequired = (urlParams.get('setup') === 'address' || urlParams.get('required') === '1') && isCustomerProfileIncomplete();
 
         let settingsMap = null;
         let settingsMarker = null;
@@ -812,6 +818,9 @@
                         if (prof.has_shipping_setup === true) {
                             localStorage.setItem('modelyx_shipping_setup', '1');
                             document.cookie = "modelyx_shipping_setup=1; path=/; max-age=2592000; SameSite=Lax";
+                            $('requiredSetupBanner')?.classList.add('hidden');
+                            $('headerProfileBtn')?.classList.remove('hidden');
+                            $('headerDashboardBtn')?.classList.remove('hidden');
                         } else {
                             localStorage.setItem('modelyx_shipping_setup', '0');
                             document.cookie = "modelyx_shipping_setup=0; path=/; max-age=2592000; SameSite=Lax";
@@ -1013,10 +1022,8 @@
             if (urlParams.get('from') === 'editor' || sessionStorage.getItem('modelyx_redirect_after_setup') === 'editor') {
                 sessionStorage.removeItem('modelyx_redirect_after_setup');
                 location.href = 'editor.html';
-            } else if (isSetupRequired) {
-                location.href = 'dashboard.html';
             } else {
-                location.href = 'profile.html';
+                location.href = 'dashboard.html';
             }
         });
     </script>

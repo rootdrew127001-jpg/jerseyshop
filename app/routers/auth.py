@@ -164,7 +164,13 @@ async def google_login(db: Session = Depends(get_db)):
         return response
 
     url = await get_google_auth_url()
-    return RedirectResponse(url)
+    response = RedirectResponse(url)
+    response.delete_cookie("modelyx_token")
+    response.delete_cookie("modelyx_role")
+    response.delete_cookie("modelyx_name")
+    response.delete_cookie("modelyx_email")
+    response.delete_cookie("modelyx_shipping_setup")
+    return response
 
 @router.get("/google/callback")
 async def google_callback(code: str, db: Session = Depends(get_db)):
@@ -197,6 +203,43 @@ async def google_callback(code: str, db: Session = Depends(get_db)):
     response.set_cookie(key="modelyx_shipping_setup", value="1" if has_shipping else "0", httponly=False, max_age=86400 * 7, path="/")
     return response
 
+@router.get("/session")
+def get_session(request: Request, db: Session = Depends(get_db)):
+    try:
+        user_data = get_current_user(request=request, credentials=None, db=db)
+    except HTTPException:
+        return {"authenticated": False, "user": None}
+
+    if not user_data or "id" not in user_data:
+        return {"authenticated": False, "user": None}
+
+    user = db.query(User).filter(User.id == user_data["id"]).first()
+    if not user:
+        return {"authenticated": False, "user": None}
+
+    has_shipping = is_profile_complete(user)
+    return {
+        "authenticated": True,
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "is_verified": bool(user.is_verified),
+            "has_shipping_setup": has_shipping,
+            "shipping": {
+                "address": user.address or "",
+                "city": user.city or "",
+                "state": user.state or "",
+                "zip_code": user.zip_code or "",
+                "country": user.country or "Philippines",
+                "phone": user.phone or "",
+                "latitude": float(user.latitude) if user.latitude is not None else None,
+                "longitude": float(user.longitude) if user.longitude is not None else None,
+            }
+        }
+    }
+
 @router.post("/logout")
 def logout(request: Request):
     token = None
@@ -215,6 +258,8 @@ def logout(request: Request):
     response.delete_cookie("modelyx_token")
     response.delete_cookie("modelyx_role")
     response.delete_cookie("modelyx_name")
+    response.delete_cookie("modelyx_email")
+    response.delete_cookie("modelyx_shipping_setup")
     return response
 
 # =========================================================================
@@ -432,21 +477,7 @@ class ProfileUpdateRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
-def is_profile_complete(user) -> bool:
-    if not user:
-        return False
-    if user.role != "customer":
-        return True
-    has_name = bool(user.name and user.name.strip())
-    has_email = bool(user.email and user.email.strip())
-    has_phone = bool(user.phone and sum(1 for c in user.phone if c.isdigit()) >= 7)
-    has_address = bool(user.address and user.address.strip())
-    has_city = bool(user.city and user.city.strip())
-    has_state = bool(user.state and user.state.strip())
-    has_zip = bool(user.zip_code and user.zip_code.strip())
-    has_country = bool(user.country and user.country.strip())
-    has_coords = bool(user.latitude is not None and user.longitude is not None)
-    return all([has_name, has_email, has_phone, has_address, has_city, has_state, has_zip, has_country, has_coords])
+is_profile_complete = user_service.is_profile_complete
 
 @router.get("/profile")
 def get_user_profile(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):

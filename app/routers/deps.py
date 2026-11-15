@@ -70,7 +70,7 @@ def get_current_user(
                 detail="Invalid token"
             )
 
-    if credentials:
+    if credentials and isinstance(credentials, HTTPBasicCredentials):
         username_clean = (credentials.username or "").strip().lower()
         password_clean = credentials.password or ""
         if DEV_MODE:

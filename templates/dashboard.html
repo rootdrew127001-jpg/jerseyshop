@@ -4,40 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modelyx | Hub</title>
+    <script src="/static/js/sessionManager.js?v=1.0"></script>
     <script>
-        (function() {
-            var token = localStorage.getItem('modelyx_token');
-            var role = localStorage.getItem('modelyx_user_role');
-            var setup = localStorage.getItem('modelyx_shipping_setup');
-            if (!token) {
-                var ct = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_token='); });
-                if (ct) token = ct.split('=')[1];
-            }
-            if (!role) {
-                var cr = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_role='); });
-                if (cr) role = cr.split('=')[1];
-            }
-            if (!setup) {
-                var cs = document.cookie.split(';').find(function(c) { return c.trim().startsWith('modelyx_shipping_setup='); });
-                if (cs) setup = cs.split('=')[1];
-            }
-            var name = (localStorage.getItem('modelyx_user_name') || '').trim();
-            var email = (localStorage.getItem('modelyx_user_email') || '').trim();
-            var phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
-            var addr = (localStorage.getItem('modelyx_shipping_address') || '').trim();
-            var city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
-            var state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
-            var zip = (localStorage.getItem('modelyx_shipping_zip') || '').trim();
-            var country = (localStorage.getItem('modelyx_shipping_country') || '').trim();
-            var lat = localStorage.getItem('modelyx_shipping_latitude');
-            var lng = localStorage.getItem('modelyx_shipping_longitude');
-            var hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-            var isComplete = (setup === '1') && name && email && email.includes('@') && phone.length >= 7 && addr && city && state && zip && country && hasCoords;
-
-            if (token && role === 'customer' && !isComplete) {
-                window.location.replace('/settings.html?setup=address&required=1');
-            }
-        })();
+        ModelyxSession.guard({ requireCustomer: true });
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -145,24 +114,8 @@
     </main>
     <script>
         const $ = id => document.getElementById(id);
-        // Sync cookies from OAuth / Dev bypass if token is not yet in localStorage
-        if (!localStorage.getItem('modelyx_token')) {
-            const cToken = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_token='));
-            if (cToken) {
-                localStorage.setItem('modelyx_token', cToken.split('=')[1]);
-                const cRole = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
-                if (cRole) localStorage.setItem('modelyx_user_role', cRole.split('=')[1]);
-                const cName = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
-                if (cName) localStorage.setItem('modelyx_user_name', decodeURIComponent(cName.split('=')[1]));
-            }
-        }
-        const token = localStorage.getItem('modelyx_token');
-        const role = localStorage.getItem('modelyx_user_role');
-        if (!token) {
-            location.href = '/index.html';
-        } else if (role === 'owner' || role === 'admin') {
-            location.href = '/admin.html';
-        }
+        const token = ModelyxSession.getToken();
+        const role = localStorage.getItem('modelyx_user_role') || 'customer';
         const escapeHtml = (value = '') =>
             String(value)
                 .replace(/&/g, '&amp;')

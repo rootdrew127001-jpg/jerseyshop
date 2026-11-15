@@ -31,6 +31,7 @@ class TokenResponse(BaseModel):
     token_type: str
     role: str
     name: str
+    email: Optional[str] = None
     is_verified: Optional[int] = 0
     has_shipping_setup: Optional[bool] = True
     shipping: Optional[dict] = None
