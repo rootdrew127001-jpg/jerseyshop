@@ -16,89 +16,43 @@ const clock = new THREE.Clock();
 let ambientLight, dirLight, fillLight, backLight;
 
 export const PRESET_SKINS = {
-    'obsidian': {
-        id: 'obsidian',
-        name: 'Studio Slate',
-        color: '#1e293b',
-        roughness: 0.80,
-        metalness: 0.15,
-        preview: '#1e293b'
+    'black': {
+        id: 'black',
+        name: 'Matte Black',
+        color: '#18181b',
+        roughness: 0.75,
+        metalness: 0.10,
+        preview: '#18181b'
     },
-    'fair': {
-        id: 'fair',
-        name: 'Fair / Porcelain',
-        color: '#f6d2b8',
-        roughness: 0.65,
-        metalness: 0.05,
-        preview: '#f6d2b8'
-    },
-    'warm-beige': {
-        id: 'warm-beige',
-        name: 'Warm Beige',
-        color: '#e4b58e',
-        roughness: 0.65,
-        metalness: 0.05,
-        preview: '#e4b58e'
-    },
-    'honey': {
-        id: 'honey',
-        name: 'Honey / Olive',
-        color: '#c68b59',
-        roughness: 0.65,
-        metalness: 0.05,
-        preview: '#c68b59'
-    },
-    'bronze': {
-        id: 'bronze',
-        name: 'Rich Bronze',
-        color: '#9d633b',
-        roughness: 0.65,
-        metalness: 0.05,
-        preview: '#9d633b'
-    },
-    'chestnut': {
-        id: 'chestnut',
-        name: 'Chestnut Brown',
-        color: '#6c3e23',
-        roughness: 0.65,
-        metalness: 0.05,
-        preview: '#6c3e23'
-    },
-    'espresso': {
-        id: 'espresso',
-        name: 'Deep Espresso',
-        color: '#382015',
-        roughness: 0.70,
-        metalness: 0.05,
-        preview: '#382015'
-    },
-    'matte-white': {
-        id: 'matte-white',
+    'white': {
+        id: 'white',
         name: 'Matte White',
         color: '#f8fafc',
         roughness: 0.55,
         metalness: 0.05,
-        preview: '#f8fafc'
+        preview: '#ffffff'
     },
-    'cyber-chrome': {
-        id: 'cyber-chrome',
-        name: 'Cyber Chrome',
-        color: '#94a3b8',
-        roughness: 0.20,
-        metalness: 0.85,
-        preview: '#94a3b8'
-    },
-    'gold': {
-        id: 'gold',
-        name: 'Metallic Bronze Gold',
-        color: '#523e1b',
-        roughness: 0.30,
-        metalness: 0.75,
-        preview: '#d97706'
+    'grey': {
+        id: 'grey',
+        name: 'Studio Grey',
+        color: '#64748b',
+        roughness: 0.65,
+        metalness: 0.15,
+        preview: '#64748b'
     }
 };
 
-let currentSkinKey = 'obsidian';
+export function resolveSkinKey(key) {
+    if (!key) return 'black';
+    if (PRESET_SKINS[key]) return key;
+    const lower = String(key).toLowerCase();
+    if (lower === 'obsidian' || lower.includes('black') || lower.includes('dark')) return 'black';
+    if (lower === 'matte-white' || lower.includes('white') || lower.includes('fair') || lower.includes('porcelain')) return 'white';
+    if (lower === 'cyber-chrome' || lower.includes('grey') || lower.includes('gray') || lower.includes('slate')) return 'grey';
+    return 'black';
+}
+
+let currentSkinKey = 'black';
 
 export function initViewer(canvasId) {
     const canvas = document.getElementById(canvasId);
@@ -984,19 +938,17 @@ function tryLoadGLB(path) {
                     meshParts['hair'] = child;
                 // Body / skin / head / limbs / mannequin
                 } else if (name === 'head' || name === 'body' || name.includes('hand') || name.includes('leg') || name.includes('limb') || name.includes('arm') || name.includes('mannequin') || name.includes('skin') || name.includes('human')) {
-                    const skin = PRESET_SKINS[currentSkinKey] || PRESET_SKINS['obsidian'];
+                    const skin = PRESET_SKINS[resolveSkinKey(currentSkinKey)] || PRESET_SKINS['black'];
                     child.material = new THREE.MeshStandardMaterial({
                         color: skin.color,
                         roughness: skin.roughness,
                         metalness: skin.metalness
                     });
                     mannequinMeshes.push(child);
-                // Socks (standalone)
                 } else if (name.includes('sock') && !name.includes('shoe')) {
                     child.material = cleanMaterial('#ffffff');
                     trimMeshes.push(child);
                     meshParts[child.name] = child;
-                // Shoes (standalone) or combined "shoes and socks" or tripo_part shoe meshes
                 } else if (name.includes('shoe') || name.startsWith('tripo_part')) {
                     child.material = new THREE.MeshStandardMaterial({
                         color: '#0f172a',
@@ -1005,7 +957,7 @@ function tryLoadGLB(path) {
                     });
                     shoeMeshes.push(child);
                 } else {
-                    const skin = PRESET_SKINS[currentSkinKey] || PRESET_SKINS['obsidian'];
+                    const skin = PRESET_SKINS[resolveSkinKey(currentSkinKey)] || PRESET_SKINS['black'];
                     child.material = new THREE.MeshStandardMaterial({
                         color: skin.color,
                         roughness: skin.roughness,
@@ -1148,9 +1100,10 @@ export function setPartColor(partName, color) {
 }
 
 export function setMannequinSkin(skinKey) {
-    if (!PRESET_SKINS[skinKey]) return;
-    currentSkinKey = skinKey;
-    const skin = PRESET_SKINS[skinKey];
+    const key = resolveSkinKey(skinKey);
+    currentSkinKey = key;
+    const skin = PRESET_SKINS[key];
+    if (!skin) return;
 
     const applySkin = (mesh) => {
         if (!mesh || !mesh.material) return;

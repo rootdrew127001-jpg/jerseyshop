@@ -67,7 +67,7 @@ let currentDesign = {
     showBackText: true,
     showBackNumber: true,
     showSponsor: false,
-    skinTone: 'obsidian',
+    skinTone: 'black',
     // Shorts settings
     matchJerseyColors: true,
     shortsBaseColor: '#4F46E5',
@@ -112,7 +112,7 @@ export function initEditor() {
         syncUI(currentDesign);
         loadJerseyModel(currentDesign.jerseyType, currentDesign.gender);
         applyDesign(currentDesign);
-        setMannequinSkin(currentDesign.skinTone || 'obsidian');
+        setMannequinSkin(currentDesign.skinTone || 'black');
     };
 
     generateParameterizedPatterns();
@@ -124,7 +124,7 @@ export function initEditor() {
 
     window.addEventListener('viewer:ready', () => {
         applyDesign(currentDesign);
-        setMannequinSkin(currentDesign.skinTone || 'obsidian');
+        setMannequinSkin(currentDesign.skinTone || 'black');
     });
 }
 
@@ -1251,14 +1251,15 @@ function setupSkinToneControls() {
     const lblActiveSkin = document.getElementById('lblActiveSkin');
 
     function updateActiveSwatches(activeKey) {
-        currentDesign.skinTone = activeKey;
-        const skinObj = PRESET_SKINS[activeKey] || PRESET_SKINS['obsidian'];
+        const resolved = PRESET_SKINS[activeKey] ? activeKey : (activeKey === 'obsidian' ? 'black' : (activeKey === 'matte-white' ? 'white' : (activeKey === 'cyber-chrome' ? 'grey' : 'black')));
+        currentDesign.skinTone = resolved;
+        const skinObj = PRESET_SKINS[resolved] || PRESET_SKINS['black'];
         if (lblActiveSkin) {
             lblActiveSkin.textContent = skinObj.name;
         }
 
         document.querySelectorAll('.skin-swatch-btn').forEach(btn => {
-            const isMatch = btn.getAttribute('data-skin-id') === activeKey;
+            const isMatch = btn.getAttribute('data-skin-id') === resolved;
             const isToolbar = !!btn.closest('#skinSwatchesContainer');
             const sizeClass = isToolbar ? 'w-5 h-5' : 'w-6 h-6';
             if (isMatch) {
@@ -1279,7 +1280,7 @@ function setupSkinToneControls() {
             btn.setAttribute('data-skin-id', skin.id);
             btn.title = skin.name;
             btn.style.backgroundColor = skin.preview;
-            const isMatch = (currentDesign.skinTone || 'obsidian') === skin.id;
+            const isMatch = (currentDesign.skinTone || 'black') === skin.id;
             btn.className = isMatch
                 ? `skin-swatch-btn ${sizeClass} rounded-full border-2 border-white ring-2 ring-indigo-500 scale-110 shadow-md shadow-indigo-500/50 transition-all cursor-pointer relative flex-shrink-0`
                 : `skin-swatch-btn ${sizeClass} rounded-full border border-slate-600/80 hover:border-slate-400 hover:scale-105 transition-all cursor-pointer relative opacity-90 hover:opacity-100 flex-shrink-0`;
@@ -1520,7 +1521,7 @@ function syncUI(design) {
     });
 
     if (window._updateActiveSkinSwatches) {
-        window._updateActiveSkinSwatches(design.skinTone || 'obsidian');
+        window._updateActiveSkinSwatches(design.skinTone || 'black');
     }
 
     // Sync Shorts Controls
