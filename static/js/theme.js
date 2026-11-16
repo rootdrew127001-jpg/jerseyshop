@@ -24,66 +24,19 @@
             border: '#1e293b',
             accent: '#6366f1',
             threeBg: '#0a071b'
-        },
-        {
-            id: 'cyber',
-            name: 'Cyberpunk',
-            icon: '⚡',
-            type: 'dark',
-            bg: '#090314',
-            surface: '#14092b',
-            border: '#3b1464',
-            accent: '#06b6d4',
-            threeBg: '#080512'
-        },
-        {
-            id: 'emerald',
-            name: 'Stadium',
-            icon: '🌿',
-            type: 'dark',
-            bg: '#03140c',
-            surface: '#092316',
-            border: '#164e32',
-            accent: '#10b981',
-            threeBg: '#04180e'
-        },
-        {
-            id: 'cobalt',
-            name: 'Cobalt',
-            icon: '🌊',
-            type: 'dark',
-            bg: '#030d1a',
-            surface: '#081d36',
-            border: '#143e6d',
-            accent: '#38bdf8',
-            threeBg: '#041224'
-        },
-        {
-            id: 'gold',
-            name: 'Gold',
-            icon: '🏆',
-            type: 'dark',
-            bg: '#0c0a08',
-            surface: '#1a1612',
-            border: '#3d3326',
-            accent: '#facc15',
-            threeBg: '#120e07'
-        },
-        {
-            id: 'crimson',
-            name: 'Crimson',
-            icon: '🔥',
-            type: 'dark',
-            bg: '#120406',
-            surface: '#240a0e',
-            border: '#521520',
-            accent: '#f43f5e',
-            threeBg: '#180508'
         }
     ];
 
     function getStoredTheme() {
-        return localStorage.getItem(THEME_KEY) || 'light';
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored === 'light' || stored === 'dark' || stored === 'system') {
+            return stored;
+        }
+        if (['cyber', 'emerald', 'cobalt', 'gold', 'crimson'].includes(stored)) {
+            localStorage.setItem(THEME_KEY, 'dark');
+            return 'dark';
+        }
+        return 'light';
     }
 
     function resolveThemeObj(themeId) {
@@ -91,7 +44,12 @@
         if (id === 'system') {
             id = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
         }
-        return MODELYX_THEMES.find(t => t.id === id) || MODELYX_THEMES[0];
+        const found = MODELYX_THEMES.find(t => t.id === id);
+        if (found) return found;
+        if (['cyber', 'emerald', 'cobalt', 'gold', 'crimson', 'dark'].includes(id)) {
+            return MODELYX_THEMES.find(t => t.id === 'dark') || MODELYX_THEMES[0];
+        }
+        return MODELYX_THEMES[0];
     }
 
     function applyTheme(themeChoice, persist = false) {
@@ -201,20 +159,20 @@
             modal.id = 'modelyxUniversalThemeModal';
             modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm';
             modal.innerHTML = `
-                <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 shadow-2xl border"
+                <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 shadow-2xl border"
                      style="background: var(--theme-surface, #ffffff); border-color: var(--theme-border, #e2e8f0); color: var(--theme-text, #0f172a);">
                     <div class="flex items-center justify-between pb-4 border-b mb-6" style="border-color: var(--theme-border, #e2e8f0);">
                         <div>
                             <p class="text-[10px] uppercase tracking-widest font-black" style="color: var(--theme-accent, #4f46e5);">Appearance & Atmosphere</p>
                             <h2 class="text-2xl font-black mt-0.5">Theme Preferences</h2>
-                            <p class="text-xs text-slate-400 mt-1">Select from 7 curated themes + OS auto mode. Updates across all pages live.</p>
+                            <p class="text-xs text-slate-400 mt-1">Select from Light, Dark, or System Auto mode. Updates across all pages live.</p>
                         </div>
                         <button id="closeUniversalThemeModal" class="w-9 h-9 rounded-2xl flex items-center justify-center text-lg font-bold transition cursor-pointer"
                                 style="background: var(--theme-surface-sub, #f1f5f9); color: var(--theme-text, #0f172a);">
                             ✕
                         </button>
                     </div>
-                    <div id="universalThemeModalGrid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+                    <div id="universalThemeModalGrid" class="grid gap-4 sm:grid-cols-3"></div>
                     <div class="mt-6 flex justify-end">
                         <button id="doneUniversalThemeModal" class="px-6 py-2.5 rounded-xl font-bold text-sm text-white transition shadow-lg cursor-pointer"
                                 style="background: var(--theme-accent, #4f46e5);">

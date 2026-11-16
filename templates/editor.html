@@ -1797,7 +1797,7 @@
                 <button id="btnStudioThemeToggle" onclick="toggleThemeDropdown(event)" title="Choose Studio Theme"
                         class="px-3.5 py-2 text-xs font-bold rounded-xl bg-slate-800/90 backdrop-blur border border-slate-700 text-slate-200 hover:text-white shadow-lg transition flex items-center gap-2 cursor-pointer">
                     <span id="themeToggleIcon" class="text-sm">☀️</span>
-                    <span id="themeToggleText">Daylight Pure</span>
+                    <span id="themeToggleText">Daylight</span>
                     <span class="text-[10px] opacity-60">▼</span>
                 </button>
 
@@ -1805,7 +1805,7 @@
                 <div id="themeDropdownMenu" class="hidden absolute right-0 top-11 w-64 rounded-2xl p-2 shadow-2xl border border-slate-700 bg-slate-900/95 backdrop-blur-xl z-50">
                     <div class="px-2.5 py-1.5 flex items-center justify-between border-b border-slate-800/80 mb-1">
                         <span class="text-[9px] font-black uppercase tracking-wider text-slate-400">Studio Theme</span>
-                        <span class="text-[9px] text-indigo-400 font-bold">7 Palettes</span>
+                        <span class="text-[9px] text-indigo-400 font-bold">3 Themes</span>
                     </div>
                     <div id="themeOptionsList" class="space-y-1">
                         <!-- Populated by JS -->
@@ -2764,7 +2764,10 @@
         const list = document.getElementById('themeOptionsList');
         if (!list || !window.ModelyxTheme) return;
         const currentThemeId = window.ModelyxTheme.getTheme();
-        const themes = window.ModelyxTheme.THEMES;
+        const themes = [
+            ...window.ModelyxTheme.THEMES,
+            { id: 'system', name: 'System Auto', icon: '🖥️', bg: '#ffffff', surface: '#0f172a', accent: '#6366f1' }
+        ];
 
         list.innerHTML = themes.map(t => {
             const isActive = t.id === currentThemeId;
@@ -2791,11 +2794,17 @@
     function updateStudioThemeUI() {
         if (!window.ModelyxTheme) return;
         const activeTheme = window.ModelyxTheme.getActiveThemeObj();
+        const currentChoice = window.ModelyxTheme.getTheme();
         const icon = document.getElementById('themeToggleIcon');
         const text = document.getElementById('themeToggleText');
-        if (icon && text && activeTheme) {
-            icon.textContent = activeTheme.icon;
-            text.textContent = activeTheme.name;
+        if (icon && text) {
+            if (currentChoice === 'system') {
+                icon.textContent = '🖥️';
+                text.textContent = 'System Auto';
+            } else if (activeTheme) {
+                icon.textContent = activeTheme.icon;
+                text.textContent = activeTheme.name;
+            }
         }
         renderThemeOptionsList();
         if (window.setThreeStudioTheme && activeTheme) {

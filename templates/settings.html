@@ -104,8 +104,7 @@
                     <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Choose your interface theme.</p>
 
                     <!-- 8 Theme Selection Cards -->
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <!-- Daylight Card -->
+                    <div class="grid gap-4 sm:grid-cols-3">
                         <div id="cardThemeLight" onclick="selectTheme('light')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-indigo-400 border-indigo-600 dark:border-indigo-500 ring-2 ring-indigo-500/20 bg-indigo-50/40 dark:bg-indigo-950/20">
                             <input type="radio" id="themeLight" name="themeChoice" value="light" class="sr-only">
                             <div class="h-20 w-full rounded-xl bg-white border border-slate-200 p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
@@ -134,7 +133,6 @@
                             </div>
                         </div>
 
-                        <!-- Obsidian Card -->
                         <div id="cardThemeDark" onclick="selectTheme('dark')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-indigo-400 border-slate-200 dark:border-slate-800">
                             <input type="radio" id="themeDark" name="themeChoice" value="dark" class="sr-only">
                             <div class="h-20 w-full rounded-xl bg-slate-950 border border-slate-800 p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
@@ -163,152 +161,6 @@
                             </div>
                         </div>
 
-                        <!-- Cyberpunk Card -->
-                        <div id="cardThemeCyber" onclick="selectTheme('cyber')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-cyan-400 border-slate-200 dark:border-slate-800">
-                            <input type="radio" id="themeCyber" name="themeChoice" value="cyber" class="sr-only">
-                            <div class="h-20 w-full rounded-xl bg-[#090314] border border-[#3b1464] p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-cyan-400"></div>
-                                        <div class="w-10 h-1.5 rounded-full bg-purple-900"></div>
-                                    </div>
-                                    <div class="w-4 h-1.5 rounded-full bg-pink-500"></div>
-                                </div>
-                                <div class="space-y-1">
-                                    <div class="w-3/4 h-2 rounded bg-cyan-200"></div>
-                                    <div class="w-1/2 h-1.5 rounded bg-purple-700"></div>
-                                </div>
-                                <div class="flex gap-1.5">
-                                    <div class="w-10 h-2.5 rounded bg-cyan-500"></div>
-                                    <div class="w-6 h-2.5 rounded bg-purple-950 border border-purple-800"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">⚡</span>
-                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Cyberpunk</span>
-                                </div>
-                                <span class="theme-check-icon w-5 h-5 rounded-full bg-cyan-500 text-black flex items-center justify-center text-xs opacity-0 transition-opacity font-bold">✓</span>
-                            </div>
-                        </div>
-
-                        <!-- Stadium Card -->
-                        <div id="cardThemeEmerald" onclick="selectTheme('emerald')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-emerald-400 border-slate-200 dark:border-slate-800">
-                            <input type="radio" id="themeEmerald" name="themeChoice" value="emerald" class="sr-only">
-                            <div class="h-20 w-full rounded-xl bg-[#03140c] border border-[#164e32] p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400"></div>
-                                        <div class="w-10 h-1.5 rounded-full bg-emerald-900"></div>
-                                    </div>
-                                    <div class="w-4 h-1.5 rounded-full bg-emerald-600"></div>
-                                </div>
-                                <div class="space-y-1">
-                                    <div class="w-3/4 h-2 rounded bg-emerald-200"></div>
-                                    <div class="w-1/2 h-1.5 rounded bg-emerald-800"></div>
-                                </div>
-                                <div class="flex gap-1.5">
-                                    <div class="w-10 h-2.5 rounded bg-emerald-500"></div>
-                                    <div class="w-6 h-2.5 rounded bg-emerald-950 border border-emerald-800"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">🌿</span>
-                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Stadium</span>
-                                </div>
-                                <span class="theme-check-icon w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center text-xs opacity-0 transition-opacity font-bold">✓</span>
-                            </div>
-                        </div>
-
-                        <!-- Cobalt Card -->
-                        <div id="cardThemeCobalt" onclick="selectTheme('cobalt')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-sky-400 border-slate-200 dark:border-slate-800">
-                            <input type="radio" id="themeCobalt" name="themeChoice" value="cobalt" class="sr-only">
-                            <div class="h-20 w-full rounded-xl bg-[#030d1a] border border-[#143e6d] p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-sky-400"></div>
-                                        <div class="w-10 h-1.5 rounded-full bg-slate-800"></div>
-                                    </div>
-                                    <div class="w-4 h-1.5 rounded-full bg-sky-600"></div>
-                                </div>
-                                <div class="space-y-1">
-                                    <div class="w-3/4 h-2 rounded bg-sky-100"></div>
-                                    <div class="w-1/2 h-1.5 rounded bg-sky-900"></div>
-                                </div>
-                                <div class="flex gap-1.5">
-                                    <div class="w-10 h-2.5 rounded bg-sky-500"></div>
-                                    <div class="w-6 h-2.5 rounded bg-blue-950 border border-blue-900"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">🌊</span>
-                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Cobalt</span>
-                                </div>
-                                <span class="theme-check-icon w-5 h-5 rounded-full bg-sky-500 text-black flex items-center justify-center text-xs opacity-0 transition-opacity font-bold">✓</span>
-                            </div>
-                        </div>
-
-                        <!-- Gold Card -->
-                        <div id="cardThemeGold" onclick="selectTheme('gold')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-amber-400 border-slate-200 dark:border-slate-800">
-                            <input type="radio" id="themeGold" name="themeChoice" value="gold" class="sr-only">
-                            <div class="h-20 w-full rounded-xl bg-[#0c0a08] border border-[#3d3326] p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div>
-                                        <div class="w-10 h-1.5 rounded-full bg-amber-950"></div>
-                                    </div>
-                                    <div class="w-4 h-1.5 rounded-full bg-amber-600"></div>
-                                </div>
-                                <div class="space-y-1">
-                                    <div class="w-3/4 h-2 rounded bg-amber-100"></div>
-                                    <div class="w-1/2 h-1.5 rounded bg-amber-900"></div>
-                                </div>
-                                <div class="flex gap-1.5">
-                                    <div class="w-10 h-2.5 rounded bg-amber-400"></div>
-                                    <div class="w-6 h-2.5 rounded bg-stone-900 border border-amber-900"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">🏆</span>
-                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Gold</span>
-                                </div>
-                                <span class="theme-check-icon w-5 h-5 rounded-full bg-amber-400 text-black flex items-center justify-center text-xs opacity-0 transition-opacity font-bold">✓</span>
-                            </div>
-                        </div>
-
-                        <!-- Crimson Card -->
-                        <div id="cardThemeCrimson" onclick="selectTheme('crimson')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-rose-400 border-slate-200 dark:border-slate-800">
-                            <input type="radio" id="themeCrimson" name="themeChoice" value="crimson" class="sr-only">
-                            <div class="h-20 w-full rounded-xl bg-[#120406] border border-[#521520] p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1.5">
-                                        <div class="w-2.5 h-2.5 rounded-full bg-rose-500"></div>
-                                        <div class="w-10 h-1.5 rounded-full bg-rose-950"></div>
-                                    </div>
-                                    <div class="w-4 h-1.5 rounded-full bg-rose-600"></div>
-                                </div>
-                                <div class="space-y-1">
-                                    <div class="w-3/4 h-2 rounded bg-rose-200"></div>
-                                    <div class="w-1/2 h-1.5 rounded bg-rose-900"></div>
-                                </div>
-                                <div class="flex gap-1.5">
-                                    <div class="w-10 h-2.5 rounded bg-rose-500"></div>
-                                    <div class="w-6 h-2.5 rounded bg-[#1f0508] border border-rose-900"></div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">🔥</span>
-                                    <span class="font-bold text-sm text-slate-900 dark:text-white">Crimson</span>
-                                </div>
-                                <span class="theme-check-icon w-5 h-5 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs opacity-0 transition-opacity font-bold">✓</span>
-                            </div>
-                        </div>
-
-                        <!-- System Auto Card -->
                         <div id="cardThemeSystem" onclick="selectTheme('system')" class="theme-option-card relative flex flex-col p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 group bg-slate-50 dark:bg-slate-800/40 hover:border-indigo-400 border-slate-200 dark:border-slate-800">
                             <input type="radio" id="themeSystem" name="themeChoice" value="system" class="sr-only">
                             <div class="h-20 w-full rounded-xl border border-slate-200 dark:border-slate-800 p-2.5 shadow-sm mb-3 flex flex-col justify-between overflow-hidden relative" style="background: linear-gradient(90deg, #ffffff 50%, #020617 50%);">
@@ -446,11 +298,6 @@
         const themeCardIds = {
             light: 'cardThemeLight',
             dark: 'cardThemeDark',
-            cyber: 'cardThemeCyber',
-            emerald: 'cardThemeEmerald',
-            cobalt: 'cardThemeCobalt',
-            gold: 'cardThemeGold',
-            crimson: 'cardThemeCrimson',
             system: 'cardThemeSystem'
         };
 
