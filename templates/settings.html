@@ -285,7 +285,41 @@
                     </div>
                 </section>
 
-                <!-- Submit Button -->
+                <section id="termsSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-6 shadow-sm transition-colors duration-200">
+                    <div class="mb-4">
+                        <p class="text-[10px] font-black uppercase tracking-widest text-slate-400">Policy & Customer Consent</p>
+                        <h2 class="mt-1 text-xl font-black text-slate-900 dark:text-white">Terms and Conditions</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Please review and accept the official MODELYX and ATWU service policies to complete your profile.</p>
+                    </div>
+
+                    <div id="termsContainer" class="p-5 rounded-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 transition-all">
+                        <div class="flex items-start gap-3.5">
+                            <input type="checkbox" id="termsAgreementCheckbox" name="termsAgreement" class="mt-1 h-5 w-5 rounded-lg text-indigo-600 focus:ring-indigo-500 border-slate-300 dark:border-slate-600 dark:bg-slate-700 cursor-pointer transition">
+                            <div class="flex-1">
+                                <label for="termsAgreementCheckbox" class="text-sm font-semibold text-slate-800 dark:text-slate-200 cursor-pointer select-none">
+                                    I Agree to the Terms and Conditions
+                                </label>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                                    By selecting this checkbox, you confirm that you have read, understood, and accepted the policies governing the use of MODELYX and the custom jersey design and ordering services provided by ATWU.
+                                </p>
+                                <div class="mt-3 flex items-center gap-3">
+                                    <button type="button" onclick="openTermsModal()" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 transition cursor-pointer">
+                                        <span>📜</span>
+                                        <span>Read Full Terms & Conditions</span>
+                                    </button>
+                                    <span id="termsStatusBadge" class="hidden text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                        <span>✓</span> Accepted
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="termsErrorMsg" class="hidden mt-3 pt-3 border-t border-rose-200 dark:border-rose-900/50 flex items-center gap-2 text-xs font-bold text-rose-600 dark:text-rose-400">
+                            <span>⚠️</span>
+                            <span>Please accept the Terms and Conditions before saving your profile.</span>
+                        </div>
+                    </div>
+                </section>
+
                 <button type="submit" class="w-full rounded-2xl bg-indigo-600 px-4 py-4 text-sm font-bold text-white shadow-lg shadow-indigo-100 dark:shadow-none transition hover:bg-indigo-700 cursor-pointer">Save Changes</button>
             </form>
         </section>
@@ -662,6 +696,11 @@
                             localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
                             $('longitude').value = prof.longitude;
                         }
+                        if (prof.terms_accepted === true) {
+                            if ($('termsAgreementCheckbox')) $('termsAgreementCheckbox').checked = true;
+                            $('termsStatusBadge')?.classList.remove('hidden');
+                            $('termsContainer')?.classList.add('border-emerald-500/50');
+                        }
                         if (prof.has_shipping_setup === true) {
                             localStorage.setItem('modelyx_shipping_setup', '1');
                             document.cookie = "modelyx_shipping_setup=1; path=/; max-age=2592000; SameSite=Lax";
@@ -820,6 +859,19 @@
                 return;
             }
 
+            const termsAccepted = $('termsAgreementCheckbox')?.checked === true;
+            if (!termsAccepted) {
+                const err = $('termsErrorMsg');
+                if (err) err.classList.remove('hidden');
+                const container = $('termsContainer');
+                if (container) {
+                    container.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20');
+                    container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                $('termsAgreementCheckbox')?.focus();
+                return;
+            }
+
             const token = localStorage.getItem('modelyx_token');
             if (token) {
                 try {
@@ -838,7 +890,8 @@
                             zip_code: zip || undefined,
                             country: country || undefined,
                             latitude: numLat,
-                            longitude: numLng
+                            longitude: numLng,
+                            terms_accepted: true
                         })
                     });
                 } catch (err) {}
@@ -873,6 +926,166 @@
                 location.href = 'dashboard.html';
             }
         });
+
+        window.openTermsModal = function() {
+            const modal = $('termsModal');
+            if (modal) modal.classList.remove('hidden');
+        };
+
+        window.closeTermsModal = function() {
+            const modal = $('termsModal');
+            if (modal) modal.classList.add('hidden');
+        };
+
+        window.acceptTermsFromModal = function() {
+            const cb = $('termsAgreementCheckbox');
+            if (cb) {
+                cb.checked = true;
+                $('termsContainer')?.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+                $('termsContainer')?.classList.add('border-emerald-500/50');
+                $('termsErrorMsg')?.classList.add('hidden');
+                $('termsStatusBadge')?.classList.remove('hidden');
+            }
+            window.closeTermsModal();
+        };
+
+        window.declineTermsFromModal = function() {
+            window.closeTermsModal();
+        };
+
+        const termsCb = $('termsAgreementCheckbox');
+        if (termsCb) {
+            termsCb.addEventListener('change', () => {
+                if (termsCb.checked) {
+                    $('termsContainer')?.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+                    $('termsContainer')?.classList.add('border-emerald-500/50');
+                    $('termsErrorMsg')?.classList.add('hidden');
+                    $('termsStatusBadge')?.classList.remove('hidden');
+                } else {
+                    $('termsContainer')?.classList.remove('border-emerald-500/50');
+                    $('termsStatusBadge')?.classList.add('hidden');
+                }
+            });
+        }
     </script>
+
+    <div id="termsModal" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+            <div class="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Legal Agreement</span>
+                    <h3 class="text-xl font-black text-slate-900 dark:text-white mt-0.5">TERMS AND CONDITIONS</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">MODELYX – AI-Powered Platform for Jersey Design and Color Matching with Online Ordering and Billing System</p>
+                </div>
+                <button type="button" onclick="closeTermsModal()" class="w-9 h-9 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-100 dark:bg-slate-800 text-lg font-bold transition cursor-pointer">&times;</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-6 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                <div class="p-4 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40">
+                    <p class="font-bold text-slate-900 dark:text-white">Welcome to MODELYX!</p>
+                    <p class="text-xs mt-1 text-slate-600 dark:text-slate-300">
+                        MODELYX is a web-based platform developed for ATWU, designed to provide customers with a convenient and accessible way to create customized jersey designs, explore AI-powered color recommendations, preview products, and submit orders online.
+                    </p>
+                    <p class="text-xs mt-2 text-slate-600 dark:text-slate-300">
+                        These Terms and Conditions govern the use of the MODELYX website and the services provided through the platform on behalf of ATWU. By accessing or using the MODELYX website, you acknowledge that you have read, understood, and agreed to these Terms and Conditions.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">1. Acceptance of Terms</h4>
+                    <p class="text-xs mt-1">By using the MODELYX website, customers agree to follow the policies and guidelines established for the platform and the services provided by ATWU.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">2. Website Usage</h4>
+                    <p class="text-xs mt-1">MODELYX allows customers to design, customize, preview, and order jerseys and other available apparel offered by ATWU. Customers must:</p>
+                    <ul class="list-disc pl-5 mt-1.5 space-y-1 text-xs">
+                        <li>Provide accurate and truthful information.</li>
+                        <li>Use the website for legitimate purposes.</li>
+                        <li>Avoid uploading inappropriate or unauthorized content.</li>
+                        <li>Refrain from activities that may disrupt website operations.</li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">3. Customer Information</h4>
+                    <p class="text-xs mt-1">Customers must provide accurate personal and contact information when submitting their details. ATWU will use the information for order processing, quotations, customer communication, and related business transactions, subject to applicable data privacy requirements.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">4. Jersey Design and Customization</h4>
+                    <p class="text-xs mt-1">Customers may upload images, customize jersey designs, and utilize the platform's AI-powered color detection and recommendation features. Customers are responsible for reviewing their designs before submitting orders. AI-generated recommendations are suggestions and do not guarantee exact printing results.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">5. Orders and Confirmation</h4>
+                    <p class="text-xs mt-1">All orders submitted through MODELYX are subject to review and approval by ATWU. ATWU reserves the right to request clarification, verify order details, and decline incomplete or inappropriate orders.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">6. Price Quotations and Billing</h4>
+                    <p class="text-xs mt-1">MODELYX provides price quotations based on the selected products and customization requirements. ATWU is responsible for verifying quotations, communicating applicable charges, and providing payment instructions to customers before finalizing orders.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">7. Order Tracking and Notifications</h4>
+                    <p class="text-xs mt-1">Customers may monitor their order status through the website. ATWU will provide updates regarding order progress whenever applicable.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">8. Customer Responsibilities</h4>
+                    <p class="text-xs mt-1">Customers must ensure that all submitted information, designs, and order details are accurate. They must also follow the policies and instructions provided by ATWU.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">9. Privacy and Data Protection</h4>
+                    <p class="text-xs mt-1">ATWU and the MODELYX platform shall handle customer information responsibly and implement reasonable measures to protect personal data in accordance with the Philippine Data Privacy Act of 2012 (Republic Act No. 10173).</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">10. Website Availability</h4>
+                    <p class="text-xs mt-1">MODELYX aims to provide reliable website access. However, temporary interruptions may occur due to maintenance, technical problems, or system updates.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">11. Intellectual Property</h4>
+                    <p class="text-xs mt-1">The MODELYX platform, its original interface, and system features are protected by applicable intellectual property laws. Customers are responsible for ensuring that uploaded designs and images are authorized for use.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">12. Modification of Terms</h4>
+                    <p class="text-xs mt-1">ATWU reserves the right to update or modify these Terms and Conditions when necessary. Updated terms will be published through the website.</p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-slate-900 dark:text-white">13. Customer Support</h4>
+                    <p class="text-xs mt-1">For questions, concerns, or assistance regarding jersey customization, quotations, orders, and billing, customers may contact ATWU through the available customer support channels.</p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-slate-900 dark:text-white">14. Agreement and Consent</h4>
+                    <p class="text-xs mt-1 text-slate-600 dark:text-slate-300">
+                        By selecting the "I Agree to the Terms and Conditions" checkbox, customers confirm that they have read, understood, and accepted the policies governing the use of MODELYX and the services provided by ATWU.
+                    </p>
+                    <p class="text-xs mt-2 font-bold text-indigo-600 dark:text-indigo-400">
+                        Thank you for choosing ATWU through MODELYX!
+                    </p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 italic mt-0.5">
+                        Design Your Jersey. Match Your Colors. Make It Yours.
+                    </p>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/50">
+                <button type="button" onclick="declineTermsFromModal()" class="px-5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer">
+                    Decline / Close
+                </button>
+                <button type="button" onclick="acceptTermsFromModal()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition cursor-pointer flex items-center gap-1.5">
+                    <span>✓</span>
+                    <span>Accept & Agree</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

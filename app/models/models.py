@@ -25,6 +25,8 @@ class User(Base):
     otp_code = Column(String(10), nullable=True)
     otp_expires = Column(DateTime, nullable=True)
     google_id = Column(String(255), nullable=True)
+    terms_accepted = Column(Integer, default=0)
+    terms_accepted_at = Column(DateTime, nullable=True)
 
     orders = relationship("Order", back_populates="user")
 

@@ -88,6 +88,8 @@ USER_COLUMN_DEFINITIONS = {
     "is_active": "INT DEFAULT 1 NULL",
     "latitude": "DECIMAL(10,8) NULL",
     "longitude": "DECIMAL(11,8) NULL",
+    "terms_accepted": "INT DEFAULT 0",
+    "terms_accepted_at": "DATETIME NULL",
 }
 
 def ensure_order_shipping_columns():

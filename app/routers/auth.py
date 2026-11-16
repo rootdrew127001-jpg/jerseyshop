@@ -1,4 +1,5 @@
 from typing import Optional
+from datetime import datetime
 import os
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import RedirectResponse, JSONResponse
@@ -476,6 +477,7 @@ class ProfileUpdateRequest(BaseModel):
     country: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    terms_accepted: Optional[bool] = None
 
 is_profile_complete = user_service.is_profile_complete
 
@@ -498,6 +500,8 @@ def get_user_profile(current_user: dict = Depends(get_current_user), db: Session
         "country": user.country,
         "latitude": float(user.latitude) if user.latitude else None,
         "longitude": float(user.longitude) if user.longitude else None,
+        "terms_accepted": bool(getattr(user, "terms_accepted", 0) == 1),
+        "terms_accepted_at": user.terms_accepted_at.isoformat() if getattr(user, "terms_accepted_at", None) else None,
         "has_shipping_setup": has_shipping
     }
 
@@ -506,7 +510,17 @@ def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depe
     user = db.query(User).filter(User.id == current_user["id"]).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    for field, val in payload.dict(exclude_unset=True).items():
+    update_data = payload.dict(exclude_unset=True)
+    if "terms_accepted" in update_data:
+        val = update_data.pop("terms_accepted")
+        if val is True or val == 1:
+            user.terms_accepted = 1
+            user.terms_accepted_at = datetime.utcnow()
+        elif val is False or val == 0:
+            user.terms_accepted = 0
+            user.terms_accepted_at = None
+
+    for field, val in update_data.items():
         if hasattr(user, field):
             setattr(user, field, val)
     db.commit()
@@ -515,6 +529,8 @@ def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depe
     return {
         "message": "Profile updated successfully",
         "has_shipping_setup": has_shipping,
+        "terms_accepted": bool(getattr(user, "terms_accepted", 0) == 1),
+        "terms_accepted_at": user.terms_accepted_at.isoformat() if getattr(user, "terms_accepted_at", None) else None,
         "user": {
             "id": user.id,
             "name": user.name,
@@ -527,6 +543,8 @@ def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depe
             "zip_code": user.zip_code,
             "country": user.country,
             "latitude": float(user.latitude) if user.latitude else None,
-            "longitude": float(user.longitude) if user.longitude else None
+            "longitude": float(user.longitude) if user.longitude else None,
+            "terms_accepted": bool(getattr(user, "terms_accepted", 0) == 1),
+            "terms_accepted_at": user.terms_accepted_at.isoformat() if getattr(user, "terms_accepted_at", None) else None
         }
     }
