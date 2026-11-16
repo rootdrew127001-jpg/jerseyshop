@@ -84,10 +84,13 @@
                 <div class="glass bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-6 shadow-sm transition-colors duration-200">
                     <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Last scanned DNA</p>
                     <div class="mt-5 flex items-center gap-4">
-                        <div id="pickMain" class="w-16 h-16 rounded-3xl border shadow-sm" style="background-color: #4F46E5;"></div>
+                        <div class="flex items-center -space-x-3 shrink-0">
+                            <div id="pickMain" class="w-16 h-16 rounded-3xl border shadow-sm relative z-10" style="background-color: #4F46E5;"></div>
+                            <div id="pickAccentMain" class="w-16 h-16 rounded-3xl border shadow-sm relative z-20 hidden" style="background-color: #E59546;"></div>
+                        </div>
                         <div>
                             <p class="text-xl font-black text-slate-900 dark:text-white" id="scanHexMain">#4F46E5</p>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">Saved color ready for design.</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400" id="scanDnaSub">Saved color ready for design.</p>
                         </div>
                     </div>
                 </div>
@@ -211,8 +214,23 @@
         window.onload = () => {
             $('welcomeName').innerText = localStorage.getItem('modelyx_user_name') || localStorage.getItem('modelyx_user_email')?.split('@')[0] || 'Designer';
             const color = localStorage.getItem('modelyx_color') || '#4F46E5';
+            const accent = localStorage.getItem('modelyx_accent_color');
             $('pickMain').style.background = color;
-            $('scanHexMain').innerText = color;
+            const pickAccent = $('pickAccentMain');
+            if (pickAccent) {
+                if (accent) {
+                    pickAccent.style.background = accent;
+                    pickAccent.classList.remove('hidden');
+                    $('scanHexMain').innerText = `${color} + ${accent}`;
+                    $('scanDnaSub').innerText = 'Base and paired accent ready for design.';
+                } else {
+                    pickAccent.classList.add('hidden');
+                    $('scanHexMain').innerText = color;
+                    $('scanDnaSub').innerText = 'Saved color ready for design.';
+                }
+            } else {
+                $('scanHexMain').innerText = color;
+            }
             loadNotifications();
             setInterval(loadNotifications, 30000);
         };

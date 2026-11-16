@@ -107,6 +107,30 @@
                         </div>
                     </div>
 
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <p class="text-[10px] uppercase tracking-widest text-slate-400 font-black">Matched Kit Accent</p>
+                            <span id="quickAccentSchemeBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40">Complementary</span>
+                        </div>
+                        <div class="mt-2.5 flex items-center justify-between gap-3 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl border border-slate-200 dark:border-slate-800/80 shadow-inner">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div id="quickAccentSwatch" class="w-12 h-12 rounded-xl border-2 border-white/40 ring-1 ring-black/40 shadow shrink-0 transition-all duration-100" style="background-color: #E59546;"></div>
+                                <div class="min-w-0">
+                                    <p id="quickAccentHex" class="text-base font-black font-mono tracking-tight text-slate-900 dark:text-white">#E59546</p>
+                                    <p id="quickAccentLabel" class="text-[11px] text-slate-500 dark:text-slate-400 truncate">Direct Complement</p>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end gap-1 shrink-0">
+                                <div class="flex items-center gap-1 bg-white dark:bg-slate-900 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] font-mono font-bold shadow-xs">
+                                    <span id="miniBaseDot" class="w-2.5 h-2.5 rounded-full" style="background-color: #4F46E5;"></span>
+                                    <span class="text-slate-400">+</span>
+                                    <span id="miniAccentDot" class="w-2.5 h-2.5 rounded-full" style="background-color: #E59546;"></span>
+                                </div>
+                                <span id="quickContrastRatio" class="text-[9px] font-mono font-bold text-emerald-600 dark:text-emerald-400">4.8:1 Contrast</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="space-y-3">
                         <button id="captureBtn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-3 rounded-xl font-bold transition shadow-lg shadow-indigo-900/30 flex items-center justify-center gap-2 cursor-pointer">
                             <span>🎯</span>
@@ -123,6 +147,30 @@
                 </div>
             </aside>
         </section>
+
+        <!-- Simple 3 Recommended Matches -->
+        <section id="recommendationsPanel" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4 transition-colors duration-200">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800/80 pb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg">🎨</span>
+                        <h2 class="text-lg font-black text-slate-900 dark:text-white">Recommended Color Matches</h2>
+                        <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40">3 Best Fits</span>
+                    </div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Selected color combinations that best pair with <span id="recomBaseHexLabel" class="font-mono font-bold text-slate-800 dark:text-slate-200">#4F46E5</span>.
+                    </p>
+                </div>
+            </div>
+
+            <div id="simpleRecommendationsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
+        </section>
+
+        <!-- Toast Feedback -->
+        <div id="scannerToast" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 dark:bg-white/95 text-white dark:text-slate-900 text-xs font-bold px-4 py-2.5 rounded-2xl shadow-2xl border border-white/10 dark:border-slate-900/10 opacity-0 pointer-events-none transition-all duration-200 flex items-center gap-2">
+            <span id="toastIcon">✨</span>
+            <span id="toastText">Action completed</span>
+        </div>
     </main>
 
     <script>
@@ -133,8 +181,12 @@
             : 'dashboard.html';
 
         let stream = null;
-        let activeMode = 'camera'; // 'camera' | 'testcard' | 'upload'
+        let activeMode = 'camera';
         let currentHex = localStorage.getItem('modelyx_color') || '#4F46E5';
+        let pairedAccentHex = localStorage.getItem('modelyx_accent_color') || null;
+        let isUserSelectedAccent = false;
+        let activeAccentScheme = 'Complementary';
+        let currentSchemeFilter = 'all';
         let reticleNormX = 0.5;
         let reticleNormY = 0.5;
 
@@ -146,7 +198,6 @@
         const setPreview = (hex, label = 'Center-area average (25x25)') => {
             currentHex = hex.toUpperCase();
             
-            // 1. Update Preview Swatch with high-priority background & dynamic glow
             const swatch = $('previewSwatch');
             if (swatch) {
                 swatch.style.setProperty('background-color', currentHex, 'important');
@@ -155,14 +206,12 @@
             $('previewHex').innerText = currentHex;
             $('sampleInfo').innerText = label;
 
-            // 2. Update Reticle Center Dot so the user sees the color on the crosshair!
             const dot = $('reticleDot');
             if (dot) {
                 dot.style.setProperty('background-color', currentHex, 'important');
                 dot.style.boxShadow = `0 0 10px ${currentHex}`;
             }
 
-            // 3. Update Reticle Badge with dot & hex
             const badgeDot = $('reticleBadgeDot');
             if (badgeDot) {
                 badgeDot.style.setProperty('background-color', currentHex, 'important');
@@ -172,15 +221,246 @@
                 badgeText.innerText = currentHex;
             }
 
-            // 4. Update Reticle ring border color
             if (reticle) {
                 reticle.style.borderColor = currentHex;
             }
+
+            scheduleRecommendationsUpdate(currentHex, false);
         };
 
         const updateStatus = (text, icon = 'ℹ️', isWarning = false) => {
-            // Status feedback box removed
         };
+
+        function hexToRgb(hex) {
+            const clean = String(hex || '').replace(/^#/, '');
+            const normalized = clean.length === 3
+                ? clean.split('').map(c => c + c).join('')
+                : clean;
+            const num = parseInt(normalized, 16);
+            if (isNaN(num) || normalized.length !== 6) return [79, 70, 229];
+            return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
+        }
+
+        function rgbToHex(r, g, b) {
+            const clamp = n => Math.max(0, Math.min(255, Math.round(n)));
+            return '#' + [clamp(r), clamp(g), clamp(b)].map(n => n.toString(16).padStart(2, '0')).join('').toUpperCase();
+        }
+
+        function rgbToHsv(r, g, b) {
+            r /= 255; g /= 255; b /= 255;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const d = max - min;
+            let h = 0;
+            const s = max === 0 ? 0 : d / max;
+            const v = max;
+            if (d !== 0) {
+                if (max === r) {
+                    h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+                } else if (max === g) {
+                    h = ((b - r) / d + 2) / 6;
+                } else {
+                    h = ((r - g) / d + 4) / 6;
+                }
+            }
+            return [h * 360, s, v];
+        }
+
+        function hsvToHex(h, s, v) {
+            h = ((h % 360) + 360) % 360;
+            s = Math.max(0, Math.min(1, s));
+            v = Math.max(0, Math.min(1, v));
+            const [r, g, b] = hsvToRgb(h / 360, s, v);
+            return rgbToHex(r, g, b);
+        }
+
+        function getLuminance(r, g, b) {
+            const a = [r, g, b].map(v => {
+                v /= 255;
+                return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+            });
+            return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+        }
+
+        function getContrastRatio(hex1, hex2) {
+            const rgb1 = hexToRgb(hex1);
+            const rgb2 = hexToRgb(hex2);
+            const lum1 = getLuminance(rgb1[0], rgb1[1], rgb1[2]);
+            const lum2 = getLuminance(rgb2[0], rgb2[1], rgb2[2]);
+            const brightest = Math.max(lum1, lum2);
+            const darkest = Math.min(lum1, lum2);
+            return ((brightest + 0.05) / (darkest + 0.05)).toFixed(1);
+        }
+
+        function getContrastBadge(hex1, hex2) {
+            const ratio = parseFloat(getContrastRatio(hex1, hex2));
+            if (ratio >= 7.0) {
+                return { text: ratio + ':1 Ultra Contrast', cls: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800/60' };
+            }
+            if (ratio >= 4.5) {
+                return { text: ratio + ':1 High Contrast', cls: 'bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 border-teal-300 dark:border-teal-800/60' };
+            }
+            if (ratio >= 3.0) {
+                return { text: ratio + ':1 Balanced', cls: 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border-indigo-300 dark:border-indigo-800/60' };
+            }
+            return { text: ratio + ':1 Subtle Harmony', cls: 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-slate-300 dark:border-slate-700' };
+        }
+
+        function calculate3Recommendations(baseHex) {
+            const [r, g, b] = hexToRgb(baseHex);
+            const [h, s, v] = rgbToHsv(r, g, b);
+            const isAchromatic = s < 0.12;
+
+            if (isAchromatic) {
+                return [
+                    {
+                        type: 'Bold Contrast',
+                        hex: '#FACC15',
+                        desc: 'Championship Gold high-contrast accent for numbers & crest.'
+                    },
+                    {
+                        type: 'Smooth Harmony',
+                        hex: '#94A3B8',
+                        desc: 'Titanium Slate neutral tone for sleeves & side panels.'
+                    },
+                    {
+                        type: 'Athletic Pop',
+                        hex: '#00BCD4',
+                        desc: 'Electric Cyan vibrant trim for collar & sleeve piping.'
+                    }
+                ];
+            }
+
+            const compHue = (h + 180) % 360;
+            const analHue = (h + 30) % 360;
+            const triadHue = (h + 120) % 360;
+
+            return [
+                {
+                    type: 'Bold Contrast',
+                    hex: hsvToHex(compHue, Math.min(1, s * 1.05), Math.min(1, v * 1.05)),
+                    desc: 'High-impact opposite accent, best for numbers and player names.'
+                },
+                {
+                    type: 'Smooth Harmony',
+                    hex: hsvToHex(analHue, s, v),
+                    desc: 'Natural neighboring tone, best for sleeves and side panels.'
+                },
+                {
+                    type: 'Athletic Pop',
+                    hex: hsvToHex(triadHue, Math.min(1, s * 1.1), v),
+                    desc: 'Balanced energetic partner, best for collar piping and trims.'
+                }
+            ];
+        }
+
+        let toastTimeout = null;
+        function showToast(text, icon = '✨') {
+            const toast = $('scannerToast');
+            const toastTxt = $('toastText');
+            const toastIcn = $('toastIcon');
+            if (!toast || !toastTxt) return;
+            toastTxt.textContent = text;
+            if (toastIcn) toastIcn.textContent = icon;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            toast.classList.add('opacity-100');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2000);
+        }
+
+        function renderRecommendations(baseHex) {
+            const recs = calculate3Recommendations(baseHex);
+            
+            if (!pairedAccentHex || !isUserSelectedAccent) {
+                pairedAccentHex = recs[0].hex;
+                activeAccentScheme = recs[0].type;
+            }
+
+            const recomLabel = $('recomBaseHexLabel');
+            if (recomLabel) recomLabel.textContent = baseHex;
+
+            const qSwatch = $('quickAccentSwatch');
+            if (qSwatch) {
+                qSwatch.style.backgroundColor = pairedAccentHex;
+                qSwatch.style.boxShadow = '0 2px 10px ' + pairedAccentHex + '60';
+            }
+            const qHex = $('quickAccentHex');
+            if (qHex) qHex.textContent = pairedAccentHex;
+            const qBadge = $('quickAccentSchemeBadge');
+            if (qBadge) qBadge.textContent = activeAccentScheme;
+            const qRatio = $('quickContrastRatio');
+            if (qRatio) qRatio.textContent = getContrastRatio(baseHex, pairedAccentHex) + ':1 Contrast';
+            const mBase = $('miniBaseDot');
+            if (mBase) mBase.style.backgroundColor = baseHex;
+            const mAccent = $('miniAccentDot');
+            if (mAccent) mAccent.style.backgroundColor = pairedAccentHex;
+
+            const grid = $('simpleRecommendationsGrid');
+            if (!grid) return;
+
+            let html = '';
+            recs.forEach(rec => {
+                const isSelected = (rec.hex === pairedAccentHex);
+                const cBadge = getContrastBadge(baseHex, rec.hex);
+                html += '<div class="bg-slate-50 dark:bg-slate-950/40 border ' + (isSelected ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-slate-200 dark:border-slate-800') + ' rounded-2xl p-4 flex flex-col justify-between space-y-3 transition shadow-xs group">';
+                html += '  <div class="w-full h-20 rounded-xl border border-black/10 dark:border-white/10 shadow-inner relative flex items-center justify-center transition group-hover:scale-[1.01]" style="background-color: ' + rec.hex + ';">';
+                if (isSelected) {
+                    html += '    <span class="text-[9px] font-black px-2 py-0.5 rounded-full bg-black/80 text-white backdrop-blur-xs">ACTIVE ACCENT</span>';
+                }
+                html += '  </div>';
+                html += '  <div class="space-y-1">';
+                html += '    <div class="flex items-center justify-between">';
+                html += '      <span class="text-[10px] uppercase font-black text-indigo-600 dark:text-indigo-400 tracking-wider">' + rec.type + '</span>';
+                html += '      <span class="text-[9px] font-mono px-1.5 py-0.5 rounded border ' + cBadge.cls + '">' + cBadge.text.split(' ')[0] + '</span>';
+                html += '    </div>';
+                html += '    <p class="text-xl font-mono font-black text-slate-900 dark:text-white cursor-pointer hover:text-indigo-500 transition" onclick="copyHex(\'' + rec.hex + '\')" title="Click to copy">' + rec.hex + '</p>';
+                html += '    <p class="text-xs text-slate-500 dark:text-slate-400">' + rec.desc + '</p>';
+                html += '  </div>';
+                html += '  <div class="flex items-center gap-2 pt-2 border-t border-slate-200 dark:border-slate-800/80">';
+                html += '    <button onclick="selectAccentColor(\'' + rec.hex + '\', \'' + rec.type + '\')" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold ' + (isSelected ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 hover:bg-indigo-600 hover:text-white border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300') + ' transition cursor-pointer">Use as Accent</button>';
+                html += '    <button onclick="copyHex(\'' + rec.hex + '\')" class="py-2 px-3 rounded-xl text-xs font-bold bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 transition cursor-pointer" title="Copy Hex Code">📋</button>';
+                html += '  </div>';
+                html += '</div>';
+            });
+            grid.innerHTML = html;
+        }
+
+        let recommendationTimer = null;
+        function scheduleRecommendationsUpdate(hex, immediate = false) {
+            if (immediate) {
+                if (recommendationTimer) {
+                    clearTimeout(recommendationTimer);
+                    recommendationTimer = null;
+                }
+                renderRecommendations(hex);
+                return;
+            }
+            if (recommendationTimer) return;
+            recommendationTimer = setTimeout(() => {
+                recommendationTimer = null;
+                renderRecommendations(currentHex);
+            }, 75);
+        }
+
+        function selectAccentColor(hex, schemeTitle = 'Custom') {
+            pairedAccentHex = hex.toUpperCase();
+            isUserSelectedAccent = true;
+            activeAccentScheme = schemeTitle;
+            localStorage.setItem('modelyx_accent_color', pairedAccentHex);
+            renderRecommendations(currentHex);
+            showToast('Set ' + pairedAccentHex + ' as Paired Kit Accent!', '🎨');
+        }
+
+        function copyHex(hex) {
+            navigator.clipboard.writeText(hex).then(() => {
+                showToast('Copied ' + hex + ' to clipboard!', '📋');
+            }).catch(() => {
+                showToast('Copied ' + hex, '📋');
+            });
+        }
 
         function hsvToRgb(h, s, v) {
             let r, g, b;
@@ -605,15 +885,16 @@
             if (isPointerDown) {
                 isPointerDown = false;
                 $('viewfinderWrapper').releasePointerCapture?.(e.pointerId);
+                scheduleRecommendationsUpdate(currentHex, true);
             }
         };
         $('viewfinderWrapper').addEventListener('pointerup', releasePointer);
         $('viewfinderWrapper').addEventListener('pointercancel', releasePointer);
 
-        // Capture DNA button with instant tactile feedback
         $('captureBtn').addEventListener('click', () => {
             const hex = sampleAreaHex(reticleNormX, reticleNormY);
             setPreview(hex, 'Color DNA Captured & Locked');
+            scheduleRecommendationsUpdate(hex, true);
             const originalHTML = $('captureBtn').innerHTML;
             $('captureBtn').innerHTML = '<span>✨</span><span>DNA Captured!</span>';
             $('captureBtn').classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
@@ -625,9 +906,11 @@
             }, 1200);
         });
 
-        // Save & Return
         const saveAndReturn = () => {
             localStorage.setItem('modelyx_color', currentHex);
+            if (pairedAccentHex) {
+                localStorage.setItem('modelyx_accent_color', pairedAccentHex);
+            }
             window.location.href = returnTarget;
         };
 
@@ -704,8 +987,7 @@
 
         window.addEventListener('beforeunload', stopCamera);
         setPreview(currentHex);
-
-        // Auto-start camera or gracefully fall back to test card
+        renderRecommendations(currentHex);
         startCamera();
     </script>
 </body>

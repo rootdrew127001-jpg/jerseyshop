@@ -90,12 +90,15 @@ export function initEditor() {
         }
     }
 
-    // Auto-apply newly scanned color if returning fresh from scanner
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('scanned') === '1') {
         const scannedColor = localStorage.getItem('modelyx_color');
         if (scannedColor) {
             currentDesign.baseColor = scannedColor;
+        }
+        const scannedAccent = localStorage.getItem('modelyx_accent_color');
+        if (scannedAccent) {
+            currentDesign.accentColor = scannedAccent;
         }
         const cleanUrl = window.location.pathname + (urlParams.get('exit') ? `?exit=${urlParams.get('exit')}` : '');
         window.history.replaceState({}, document.title, cleanUrl);
@@ -246,7 +249,7 @@ function bindControls() {
     const btnApplyScannedAccent = document.getElementById('btnApplyScannedAccent');
     if (btnApplyScannedAccent) {
         btnApplyScannedAccent.addEventListener('click', () => {
-            const scannedColor = localStorage.getItem('modelyx_color');
+            const scannedColor = localStorage.getItem('modelyx_accent_color') || localStorage.getItem('modelyx_color');
             if (scannedColor) {
                 currentDesign.accentColor = scannedColor;
                 const accentInput = document.getElementById('accentColor');
@@ -1585,15 +1588,27 @@ function syncUI(design) {
 
 function syncScannedColorUI() {
     const scannedColor = localStorage.getItem('modelyx_color');
+    const scannedAccent = localStorage.getItem('modelyx_accent_color');
     const scannedContainer = document.getElementById('scannedColorContainer');
     if (scannedContainer) {
         if (scannedColor) {
             scannedContainer.classList.remove('hidden');
             scannedContainer.classList.add('flex');
             const swatch = document.getElementById('scannedColorSwatch');
+            const accentSwatch = document.getElementById('scannedAccentSwatch');
             const hexLabel = document.getElementById('lblScannedHex');
             if (swatch) swatch.style.backgroundColor = scannedColor;
-            if (hexLabel) hexLabel.textContent = scannedColor;
+            if (accentSwatch) {
+                if (scannedAccent) {
+                    accentSwatch.style.backgroundColor = scannedAccent;
+                    accentSwatch.classList.remove('hidden');
+                } else {
+                    accentSwatch.classList.add('hidden');
+                }
+            }
+            if (hexLabel) {
+                hexLabel.textContent = scannedAccent ? `${scannedColor} + ${scannedAccent}` : scannedColor;
+            }
         } else {
             scannedContainer.classList.add('hidden');
             scannedContainer.classList.remove('flex');
