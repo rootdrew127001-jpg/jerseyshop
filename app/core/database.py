@@ -118,6 +118,25 @@ def ensure_order_shipping_columns():
                 for name, definition in missing_user_cols:
                     conn.execute(text(f"ALTER TABLE users ADD COLUMN {name} {definition}"))
 
+def ensure_chat_tables():
+    from app.models.models import ChatConversation, ChatMessage, ChatCannedResponse
+    ChatConversation.__table__.create(bind=engine, checkfirst=True)
+    ChatMessage.__table__.create(bind=engine, checkfirst=True)
+    ChatCannedResponse.__table__.create(bind=engine, checkfirst=True)
+
+    inspector = inspect(engine)
+    if inspector.has_table("chat_conversations"):
+        conv_cols = {col["name"] for col in inspector.get_columns("chat_conversations")}
+        if "referenced_order_id" not in conv_cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE chat_conversations ADD COLUMN referenced_order_id INT NULL"))
+
+    if inspector.has_table("chat_messages"):
+        msg_cols = {col["name"] for col in inspector.get_columns("chat_messages")}
+        if "order_id" not in msg_cols:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE chat_messages ADD COLUMN order_id INT NULL"))
+
 def get_db():
     db = SessionLocal()
     try:

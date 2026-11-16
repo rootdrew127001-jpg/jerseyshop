@@ -112,3 +112,49 @@ class Notification(Base):
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User", backref="notifications")
+
+
+class ChatConversation(Base):
+    __tablename__ = "chat_conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    referenced_order_id = Column(Integer, ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
+    last_message = Column(Text, nullable=True)
+    last_message_at = Column(DateTime, server_default=func.now(), index=True)
+    customer_unread = Column(Integer, default=0)
+    admin_unread = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+    customer = relationship("User", foreign_keys=[customer_id])
+    referenced_order = relationship("Order", foreign_keys=[referenced_order_id])
+    messages = relationship("ChatMessage", back_populates="conversation", cascade="all, delete-orphan", order_by="ChatMessage.id")
+
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("chat_conversations.id", ondelete="CASCADE"), nullable=False, index=True)
+    sender_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    sender_role = Column(String(20), nullable=False)
+    sender_name = Column(String(100), nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="SET NULL"), nullable=True)
+    message = Column(Text, nullable=False)
+    is_read = Column(Integer, default=0)
+    created_at = Column(DateTime, server_default=func.now(), index=True)
+
+    conversation = relationship("ChatConversation", back_populates="messages")
+    sender = relationship("User", foreign_keys=[sender_id])
+    order = relationship("Order", foreign_keys=[order_id])
+
+
+class ChatCannedResponse(Base):
+    __tablename__ = "chat_canned_responses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    shortcut = Column(String(50), unique=True, nullable=False, index=True)
+    title = Column(String(100), nullable=False)
+    message = Column(Text, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())

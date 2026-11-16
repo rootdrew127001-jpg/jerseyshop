@@ -3,9 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from app.core.database import engine, Base, ensure_order_shipping_columns, get_db
+from app.core.database import engine, Base, ensure_order_shipping_columns, ensure_chat_tables, get_db
 from app.models.models import User
-from app.routers import auth, notifications, orders, ai, payments, geo, admin_staff, pricing
+from app.routers import auth, notifications, orders, ai, payments, geo, admin_staff, pricing, chat
 from app.core.config import ALLOWED_ORIGINS, ENV, SECRET_KEY, ALGORITHM
 from jose import jwt
 import os
@@ -13,13 +13,16 @@ import os
 try:
     Base.metadata.create_all(bind=engine)
     ensure_order_shipping_columns()
+    ensure_chat_tables()
     from app.core.database import SessionLocal
     from app.services.user_service import ensure_default_admin, ensure_dev_accounts
     from app.services.pricing_service import ensure_default_pricing
+    from app.services.chat_service import ensure_default_canned_responses
     with SessionLocal() as db_session:
         ensure_default_admin(db_session)
         ensure_dev_accounts(db_session)
         ensure_default_pricing(db_session)
+        ensure_default_canned_responses(db_session)
 except Exception as e:
     print(f"Table sync / admin bootstrap delayed: {e}", flush=True)
 
@@ -55,6 +58,7 @@ app.include_router(notifications.router)
 app.include_router(geo.router)
 app.include_router(admin_staff.router)
 app.include_router(pricing.router)
+app.include_router(chat.router)
 @app.get("/api")
 def root():
     return {

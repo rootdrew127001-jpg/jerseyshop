@@ -939,6 +939,10 @@
         });
 
         window.onload = () => {
+            const urlQuery = new URLSearchParams(window.location.search).get('search');
+            if (urlQuery && $('orderSearch')) {
+                $('orderSearch').value = urlQuery;
+            }
             render();
             loadAdminNotifications();
             setInterval(loadAdminNotifications, 30000);

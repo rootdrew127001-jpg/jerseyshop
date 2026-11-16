@@ -82,6 +82,7 @@
         const isCancelledPage = currentPath === '/cancelled.html' || currentPath === '/cancelled';
         const isDeletedPage = currentPath === '/deleted.html' || currentPath === '/deleted';
         const isStaffPage = currentPath === '/staff.html' || currentPath === '/staff';
+        const isChatPage = currentPath === '/chat.html' || currentPath === '/chat';
 
         const isOrdersTabActive = isOrdersPage && activeTab !== 'pricing';
         const isPricingTabActive = isOrdersPage && activeTab === 'pricing' && role === 'owner';
@@ -127,6 +128,11 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                     <span>Staff & Sub-Admins</span>
+                </button>
+                <button type="button" id="navChatLink" class="${isChatPage ? activeIndigoClass : inactiveClass}">
+                    <span class="text-base shrink-0">💬</span>
+                    <span class="flex-1 text-left">Live Support</span>
+                    <span id="adminNavChatBadge" class="hidden px-2 py-0.5 text-[11px] font-black bg-rose-500 text-white rounded-full">0</span>
                 </button>
                 <button type="button" id="navThemeBtn" class="${themeBtnClass}">
                     <span class="text-base shrink-0">🎨</span>
@@ -182,6 +188,196 @@
                 window.location.href = '/staff.html';
             }
         });
+
+        const chatBtn = aside.querySelector('#navChatLink');
+        if (chatBtn) {
+            chatBtn.addEventListener('click', () => {
+                if (!isChatPage) {
+                    window.location.href = '/chat.html';
+                }
+            });
+        }
+
+        const originalDocTitle = document.title;
+        function updateDocumentTitle(unreadCount) {
+            if (unreadCount > 0) {
+                document.title = '(' + unreadCount + ') ' + originalDocTitle.replace(/^\(\d+\)\s*/, '');
+            } else {
+                document.title = originalDocTitle.replace(/^\(\d+\)\s*/, '');
+            }
+        }
+
+        function applyChatBadge(count) {
+            const badge = aside.querySelector('#adminNavChatBadge');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+            updateDocumentTitle(count);
+        }
+
+        function playNavChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const now = ctx.currentTime;
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(587.33, now);
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(880, now + 0.12);
+                gain.gain.setValueAtTime(0.12, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(ctx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.12);
+                osc2.start(now + 0.12);
+                osc2.stop(now + 0.35);
+            } catch (e) {}
+        }
+
+        function showLiveChatToast(customerName, messageSnippet) {
+            if (isChatPage) return;
+            let toastContainer = document.getElementById('adminChatToastContainer');
+            if (!toastContainer) {
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'adminChatToastContainer';
+                toastContainer.className = 'fixed bottom-5 right-5 z-[9999] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4';
+                document.body.appendChild(toastContainer);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto bg-slate-900/95 border border-indigo-500/50 text-white p-4 rounded-2xl shadow-2xl backdrop-blur-md flex items-start gap-3 transition-all duration-300 transform translate-y-4 opacity-0 cursor-pointer hover:border-indigo-400';
+            toast.innerHTML = `
+                <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 text-base shadow-md shadow-indigo-600/30">
+                    💬
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between gap-1">
+                        <span class="text-xs font-black text-indigo-300 truncate">${customerName || 'Customer'}</span>
+                        <span class="text-[10px] text-slate-400 font-bold">Just now</span>
+                    </div>
+                    <p class="text-xs text-slate-200 truncate mt-0.5">${messageSnippet || 'Sent a new message'}</p>
+                    <div class="mt-2 flex items-center justify-between">
+                        <span class="text-[10px] font-black uppercase tracking-wider text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                            Reply in Live Support &rarr;
+                        </span>
+                    </div>
+                </div>
+                <button type="button" class="text-slate-400 hover:text-white text-base leading-none p-1 font-bold ml-1">&times;</button>
+            `;
+
+            toast.addEventListener('click', (e) => {
+                if (e.target.tagName && e.target.tagName.toLowerCase() === 'button') {
+                    toast.remove();
+                    return;
+                }
+                window.location.href = '/chat.html';
+            });
+
+            const closeBtn = toast.querySelector('button');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toast.remove();
+                });
+            }
+
+            toastContainer.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 6500);
+        }
+
+        let adminWs = null;
+        let adminWsPingTimer = null;
+
+        function connectAdminNavWebSocket() {
+            const t = localStorage.getItem('modelyx_token');
+            if (!t) return;
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${proto}//${window.location.host}/chat/ws?token=${encodeURIComponent(t)}`;
+
+            try {
+                adminWs = new WebSocket(wsUrl);
+                adminWs.onopen = () => {
+                    clearInterval(adminWsPingTimer);
+                    adminWsPingTimer = setInterval(() => {
+                        if (adminWs && adminWs.readyState === WebSocket.OPEN) {
+                            adminWs.send(JSON.stringify({ action: 'ping' }));
+                        }
+                    }, 25000);
+                };
+
+                adminWs.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'new_message') {
+                            const isFromCustomer = data.customer_id || (data.message && data.message.sender_role === 'customer');
+                            const unreadVal = data.unread_customers !== undefined ? data.unread_customers : (data.unread_total || 0);
+                            if (isFromCustomer) {
+                                applyChatBadge(unreadVal > 0 ? unreadVal : 1);
+                                playNavChime();
+                                const sender = data.customer_name || (data.message && data.message.sender_name) || 'Customer';
+                                const text = (data.message && data.message.message) || 'Sent a new message';
+                                showLiveChatToast(sender, text);
+                            } else if (data.unread_customers !== undefined || data.unread_total !== undefined) {
+                                applyChatBadge(unreadVal);
+                            }
+                        } else if (data.type === 'read_ack') {
+                            const unreadVal = data.unread_customers !== undefined ? data.unread_customers : (data.unread_total || 0);
+                            applyChatBadge(unreadVal);
+                        }
+                    } catch (e) {}
+                };
+
+                adminWs.onclose = () => {
+                    clearInterval(adminWsPingTimer);
+                    setTimeout(connectAdminNavWebSocket, 4000);
+                };
+
+                adminWs.onerror = () => {
+                    if (adminWs) adminWs.close();
+                };
+            } catch (e) {
+                setTimeout(connectAdminNavWebSocket, 5000);
+            }
+        }
+
+        async function updateNavChatBadge() {
+            try {
+                const t = localStorage.getItem('modelyx_token');
+                if (!t) return;
+                const res = await fetch('/chat/admin/conversations', {
+                    headers: { 'Authorization': 'Bearer ' + t }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const count = data.unread_customers !== undefined ? data.unread_customers : (data.unread_total || 0);
+                    applyChatBadge(count);
+                }
+            } catch (e) {}
+        }
+        updateNavChatBadge();
+        setInterval(updateNavChatBadge, 6000);
+        connectAdminNavWebSocket();
 
         aside.querySelector('#navThemeBtn').addEventListener('click', () => {
             if (window.ModelyxTheme && typeof window.ModelyxTheme.openThemeModal === 'function') {

@@ -443,6 +443,10 @@
         });
 
         window.onload = () => {
+            const urlQuery = new URLSearchParams(window.location.search).get('search');
+            if (urlQuery && $('deletedSearch')) {
+                $('deletedSearch').value = urlQuery;
+            }
             render();
         };
 

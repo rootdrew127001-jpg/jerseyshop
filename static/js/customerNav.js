@@ -16,6 +16,12 @@
         document.head.appendChild(script);
     }
 
+    if (!window.__modelyxChatWidgetLoaded && !document.querySelector('script[src*="chatWidget.js"]')) {
+        const chatScript = document.createElement('script');
+        chatScript.src = '/static/js/chatWidget.js';
+        document.head.appendChild(chatScript);
+    }
+
     const links = [
         { href: '/dashboard.html', label: 'Dashboard', icon: 'M4 6h16M4 12h16M4 18h16' },
         { href: '/editor.html', label: '3D Designer', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
