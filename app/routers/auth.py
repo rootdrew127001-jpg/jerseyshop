@@ -227,6 +227,7 @@ def get_session(request: Request, db: Session = Depends(get_db)):
             "email": user.email,
             "role": user.role,
             "is_verified": bool(user.is_verified),
+            "avatar": getattr(user, "avatar", None),
             "has_shipping_setup": has_shipping,
             "shipping": {
                 "address": user.address or "",
@@ -478,6 +479,7 @@ class ProfileUpdateRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     terms_accepted: Optional[bool] = None
+    avatar: Optional[str] = None
 
 is_profile_complete = user_service.is_profile_complete
 
@@ -500,6 +502,7 @@ def get_user_profile(current_user: dict = Depends(get_current_user), db: Session
         "country": user.country,
         "latitude": float(user.latitude) if user.latitude else None,
         "longitude": float(user.longitude) if user.longitude else None,
+        "avatar": getattr(user, "avatar", None),
         "terms_accepted": bool(getattr(user, "terms_accepted", 0) == 1),
         "terms_accepted_at": user.terms_accepted_at.isoformat() if getattr(user, "terms_accepted_at", None) else None,
         "has_shipping_setup": has_shipping
@@ -544,6 +547,7 @@ def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depe
             "country": user.country,
             "latitude": float(user.latitude) if user.latitude else None,
             "longitude": float(user.longitude) if user.longitude else None,
+            "avatar": getattr(user, "avatar", None),
             "terms_accepted": bool(getattr(user, "terms_accepted", 0) == 1),
             "terms_accepted_at": user.terms_accepted_at.isoformat() if getattr(user, "terms_accepted_at", None) else None
         }

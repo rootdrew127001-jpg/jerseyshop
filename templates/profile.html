@@ -160,8 +160,23 @@
             $('welcomeName').innerText = name;
             $('userEmail').innerText = email;
             $('memberDate').innerText = `Modelyx Member Since ${created}`;
+            const defaultAvatar = '/static/pngtree-customer-icon-social-raster-png-image_10853341.png';
             if (profileImg) {
-                $('avatarContainer').innerHTML = `<img src="${profileImg}" class="w-full h-full object-cover">`;
+                $('avatarContainer').innerHTML = `<img src="${profileImg}" class="w-full h-full object-cover" onerror="this.src='${defaultAvatar}'">`;
+            } else {
+                $('avatarContainer').innerHTML = `<img src="${defaultAvatar}" class="w-full h-full object-cover">`;
+            }
+
+            const token = localStorage.getItem('modelyx_token');
+            if (token) {
+                fetch('/auth/profile', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }).then(r => r.ok ? r.json() : null).then(prof => {
+                    if (prof && prof.avatar) {
+                        localStorage.setItem('modelyx_profile_image', prof.avatar);
+                        $('avatarContainer').innerHTML = `<img src="${prof.avatar}" class="w-full h-full object-cover" onerror="this.src='${defaultAvatar}'">`;
+                    }
+                }).catch(() => {});
             }
             $('overviewName').innerText = name;
             $('overviewEmail').innerText = email;

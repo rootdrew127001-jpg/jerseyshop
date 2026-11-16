@@ -63,7 +63,8 @@ def parse_user_from_token(token: Optional[str], db: Session) -> Optional[dict]:
             "id": user_id,
             "email": user_email,
             "role": user_role,
-            "name": user_name
+            "name": user_name,
+            "avatar": getattr(db_user, "avatar", None) if db_user else None
         }
     except Exception:
         return None
@@ -266,6 +267,7 @@ async def send_chat_message_http(
             "conversation_id": conv.id,
             "customer_id": current_user["id"],
             "customer_name": sender_name,
+            "customer_avatar": current_user.get("avatar"),
             "message": serialized,
             "order_id": target_order_id,
             "order": serialized.get("order"),
@@ -416,6 +418,7 @@ async def chat_websocket(
                             "conversation_id": conv.id,
                             "customer_id": user_id,
                             "customer_name": user_name,
+                            "customer_avatar": user.get("avatar"),
                             "message": serialized,
                             "order_id": target_order_id,
                             "order": serialized.get("order"),

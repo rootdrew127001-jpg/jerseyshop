@@ -56,7 +56,7 @@ class ChatConnectionManager:
         payload = {
             "type": "system_status",
             "enabled": enabled,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat() + "Z"
         }
         dead_admins = set()
         for ws in self.admin_sockets:
@@ -99,6 +99,13 @@ def set_live_chat_enabled(enabled: bool) -> bool:
         pass
     return enabled
 
+def to_iso_utc(dt: Optional[datetime]) -> Optional[str]:
+    if not dt:
+        return None
+    if getattr(dt, "tzinfo", None) is None:
+        return dt.isoformat() + "Z"
+    return dt.isoformat()
+
 def serialize_message(m: ChatMessage) -> dict:
     order_data = None
     if m.order_id:
@@ -118,11 +125,12 @@ def serialize_message(m: ChatMessage) -> dict:
         "sender_id": m.sender_id,
         "sender_role": m.sender_role,
         "sender_name": m.sender_name,
+        "sender_avatar": getattr(m.sender, "avatar", None) if m.sender else None,
         "order_id": m.order_id,
         "order": order_data,
         "message": m.message,
         "is_read": m.is_read,
-        "created_at": m.created_at.isoformat() if m.created_at else None
+        "created_at": to_iso_utc(m.created_at)
     }
 
 def get_order_snippet_by_id(db: Session, order_id: int) -> Optional[dict]:
@@ -239,8 +247,9 @@ def list_admin_conversations(db: Session) -> list:
             "customer_name": cust.name if cust else "Unknown Customer",
             "customer_email": cust.email if cust else "",
             "customer_phone": cust.phone if cust else "",
+            "customer_avatar": getattr(cust, "avatar", None) if cust else None,
             "last_message": c.last_message or "",
-            "last_message_at": c.last_message_at.isoformat() if c.last_message_at else None,
+            "last_message_at": to_iso_utc(c.last_message_at),
             "admin_unread": c.admin_unread or 0,
             "customer_unread": c.customer_unread or 0,
             "active_order": order_snippet

@@ -70,7 +70,12 @@
     function formatTime(iso) {
         if (!iso) return '';
         try {
-            const d = new Date(iso);
+            let str = String(iso).trim();
+            if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(str)) {
+                str += 'Z';
+            }
+            const d = new Date(str);
+            if (isNaN(d.getTime())) return '';
             return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } catch (e) {
             return '';
@@ -112,7 +117,7 @@
                     <span>Support is currently away. Leave a message and we'll reply shortly!</span>
                 </div>
 
-                <div id="widgetMessagesContainer" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/70">
+                <div id="widgetMessagesContainer" class="chat-widget-messages flex-1 overflow-y-auto p-4 space-y-3">
                     <div id="widgetLoadingOlder" class="text-center py-1 text-[11px] font-bold text-slate-400 hidden">
                         Loading older messages...
                     </div>
@@ -331,36 +336,31 @@
 
     function getOrderStatusBadgeHtml(status) {
         const s = (status || 'Pending Review').toLowerCase();
+        let badgeClass = 'badge-status-pending';
         if (s.includes('cancel') || s.includes('reject')) {
-            return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 border border-rose-200">' + escapeHtml(status) + '</span>';
+            badgeClass = 'badge-status-cancelled';
+        } else if (s.includes('complete')) {
+            badgeClass = 'badge-status-completed';
+        } else if (s.includes('production')) {
+            badgeClass = 'badge-status-production';
+        } else if (s.includes('ship')) {
+            badgeClass = 'badge-status-shipped';
         }
-        if (s.includes('complete')) {
-            return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200">' + escapeHtml(status) + '</span>';
-        }
-        if (s.includes('production')) {
-            return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 border border-indigo-200">' + escapeHtml(status) + '</span>';
-        }
-        if (s.includes('ship')) {
-            return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-700 border border-blue-200">' + escapeHtml(status) + '</span>';
-        }
-        return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200">' + escapeHtml(status) + '</span>';
+        return `<span class="px-2 py-0.5 rounded-full text-[9px] font-black border ${badgeClass}">${escapeHtml(status)}</span>`;
     }
 
     function renderOrderSnippet(order) {
         if (!order || !order.id) return '';
         return `
-            <div class="mt-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-left select-text">
+            <div class="chat-order-snippet mt-2 p-2.5 border rounded-xl text-left select-text">
                 <div class="flex items-center justify-between gap-1 mb-1">
-                    <span class="text-[11px] font-black text-slate-900">📦 Order #${order.id}</span>
+                    <span class="text-[11px] font-black">📦 Order #${order.id}</span>
                     ${getOrderStatusBadgeHtml(order.status)}
                 </div>
-                <div class="text-[10px] text-slate-600 flex items-center justify-between gap-1">
+                <div class="text-[10px] opacity-80 flex items-center justify-between gap-1">
                     <span class="truncate font-semibold">${escapeHtml(order.team_name || 'Jersey Order')}</span>
-                    <span class="font-black text-slate-900">₱${Number(order.total || 0).toLocaleString()}</span>
+                    <span class="font-black">₱${Number(order.total || 0).toLocaleString()}</span>
                 </div>
-                <a href="/orders.html" target="_blank" class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 transition">
-                    View in My Orders &rarr;
-                </a>
             </div>
         `;
     }
@@ -483,11 +483,11 @@
             return `
                 <div ${msgIdAttr} class="chat-bubble-row flex items-start justify-end gap-1.5 max-w-[85%] ml-auto">
                     <div>
-                        <div class="bg-indigo-600 text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-md shadow-indigo-600/20 break-words">
+                        <div class="chat-bubble-outgoing text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-md shadow-indigo-600/20 break-words">
                             ${escapeHtml(m.message)}
                             ${orderCard}
                         </div>
-                        <div class="text-[9px] text-slate-400 text-right mt-1 mr-1">
+                        <div class="text-[9px] text-slate-400 dark:text-slate-500 text-right mt-1 mr-1">
                             ${time}
                         </div>
                     </div>
@@ -500,12 +500,12 @@
                         M
                     </div>
                     <div>
-                        <div class="bg-white border border-slate-200 text-slate-800 text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm break-words">
+                        <div class="chat-bubble-incoming border text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm break-words">
                             ${escapeHtml(m.message)}
                             ${orderCard}
                         </div>
-                        <div class="flex items-center gap-1.5 text-[9px] text-slate-400 mt-1 ml-1">
-                            <span class="font-bold text-slate-600">${escapeHtml(m.sender_name || 'Support')}</span>
+                        <div class="flex items-center gap-1.5 text-[9px] text-slate-400 dark:text-slate-500 mt-1 ml-1">
+                            <span class="font-bold text-slate-600 dark:text-slate-300">${escapeHtml(m.sender_name || 'Support')}</span>
                             <span>·</span>
                             <span>${time}</span>
                         </div>

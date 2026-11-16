@@ -90,6 +90,7 @@ USER_COLUMN_DEFINITIONS = {
     "longitude": "DECIMAL(11,8) NULL",
     "terms_accepted": "INT DEFAULT 0",
     "terms_accepted_at": "DATETIME NULL",
+    "avatar": "LONGTEXT NULL",
 }
 
 def ensure_order_shipping_columns():

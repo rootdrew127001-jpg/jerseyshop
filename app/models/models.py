@@ -27,6 +27,7 @@ class User(Base):
     google_id = Column(String(255), nullable=True)
     terms_accepted = Column(Integer, default=0)
     terms_accepted_at = Column(DateTime, nullable=True)
+    avatar = Column(Text, nullable=True)
 
     orders = relationship("Order", back_populates="user")
 

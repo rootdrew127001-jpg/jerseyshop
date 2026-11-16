@@ -34,17 +34,6 @@
             </div>
 
             <div class="flex items-center gap-4">
-                <div id="ownerToggleContainer" class="flex items-center gap-3 bg-slate-100 px-3.5 py-1.5 rounded-xl border border-slate-200">
-                    <div class="flex flex-col text-right">
-                        <span class="text-xs font-black text-slate-800">Master Live Chat</span>
-                        <span id="chatStatusText" class="text-[10px] font-bold text-slate-500">Checking...</span>
-                    </div>
-                    <label id="chatToggleLabel" class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="chatMasterToggle" class="sr-only peer" onchange="handleMasterToggleChange(this)">
-                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
-                    </label>
-                </div>
-
                 <button onclick="loadConversations()" class="bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -84,15 +73,15 @@
                 <div id="activeConversationView" class="flex-1 flex flex-col hidden overflow-hidden">
                     <div class="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between gap-4 shrink-0 shadow-sm">
                         <div class="flex items-center gap-3">
-                            <div id="activeCustomerAvatar" class="w-10 h-10 rounded-full bg-indigo-600 text-white font-black text-sm flex items-center justify-center shadow-md shadow-indigo-500/20">
-                                C
+                            <div id="activeCustomerAvatar" class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shadow-sm shrink-0">
+                                <img src="/static/pngtree-customer-icon-social-raster-png-image_10853341.png" alt="Customer" class="w-full h-full object-cover">
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <h3 id="activeCustomerName" class="text-sm font-black text-slate-900">Customer Name</h3>
+                                    <h3 id="activeCustomerName" class="text-sm font-black text-slate-900 dark:text-slate-100">Customer Name</h3>
                                     <span id="activeCustomerTyping" class="text-[11px] font-bold text-indigo-600 hidden animate-pulse">typing...</span>
                                 </div>
-                                <p id="activeCustomerMeta" class="text-xs text-slate-500">customer@email.com</p>
+                                <p id="activeCustomerMeta" class="text-xs text-slate-500 dark:text-slate-400">customer@email.com</p>
                             </div>
                         </div>
                     </div>
@@ -106,11 +95,11 @@
 
                     <div class="bg-white border-t border-slate-200 p-4 shrink-0">
                         <div class="flex items-center justify-end mb-2">
-                            <span id="charCount" class="text-[10px] text-slate-400 font-semibold">0 / 1000</span>
+                            <span id="charCount" class="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">0 / 1000</span>
                         </div>
 
                         <form id="chatForm" onsubmit="handleSendSubmit(event)" class="flex items-end gap-2">
-                            <textarea id="chatInput" rows="2" maxlength="1000" oninput="handleAdminTyping(this)" onkeydown="handleInputKeyDown(event)" placeholder="Type a message (Enter to send, Shift+Enter for newline)..." class="flex-1 resize-none bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition"></textarea>
+                            <textarea id="chatInput" rows="2" maxlength="1000" oninput="handleAdminTyping(this)" onkeydown="handleInputKeyDown(event)" placeholder="Type a message (Enter to send, Shift+Enter for newline)..." class="flex-1 resize-none bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 transition"></textarea>
                             <button type="submit" id="sendBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-3 rounded-xl text-xs shadow-lg shadow-indigo-600/20 transition flex items-center gap-1.5 cursor-pointer shrink-0">
                                 <span>Send</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,6 +127,7 @@
         let adminPingInterval = null;
         let adminDeltaInterval = null;
         let adminListPollInterval = null;
+        const DEFAULT_CUSTOMER_AVATAR = '/static/pngtree-customer-icon-social-raster-png-image_10853341.png';
 
         function getCookie(name) {
             const v = document.cookie.split(';').find(c => c.trim().startsWith(name + '='));
@@ -169,19 +159,6 @@
         }
 
         async function initChatConsole() {
-            if (currentRole !== 'owner') {
-                const toggle = document.getElementById('chatMasterToggle');
-                if (toggle) {
-                    toggle.disabled = true;
-                    toggle.title = 'Master toggle is governed exclusively by Store Owner';
-                }
-                const lbl = document.getElementById('chatToggleLabel');
-                if (lbl) {
-                    lbl.classList.remove('cursor-pointer');
-                    lbl.classList.add('cursor-not-allowed', 'opacity-70');
-                }
-            }
-
             await checkSystemStatus();
             await loadConversations();
             initWebSocket();
@@ -294,20 +271,22 @@
                 const unread = c.admin_unread || 0;
                 const timeStr = formatTime(c.last_message_at);
 
+                const avatarSrc = c.customer_avatar || DEFAULT_CUSTOMER_AVATAR;
+
                 return `
-                    <div onclick="selectConversation(${c.id})" class="p-3.5 hover:bg-slate-50 transition cursor-pointer flex items-start gap-3 ${isActive ? 'bg-indigo-50/70 border-l-4 border-indigo-600' : ''}">
-                        <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
-                            ${initials}
+                    <div onclick="selectConversation(${c.id})" class="p-3.5 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer flex items-start gap-3 ${isActive ? 'bg-indigo-50/70 dark:bg-indigo-950/40 border-l-4 border-indigo-600' : ''}">
+                        <div class="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                            <img src="${avatarSrc}" alt="${escapeHtml(c.customer_name)}" class="w-full h-full object-cover" onerror="this.src='${DEFAULT_CUSTOMER_AVATAR}'">
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between gap-1">
-                                <h4 class="text-xs font-black text-slate-900 truncate">${escapeHtml(c.customer_name)}</h4>
-                                <span class="text-[10px] text-slate-400 shrink-0">${timeStr}</span>
+                                <h4 class="text-xs font-black text-slate-900 dark:text-slate-100 truncate">${escapeHtml(c.customer_name)}</h4>
+                                <span class="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">${timeStr}</span>
                             </div>
-                            <p class="text-[11px] text-slate-500 truncate mt-0.5">${escapeHtml(c.last_message || 'No messages yet')}</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${escapeHtml(c.last_message || 'No messages yet')}</p>
                             <div class="flex items-center justify-between mt-1.5 gap-2">
                                 ${c.active_order ? `
-                                    <span class="inline-flex items-center text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded">
+                                    <span class="inline-flex items-center text-[10px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 px-1.5 py-0.5 rounded">
                                         #${c.active_order.id} · ${c.active_order.status}
                                     </span>
                                 ` : '<span></span>'}
@@ -349,8 +328,11 @@
         function updateActiveConversationHeader(conv) {
             document.getElementById('activeCustomerName').textContent = conv.customer_name || 'Customer';
             document.getElementById('activeCustomerMeta').textContent = `${conv.customer_email || ''} ${conv.customer_phone ? '· ' + conv.customer_phone : ''}`;
-            const initials = (conv.customer_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-            document.getElementById('activeCustomerAvatar').textContent = initials;
+            const avatarElem = document.getElementById('activeCustomerAvatar');
+            if (avatarElem) {
+                const avatarSrc = conv.customer_avatar || DEFAULT_CUSTOMER_AVATAR;
+                avatarElem.innerHTML = `<img src="${avatarSrc}" alt="${escapeHtml(conv.customer_name || 'Customer')}" class="w-full h-full object-cover" onerror="this.src='${DEFAULT_CUSTOMER_AVATAR}'">`;
+            }
         }
 
         async function markAsRead(convId) {
@@ -435,32 +417,30 @@
 
         function getOrderStatusBadgeHtml(status) {
             const s = (status || 'Pending Review').toLowerCase();
+            let badgeClass = 'badge-status-pending';
             if (s.includes('cancel') || s.includes('reject')) {
-                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-rose-100 text-rose-700 border border-rose-200">' + escapeHtml(status) + '</span>';
+                badgeClass = 'badge-status-cancelled';
+            } else if (s.includes('complete')) {
+                badgeClass = 'badge-status-completed';
+            } else if (s.includes('production')) {
+                badgeClass = 'badge-status-production';
+            } else if (s.includes('ship')) {
+                badgeClass = 'badge-status-shipped';
             }
-            if (s.includes('complete')) {
-                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-100 text-emerald-700 border border-emerald-200">' + escapeHtml(status) + '</span>';
-            }
-            if (s.includes('production')) {
-                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-indigo-100 text-indigo-700 border border-indigo-200">' + escapeHtml(status) + '</span>';
-            }
-            if (s.includes('ship')) {
-                return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-700 border border-blue-200">' + escapeHtml(status) + '</span>';
-            }
-            return '<span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-amber-100 text-amber-800 border border-amber-200">' + escapeHtml(status) + '</span>';
+            return `<span class="px-2 py-0.5 rounded-full text-[9px] font-black border ${badgeClass}">${escapeHtml(status)}</span>`;
         }
 
         function renderAdminOrderSnippet(order) {
             if (!order || !order.id) return '';
             return `
-                <div class="mt-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-left select-text">
+                <div class="chat-order-snippet mt-2 p-2.5 border rounded-xl text-left select-text">
                     <div class="flex items-center justify-between gap-1 mb-1">
-                        <span class="text-[11px] font-black text-slate-900">📦 Order #${order.id}</span>
+                        <span class="text-[11px] font-black">📦 Order #${order.id}</span>
                         ${getOrderStatusBadgeHtml(order.status)}
                     </div>
-                    <div class="text-[10px] text-slate-600 flex items-center justify-between gap-1">
+                    <div class="text-[10px] opacity-80 flex items-center justify-between gap-1">
                         <span class="truncate font-semibold">${escapeHtml(order.team_name || 'Jersey Order')}</span>
-                        <span class="font-black text-slate-900">₱${Number(order.total || 0).toLocaleString()}</span>
+                        <span class="font-black">₱${Number(order.total || 0).toLocaleString()}</span>
                     </div>
                 </div>
             `;
@@ -473,18 +453,21 @@
             const orderCard = m.order ? renderAdminOrderSnippet(m.order) : '';
 
             if (isCustomer) {
+                const activeCust = conversations.find(c => c.id === activeConvId);
+                const avatarSrc = m.sender_avatar || activeCust?.customer_avatar || DEFAULT_CUSTOMER_AVATAR;
+
                 return `
                     <div ${msgIdAttr} class="chat-bubble-row flex items-start gap-2 max-w-lg">
-                        <div class="w-7 h-7 rounded-full bg-slate-300 text-slate-700 text-[10px] font-bold flex items-center justify-center shrink-0">
-                            C
+                        <div class="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+                            <img src="${avatarSrc}" alt="Customer" class="w-full h-full object-cover" onerror="this.src='${DEFAULT_CUSTOMER_AVATAR}'">
                         </div>
                         <div>
-                            <div class="bg-white border border-slate-200 text-slate-800 text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm break-words">
+                            <div class="chat-bubble-incoming border text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm break-words">
                                 ${escapeHtml(m.message)}
                                 ${orderCard}
                             </div>
-                            <div class="flex items-center gap-1.5 mt-1 ml-1 text-[10px] text-slate-400">
-                                <span>${escapeHtml(m.sender_name || 'Customer')}</span>
+                            <div class="flex items-center gap-1.5 mt-1 ml-1 text-[10px] text-slate-400 dark:text-slate-500">
+                                <span class="font-semibold text-slate-600 dark:text-slate-300">${escapeHtml(m.sender_name || 'Customer')}</span>
                                 <span>·</span>
                                 <span>${timeStr}</span>
                             </div>
@@ -495,14 +478,14 @@
                 return `
                     <div ${msgIdAttr} class="chat-bubble-row flex items-start justify-end gap-2 max-w-lg ml-auto">
                         <div class="text-right">
-                            <div class="bg-indigo-600 text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-md shadow-indigo-600/20 text-left break-words">
+                            <div class="chat-bubble-outgoing text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-md text-left break-words">
                                 ${escapeHtml(m.message)}
                                 ${orderCard}
                             </div>
-                            <div class="flex items-center justify-end gap-1.5 mt-1 mr-1 text-[10px] text-slate-400">
+                            <div class="flex items-center justify-end gap-1.5 mt-1 mr-1 text-[10px] text-slate-400 dark:text-slate-500">
                                 <span>${timeStr}</span>
                                 <span>·</span>
-                                <span class="font-bold text-indigo-600">${escapeHtml(m.sender_name || 'Support')}</span>
+                                <span class="font-bold text-indigo-600 dark:text-indigo-400">${escapeHtml(m.sender_name || 'Support')}</span>
                                 <span>${m.is_read ? '✓✓' : '✓'}</span>
                             </div>
                         </div>
@@ -728,7 +711,12 @@
         function formatTime(iso) {
             if (!iso) return '';
             try {
-                const d = new Date(iso);
+                let str = String(iso).trim();
+                if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:?\d{2}$/.test(str)) {
+                    str += 'Z';
+                }
+                const d = new Date(str);
+                if (isNaN(d.getTime())) return '';
                 return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             } catch (e) {
                 return '';

@@ -420,6 +420,8 @@
 
             if (profileImg) {
                 $('summaryAvatar').innerHTML = `<img src="${profileImg}" class="w-full h-full object-cover">`;
+            } else {
+                $('summaryAvatar').innerHTML = `<img src="/static/pngtree-customer-icon-social-raster-png-image_10853341.png" class="w-full h-full object-cover">`;
             }
 
             const fields = [name, email, localStorage.getItem('modelyx_user_phone') || '', localStorage.getItem('modelyx_shipping_address') || '', city, localStorage.getItem('modelyx_shipping_state') || '', localStorage.getItem('modelyx_shipping_zip') || '', country, profileImg];
@@ -696,6 +698,11 @@
                             localStorage.setItem('modelyx_shipping_longitude', prof.longitude);
                             $('longitude').value = prof.longitude;
                         }
+                        if (prof.avatar) {
+                            localStorage.setItem('modelyx_profile_image', prof.avatar);
+                            $('imagePreview').innerHTML = `<img src="${prof.avatar}" class="w-full h-full object-cover">`;
+                            $('summaryAvatar').innerHTML = `<img src="${prof.avatar}" class="w-full h-full object-cover">`;
+                        }
                         if (prof.terms_accepted === true) {
                             if ($('termsAgreementCheckbox')) $('termsAgreementCheckbox').checked = true;
                             $('termsStatusBadge')?.classList.remove('hidden');
@@ -744,6 +751,8 @@
 
             if (profileImg) {
                 $('imagePreview').innerHTML = `<img src="${profileImg}" class="w-full h-full object-cover">`;
+            } else {
+                $('imagePreview').innerHTML = `<img src="/static/pngtree-customer-icon-social-raster-png-image_10853341.png" class="w-full h-full object-cover">`;
             }
 
             updateSummary();
@@ -792,7 +801,9 @@
             reader.onload = (event) => {
                 const dataUrl = event.target.result;
                 $('imagePreview').innerHTML = `<img src="${dataUrl}" class="w-full h-full object-cover">`;
+                $('summaryAvatar').innerHTML = `<img src="${dataUrl}" class="w-full h-full object-cover">`;
                 localStorage.setItem('modelyx_profile_image', dataUrl);
+                updateSummary();
             };
             reader.readAsDataURL(file);
         });
@@ -891,6 +902,7 @@
                             country: country || undefined,
                             latitude: numLat,
                             longitude: numLng,
+                            avatar: localStorage.getItem('modelyx_profile_image') || undefined,
                             terms_accepted: true
                         })
                     });
