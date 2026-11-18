@@ -73,7 +73,7 @@ def delete_order(
     result = order_service.remove_order(db, order_id, actor_name=actor_name, reason=reason, actor_id=current_user.get("id"))
     if not result:
         raise HTTPException(status_code=404, detail="Order not found")
-    return {"message": "Order archived to Deleted / Rejected list", "order_id": order_id}
+    return {"message": "Order cancelled", "order_id": order_id}
 
 @router.post("/{order_id}/restore")
 def restore_order(

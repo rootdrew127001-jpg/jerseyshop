@@ -803,12 +803,6 @@
                                         class="text-red-500 hover:text-red-600 font-bold text-xs hover:underline cursor-pointer">Reject</button>
                                 </div>
                             ` : ''}
-                            ${role === 'owner' ? `
-                                <div>
-                                    <button onclick="deleteOrder(${o.id})"
-                                        class="text-slate-400 hover:text-slate-600 font-bold text-xs hover:underline cursor-pointer">Archive</button>
-                                </div>
-                            ` : ''}
                         </td>
                     </tr>
                 `}).join('') : '<tr><td colspan="6" class="p-12 text-center text-slate-400 font-bold">No matching orders found.</td></tr>';
@@ -855,29 +849,6 @@
             } catch (err) {
                 console.error('Failed to update:', err);
                 alert('Network error updating status');
-            }
-        };
-
-        const deleteOrder = async (id) => {
-            const reason = prompt(`Reason for archiving Order #${id} to Deleted records (leave blank for default):`, '');
-            if (reason === null) return;
-            try {
-                const url = reason.trim()
-                    ? `/orders/${id}?reason=${encodeURIComponent(reason.trim())}`
-                    : `/orders/${id}`;
-                const res = await fetch(url, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) {
-                    const errData = await res.json().catch(() => ({}));
-                    alert(errData.detail || 'Failed to archive order.');
-                    return;
-                }
-                render();
-            } catch (err) {
-                console.error('Failed to delete:', err);
-                alert('Server error. Try again.');
             }
         };
 

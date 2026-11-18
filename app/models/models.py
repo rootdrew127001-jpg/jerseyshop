@@ -72,6 +72,7 @@ class Order(Base):
     shipped_at = Column(DateTime, nullable=True)
     received_at = Column(DateTime, nullable=True)
     auto_completed = Column(Integer, default=0)
+    cancelled_by_role = Column(String(50), nullable=True)
 
     user = relationship("User", back_populates="orders")
     items = relationship("OrderItem", back_populates="order", cascade="all, delete-orphan")

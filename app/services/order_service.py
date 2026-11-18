@@ -188,18 +188,26 @@ def remove_order(db: Session, order_id: int, actor_name: str = "Admin", reason: 
     if not order:
         return None
     resolved_actor = actor_name
+    actor_role = "Admin"
     if actor_id:
         from app.models.models import User
         actor_user = db.query(User).filter(User.id == actor_id).first()
-        if actor_user and actor_user.name:
-            resolved_actor = actor_user.name
-    order.is_deleted = 1
+        if actor_user:
+            if actor_user.role == "owner":
+                actor_role = "Owner"
+            if actor_user.name:
+                resolved_actor = f"{actor_user.name} ({actor_role})"
+    elif "owner" in actor_name.lower():
+        actor_role = "Owner"
+    order.status = "Cancelled"
+    order.is_deleted = 0
+    order.cancelled_by_role = actor_role
     order.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    order.deleted_by = resolved_actor or "Admin"
+    order.deleted_by = resolved_actor or actor_role
     if reason and reason.strip():
-        order.cancelled_reason = f"Admin Rejected: {reason.strip()}"
+        order.cancelled_reason = f"{actor_role} Rejected: {reason.strip()}"
     elif not order.cancelled_reason:
-        order.cancelled_reason = "Removed / Rejected by Admin"
+        order.cancelled_reason = f"Removed / Rejected by {actor_role}"
     db.commit()
     db.refresh(order)
     return order
@@ -208,12 +216,16 @@ def restore_order(db: Session, order_id: int):
     order = db.query(Order).filter(Order.id == order_id).first()
     if not order:
         return None
+    order.status = "Pending Review"
     order.is_deleted = 0
+    order.cancelled_by_role = None
     order.deleted_at = None
     order.deleted_by = None
     if order.cancelled_reason and (
         order.cancelled_reason.startswith("Admin Rejected:")
+        or order.cancelled_reason.startswith("Owner Rejected:")
         or order.cancelled_reason == "Removed / Rejected by Admin"
+        or order.cancelled_reason == "Removed / Rejected by Owner"
     ):
         order.cancelled_reason = None
     db.commit()
@@ -234,12 +246,14 @@ def cancel_order_by_customer(db: Session, order_id: int, user_id: int, reason: s
         return None, "Order not found"
     if order.user_id != user_id:
         return None, "Not your order"
-    if order.status != "Pending Review":
-        return None, "Only pending orders can be cancelled"
     if order.status == "Cancelled":
         return None, "Order already cancelled"
+    if order.status != "Pending Review":
+        return None, "Only pending orders can be cancelled"
 
     order.status = "Cancelled"
+    order.is_deleted = 0
+    order.cancelled_by_role = "Customer"
     order.cancelled_reason = f"Customer: {reason}" if reason else "Cancelled by customer"
     db.commit()
     db.refresh(order)
@@ -271,18 +285,26 @@ def cancel_order_by_admin(db: Session, order_id: int, admin_id: int, reason: str
         return None, "Order already cancelled"
 
     order.status = "Cancelled"
-    if reason and (reason.startswith("Admin:") or reason.startswith("Admin Rejected:") or reason.startswith("Cancelled by")):
+    order.is_deleted = 0
+    order.deleted_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    from app.models.models import User
+    admin_user = db.query(User).filter(User.id == admin_id).first()
+    actor_role = "Owner" if (admin_user and admin_user.role == "owner") else "Admin"
+    actor_display = f"{admin_user.name} ({actor_role})" if (admin_user and admin_user.name) else actor_role
+    order.cancelled_by_role = actor_role
+    order.deleted_by = actor_display
+    if reason and (reason.startswith("Admin:") or reason.startswith("Admin Rejected:") or reason.startswith("Owner:") or reason.startswith("Owner Rejected:") or reason.startswith("Cancelled by")):
         order.cancelled_reason = reason
     elif reason:
-        order.cancelled_reason = f"Admin Rejected: {reason}"
+        order.cancelled_reason = f"{actor_role} Rejected: {reason}"
     else:
-        order.cancelled_reason = "Rejected by admin"
+        order.cancelled_reason = f"Rejected by {actor_role.lower()}"
     db.commit()
     db.refresh(order)
 
     notification_service.create_notification(
         db, order.user_id,
-        "Order Rejected by Admin",
+        f"Order Rejected by {actor_role}",
         f"Your order #{order.id} ({order.team_name} #{order.player_number}) was rejected. Reason: {order.cancelled_reason}"
     )
 

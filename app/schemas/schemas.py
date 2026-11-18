@@ -120,6 +120,7 @@ class OrderResponse(BaseModel):
     shipped_at: Optional[datetime] = None
     received_at: Optional[datetime] = None
     auto_completed: Optional[int] = 0
+    cancelled_by_role: Optional[str] = None
 
     class Config:
         from_attributes = True

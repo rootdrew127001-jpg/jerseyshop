@@ -82,6 +82,7 @@ ORDER_COLUMN_DEFINITIONS = {
     "shipped_at": "DATETIME NULL",
     "received_at": "DATETIME NULL",
     "auto_completed": "INT DEFAULT 0",
+    "cancelled_by_role": "VARCHAR(50) NULL",
 }
 
 USER_COLUMN_DEFINITIONS = {

@@ -89,17 +89,17 @@
                     class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-indigo-600 text-white">
                     All Cancelled (<span id="cntCancelAll">0</span>)
                 </button>
-                <button type="button" onclick="setCancelActorFilter('Admin')" data-actor-tab="Admin"
-                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    🛡️ Admin (<span id="cntCancelAdmin">0</span>)
-                </button>
                 <button type="button" onclick="setCancelActorFilter('Customer')" data-actor-tab="Customer"
                     class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    👤 Customer (<span id="cntCancelCustomer">0</span>)
+                    Customer (<span id="cntCancelCustomer">0</span>)
                 </button>
-                <button type="button" onclick="setCancelActorFilter('Unspecified')" data-actor-tab="Unspecified"
+                <button type="button" onclick="setCancelActorFilter('Admin')" data-actor-tab="Admin"
                     class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
-                    ❔ Other (<span id="cntCancelOther">0</span>)
+                    Admin (<span id="cntCancelAdmin">0</span>)
+                </button>
+                <button type="button" onclick="setCancelActorFilter('Owner')" data-actor-tab="Owner"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    Owner (<span id="cntCancelOwner">0</span>)
                 </button>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -322,27 +322,35 @@
         });
 
         const inferCancelledBy = order => {
-            const reason = String(order.cancelled_reason || '').toLowerCase();
-            if (reason.includes('admin')) return 'Admin';
-            if (reason.includes('customer')) return 'Customer';
-            return 'Unspecified';
+            if (order.cancelled_by_role) {
+                const r = String(order.cancelled_by_role).toLowerCase();
+                if (r === 'owner') return 'Owner';
+                if (r === 'admin') return 'Admin';
+                if (r === 'customer') return 'Customer';
+            }
+            const reason = String(order.cancelled_reason || order.deleted_reason || '').toLowerCase();
+            const deletedBy = String(order.deleted_by || '').toLowerCase();
+            if (reason.includes('owner') || deletedBy.includes('owner')) return 'Owner';
+            if (reason.includes('customer') || reason.includes('buyer') || reason.includes('client')) return 'Customer';
+            if (reason.includes('admin') || reason.includes('operator') || reason.includes('staff') || reason.includes('shop') || reason.includes('store') || reason.includes('reject') || deletedBy) return 'Admin';
+            return 'Admin';
         };
 
         const renderCharts = data => {
-            const byActor = data.reduce((acc, order) => {
+            const byActor = { 'Customer': 0, 'Admin': 0, 'Owner': 0 };
+            data.forEach(order => {
                 const actor = inferCancelledBy(order);
-                acc[actor] = (acc[actor] || 0) + 1;
-                return acc;
-            }, {});
+                byActor[actor] = (byActor[actor] || 0) + 1;
+            });
 
             if (cancelledByChartInst) cancelledByChartInst.destroy();
             cancelledByChartInst = new Chart($('cancelledByChart'), {
                 type: 'doughnut',
                 data: {
-                    labels: Object.keys(byActor).length ? Object.keys(byActor) : ['No data'],
+                    labels: ['Customer', 'Admin', 'Owner'],
                     datasets: [{
-                        data: Object.values(byActor).length ? Object.values(byActor) : [0],
-                        backgroundColor: ['#EF4444', '#F97316', '#94A3B8'],
+                        data: [byActor['Customer'], byActor['Admin'], byActor['Owner']],
+                        backgroundColor: ['#F97316', '#3B82F6', '#8B5CF6'],
                         borderWidth: 0
                     }]
                 },
@@ -401,27 +409,27 @@
                 }
 
                 const allData = await res.json();
-                const cancelled = allData.filter(order => Number(order.is_deleted) !== 1 && order.status === 'Cancelled');
+                const cancelled = allData.filter(order => order.status === 'Cancelled' || Number(order.is_deleted) === 1);
                 cachedCancelled = cancelled;
                 window.cachedCancelled = cancelled;
 
                 const totalCancelled = cancelled.length;
                 const revenueLost = cancelled.reduce((sum, order) => sum + Number(order.price || 0), 0);
-                const adminCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Admin').length;
                 const customerCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Customer').length;
-                const otherCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Unspecified').length;
+                const adminCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Admin').length;
+                const ownerCancelled = cancelled.filter(order => inferCancelledBy(order) === 'Owner').length;
                 const cancelRate = allData.length ? Math.round((totalCancelled / allData.length) * 100) : 0;
 
                 if ($('cntCancelAll')) $('cntCancelAll').textContent = totalCancelled;
-                if ($('cntCancelAdmin')) $('cntCancelAdmin').textContent = adminCancelled;
                 if ($('cntCancelCustomer')) $('cntCancelCustomer').textContent = customerCancelled;
-                if ($('cntCancelOther')) $('cntCancelOther').textContent = otherCancelled;
+                if ($('cntCancelAdmin')) $('cntCancelAdmin').textContent = adminCancelled;
+                if ($('cntCancelOwner')) $('cntCancelOwner').textContent = ownerCancelled;
 
                 if (role === 'owner') {
                     if ($('sCancelled')) $('sCancelled').innerText = totalCancelled;
                     if ($('sLost')) $('sLost').innerText = formatPeso(revenueLost);
                     if ($('sRate')) $('sRate').innerText = `${cancelRate}%`;
-                    if ($('sAdminCancelled')) $('sAdminCancelled').innerText = adminCancelled;
+                    if ($('sAdminCancelled')) $('sAdminCancelled').innerText = (adminCancelled + ownerCancelled);
                     if ($('ownerCancelledChartsGrid') && !$('ownerCancelledChartsGrid').classList.contains('hidden')) {
                         renderCharts(cancelled);
                     }
@@ -460,9 +468,12 @@
                 $('table').innerHTML = filtered.length ? filtered.map(order => {
                     const actor = inferCancelledBy(order);
                     const isTeamOrder = order.order_type === 'team' || (order.roster_data && order.roster_data !== '[]' && order.roster_data !== 'null');
-                    const actorBadgeClass = actor === 'Admin'
-                        ? 'bg-red-100 text-red-700'
-                        : (actor === 'Customer' ? 'bg-orange-100 text-orange-700' : 'bg-slate-100 text-slate-600');
+                    let actorBadgeClass = 'bg-blue-100 text-blue-700';
+                    if (actor === 'Customer') {
+                        actorBadgeClass = 'bg-orange-100 text-orange-700';
+                    } else if (actor === 'Owner') {
+                        actorBadgeClass = 'bg-purple-100 text-purple-700';
+                    }
                     const total = Number(order.price || 0);
                     const shippingFee = Number(order.shipping_fee || 0);
                     const discount = Number(order.discount_amount || 0);
@@ -525,12 +536,12 @@
                             </div>
                         </td>
                         <td class="px-4 py-4 whitespace-nowrap">
-                            <span class="text-xs font-black px-3 py-1 rounded-full ${actorBadgeClass}">
+                            <span class="inline-block text-xs font-black px-3 py-1 rounded-full ${actorBadgeClass}">
                                 ${actor}
                             </span>
                         </td>
                         <td class="px-4 py-4 max-w-xs">
-                            <p class="text-xs font-medium text-slate-900">${order.cancelled_reason || 'No reason provided.'}</p>
+                            <p class="text-xs font-medium text-slate-900">${order.cancelled_reason || order.deleted_reason || 'No reason provided.'}</p>
                         </td>
                         <td class="px-5 py-4 text-right whitespace-nowrap text-xs font-bold text-slate-500">${formatDate(order.created_at)}</td>
                     </tr>
