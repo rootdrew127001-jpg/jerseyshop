@@ -82,7 +82,109 @@
         }
     }
 
+    function injectWidgetStyles() {
+        if (document.getElementById('modelyxChatWidgetStyles')) return;
+        const style = document.createElement('style');
+        style.id = 'modelyxChatWidgetStyles';
+        style.textContent = `
+#modelyxChatWidgetRoot {
+    --chat-bg: #f8fafc;
+    --chat-surface: #ffffff;
+    --chat-surface-sub: #f1f5f9;
+    --chat-border: #e2e8f0;
+    --chat-text: #0f172a;
+    --chat-text-muted: #64748b;
+    --chat-accent: #4f46e5;
+    --chat-accent-hover: #4338ca;
+}
+html.dark #modelyxChatWidgetRoot,
+[data-theme="dark"] #modelyxChatWidgetRoot,
+[data-theme="cyber"] #modelyxChatWidgetRoot,
+[data-theme="emerald"] #modelyxChatWidgetRoot,
+[data-theme="cobalt"] #modelyxChatWidgetRoot,
+[data-theme="gold"] #modelyxChatWidgetRoot,
+[data-theme="crimson"] #modelyxChatWidgetRoot {
+    --chat-bg: #020617;
+    --chat-surface: #0f172a;
+    --chat-surface-sub: #1e293b;
+    --chat-border: #334155;
+    --chat-text: #f8fafc;
+    --chat-text-muted: #94a3b8;
+    --chat-accent: #6366f1;
+    --chat-accent-hover: #4f46e5;
+}
+#modelyxChatPanel {
+    background-color: var(--chat-surface) !important;
+    border-color: var(--chat-border) !important;
+}
+#widgetMessagesContainer {
+    background-color: var(--chat-bg) !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--chat-border) var(--chat-bg);
+}
+#widgetMessagesContainer::-webkit-scrollbar {
+    width: 6px;
+}
+#widgetMessagesContainer::-webkit-scrollbar-track {
+    background: var(--chat-bg);
+}
+#widgetMessagesContainer::-webkit-scrollbar-thumb {
+    background: var(--chat-border);
+    border-radius: 9999px;
+}
+.chat-bubble-incoming {
+    background-color: var(--chat-surface-sub) !important;
+    border-color: var(--chat-border) !important;
+    color: var(--chat-text) !important;
+}
+.chat-bubble-incoming * {
+    color: inherit !important;
+}
+.chat-bubble-outgoing {
+    background-color: var(--chat-accent) !important;
+    color: #ffffff !important;
+}
+.chat-bubble-outgoing * {
+    color: inherit !important;
+}
+.chat-order-snippet {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-color: var(--chat-border) !important;
+}
+html.dark .chat-order-snippet,
+[data-theme="dark"] .chat-order-snippet {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+}
+.chat-bubble-outgoing .chat-order-snippet {
+    background-color: rgba(255, 255, 255, 0.16) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+}
+#widgetChatInput {
+    background-color: var(--chat-surface-sub) !important;
+    border-color: var(--chat-border) !important;
+    color: var(--chat-text) !important;
+}
+#widgetChatInput::placeholder {
+    color: var(--chat-text-muted) !important;
+}
+#widgetOrderPickerContainer {
+    background-color: var(--chat-surface-sub) !important;
+    border-color: var(--chat-border) !important;
+    color: var(--chat-text) !important;
+}
+.chat-order-option {
+    background-color: var(--chat-surface) !important;
+    border-color: var(--chat-border) !important;
+    color: var(--chat-text) !important;
+}
+`;
+        document.head.appendChild(style);
+    }
+
     function injectWidgetHtml() {
+        injectWidgetStyles();
         const wrapper = document.createElement('div');
         wrapper.id = 'modelyxChatWidgetRoot';
         wrapper.className = 'fixed bottom-6 right-6 z-50 flex flex-col items-end select-none font-sans';
@@ -483,7 +585,7 @@
             return `
                 <div ${msgIdAttr} class="chat-bubble-row flex items-start justify-end gap-1.5 max-w-[85%] ml-auto">
                     <div>
-                        <div class="chat-bubble-outgoing text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-md shadow-indigo-600/20 break-words">
+                        <div class="chat-bubble-outgoing text-white text-xs px-3.5 py-2.5 rounded-2xl rounded-tr-sm shadow-md shadow-indigo-600/20 break-words" style="background-color: var(--chat-accent, #4f46e5); color: #ffffff !important;">
                             ${escapeHtml(m.message)}
                             ${orderCard}
                         </div>
@@ -500,7 +602,7 @@
                         M
                     </div>
                     <div>
-                        <div class="chat-bubble-incoming border text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm break-words">
+                        <div class="chat-bubble-incoming border text-xs px-3.5 py-2.5 rounded-2xl rounded-tl-sm shadow-sm break-words" style="background-color: var(--chat-surface-sub, #f1f5f9); color: var(--chat-text, #0f172a) !important;">
                             ${escapeHtml(m.message)}
                             ${orderCard}
                         </div>
