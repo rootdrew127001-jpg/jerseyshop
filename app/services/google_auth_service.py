@@ -2,10 +2,11 @@ import httpx
 from urllib.parse import urlencode
 from app.core.config import GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
 
-async def get_google_auth_url() -> str:
+async def get_google_auth_url(redirect_uri: str = None) -> str:
+    chosen_uri = redirect_uri or GOOGLE_REDIRECT_URI
     params = {
         "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "redirect_uri": chosen_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -15,7 +16,8 @@ async def get_google_auth_url() -> str:
     query = urlencode(params)
     return f"https://accounts.google.com/o/oauth2/v2/auth?{query}"
 
-async def exchange_code_for_token(code: str) -> dict:
+async def exchange_code_for_token(code: str, redirect_uri: str = None) -> dict:
+    chosen_uri = redirect_uri or GOOGLE_REDIRECT_URI
     async with httpx.AsyncClient() as client:
         res = await client.post(
             "https://oauth2.googleapis.com/token",
@@ -23,7 +25,7 @@ async def exchange_code_for_token(code: str) -> dict:
                 "code": code,
                 "client_id": GOOGLE_CLIENT_ID,
                 "client_secret": GOOGLE_CLIENT_SECRET,
-                "redirect_uri": GOOGLE_REDIRECT_URI,
+                "redirect_uri": chosen_uri,
                 "grant_type": "authorization_code"
             }
         )

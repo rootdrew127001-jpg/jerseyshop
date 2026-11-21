@@ -63,7 +63,10 @@ async def register(payload: RegisterRequest, db: Session = Depends(get_db)):
     user, error = user_service.register_user(db, payload)
     if error:
         raise HTTPException(status_code=400, detail=error)
-    await user_service.send_verification_otp(db, user)
+    try:
+        await user_service.send_verification_otp(db, user)
+    except Exception as e:
+        print(f"[OTP SEND WARNING] {e}", flush=True)
     return {
         "message": "Account created. Check your email for the verification code.",
         "user_id": user.id,
@@ -133,8 +136,15 @@ def get_auth_config():
         "dev_mode": bool(DEV_MODE)
     }
 
+def resolve_google_redirect_uri(request: Request) -> str:
+    host = request.headers.get("x-forwarded-host") or request.headers.get("host")
+    proto = request.headers.get("x-forwarded-proto") or request.url.scheme or "https"
+    if host:
+        return f"{proto}://{host}/auth/google/callback"
+    return GOOGLE_REDIRECT_URI
+
 @router.get("/google")
-async def google_login(db: Session = Depends(get_db)):
+async def google_login(request: Request, db: Session = Depends(get_db)):
     if DEV_MODE:
         mock_google_info = {
             "id": "google-dev-1001",
@@ -164,7 +174,8 @@ async def google_login(db: Session = Depends(get_db)):
         response.set_cookie(key="modelyx_shipping_setup", value="1" if has_shipping else "0", httponly=False, max_age=86400 * 7, path="/")
         return response
 
-    url = await get_google_auth_url()
+    redirect_uri = resolve_google_redirect_uri(request)
+    url = await get_google_auth_url(redirect_uri=redirect_uri)
     response = RedirectResponse(url)
     response.delete_cookie("modelyx_token")
     response.delete_cookie("modelyx_role")
@@ -174,8 +185,9 @@ async def google_login(db: Session = Depends(get_db)):
     return response
 
 @router.get("/google/callback")
-async def google_callback(code: str, db: Session = Depends(get_db)):
-    token_data = await exchange_code_for_token(code)
+async def google_callback(request: Request, code: str, db: Session = Depends(get_db)):
+    redirect_uri = resolve_google_redirect_uri(request)
+    token_data = await exchange_code_for_token(code, redirect_uri=redirect_uri)
     access_token = token_data.get("access_token")
     if not access_token:
         raise HTTPException(status_code=400, detail="Google auth failed")

@@ -30,7 +30,7 @@ async def send_otp_email(to_email: str, otp: str, name: str = "User", subject: s
             idx = (start_idx + attempt) % num_accounts
             sender = accounts[idx]
             sender_user = sender["user"]
-            sender_pass = sender["password"]
+            sender_pass = str(sender["password"]).replace(" ", "").strip()
 
             try:
                 message = MIMEMultipart("alternative")
@@ -67,7 +67,7 @@ async def send_otp_email(to_email: str, otp: str, name: str = "User", subject: s
                     start_tls=True,
                     username=sender_user,
                     password=sender_pass,
-                    timeout=10
+                    timeout=3
                 )
 
                 _sender_cursor = (idx + 1) % num_accounts

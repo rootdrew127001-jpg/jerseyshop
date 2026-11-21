@@ -568,7 +568,18 @@
         handleAuth('l');
     };
 
-    // Check server dev mode status to show/hide Dev Mode card
+    const rPhoneInput = $('rPhone');
+    if (rPhoneInput) {
+        rPhoneInput.addEventListener('input', function() {
+            this.value = formatPHPhoneDisplay(this.value);
+        });
+        rPhoneInput.addEventListener('paste', function() {
+            setTimeout(() => {
+                this.value = formatPHPhoneDisplay(this.value);
+            }, 0);
+        });
+    }
+
     fetch('/auth/config')
         .then(r => r.json())
         .then(cfg => {
@@ -589,18 +600,7 @@
                 devPanel.classList.add('hidden');
                 devPanel.style.display = 'none';
             }
-            const rPhoneInput = $('rPhone');
-        if (rPhoneInput) {
-            rPhoneInput.addEventListener('input', function() {
-                this.value = formatPHPhoneDisplay(this.value);
-            });
-            rPhoneInput.addEventListener('paste', function() {
-                setTimeout(() => {
-                    this.value = formatPHPhoneDisplay(this.value);
-                }, 0);
-            });
-        }
-    });
+        });
 </script>
 </body>
 </html>
