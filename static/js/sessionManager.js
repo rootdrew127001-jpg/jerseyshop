@@ -18,11 +18,52 @@
         return out;
     }
 
+    function decodeJwt(token) {
+        if (!token || typeof token !== 'string') return null;
+        const parts = token.split('.');
+        if (parts.length !== 3) return null;
+        try {
+            const base64Url = parts[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            try {
+                return JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+            } catch (err) {
+                return null;
+            }
+        }
+    }
+
+    function isTokenExpired(payload) {
+        if (!payload || !payload.exp) return false;
+        return (Number(payload.exp) * 1000) < Date.now();
+    }
+
     function extractQueryToken() {
         const urlParams = new URLSearchParams(window.location.search);
         const qToken = urlParams.get('token');
         if (qToken) {
+            const payload = decodeJwt(qToken);
+            if (payload && isTokenExpired(payload)) {
+                clearAuthStorage();
+                return null;
+            }
+            const storedEmail = localStorage.getItem('modelyx_user_email');
+            if (payload && payload.email && storedEmail && storedEmail.toLowerCase() !== payload.email.toLowerCase()) {
+                clearAuthStorage();
+            }
             localStorage.setItem('modelyx_token', qToken);
+            document.cookie = `modelyx_token=${qToken}; path=/; max-age=604800; SameSite=Lax`;
+            if (payload && payload.role) {
+                localStorage.setItem('modelyx_user_role', payload.role);
+                document.cookie = `modelyx_role=${encodeURIComponent(payload.role)}; path=/; max-age=604800; SameSite=Lax`;
+            }
+            if (payload && payload.email) {
+                localStorage.setItem('modelyx_user_email', payload.email);
+                document.cookie = `modelyx_email=${encodeURIComponent(payload.email)}; path=/; max-age=604800; SameSite=Lax`;
+            }
             urlParams.delete('token');
             const cleanSearch = urlParams.toString();
             const cleanUrl = window.location.pathname + (cleanSearch ? '?' + cleanSearch : '') + window.location.hash;
@@ -34,24 +75,38 @@
 
     function getToken() {
         const q = extractQueryToken();
-        if (q) return q;
-        const local = localStorage.getItem('modelyx_token');
-        if (local) return local;
-        const cookies = parseCookies();
-        if (cookies.modelyx_token) {
-            localStorage.setItem('modelyx_token', cookies.modelyx_token);
-            return cookies.modelyx_token;
+        let tok = q || localStorage.getItem('modelyx_token');
+        if (!tok) {
+            const cookies = parseCookies();
+            if (cookies.modelyx_token) {
+                tok = cookies.modelyx_token;
+                localStorage.setItem('modelyx_token', tok);
+            }
         }
-        return null;
+        if (!tok) return null;
+        const payload = decodeJwt(tok);
+        if (payload && isTokenExpired(payload)) {
+            clearAuthStorage();
+            return null;
+        }
+        if (payload && payload.role) {
+            const curRole = localStorage.getItem('modelyx_user_role');
+            if (curRole !== payload.role) {
+                localStorage.setItem('modelyx_user_role', payload.role);
+                document.cookie = `modelyx_role=${encodeURIComponent(payload.role)}; path=/; max-age=604800; SameSite=Lax`;
+            }
+        }
+        return tok;
     }
 
     function getCachedProfile() {
         const token = getToken();
         if (!token) return null;
+        const payload = decodeJwt(token);
         const cookies = parseCookies();
-        const role = localStorage.getItem('modelyx_user_role') || cookies.modelyx_role || 'customer';
+        const role = (payload && payload.role) || localStorage.getItem('modelyx_user_role') || cookies.modelyx_role || 'customer';
         const name = localStorage.getItem('modelyx_user_name') || (cookies.modelyx_name ? decodeURIComponent(cookies.modelyx_name) : '');
-        const email = localStorage.getItem('modelyx_user_email') || (cookies.modelyx_email ? decodeURIComponent(cookies.modelyx_email) : '');
+        const email = (payload && payload.email) || localStorage.getItem('modelyx_user_email') || (cookies.modelyx_email ? decodeURIComponent(cookies.modelyx_email) : '');
         const setup = localStorage.getItem('modelyx_shipping_setup') || cookies.modelyx_shipping_setup || '0';
         return {
             authenticated: true,
@@ -121,6 +176,9 @@
                     return data;
                 }
             }
+            if (res.status === 401 || res.status === 403) {
+                clearAuthStorage();
+            }
         } catch (e) {}
 
         memory.session = { authenticated: false, user: null };
@@ -174,34 +232,36 @@
 
     function guard(rules) {
         rules = rules || {};
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('logout') || urlParams.has('error')) {
+            clearAuthStorage();
+            return;
+        }
         const token = getToken();
         const cached = getCachedProfile();
         const currentPath = window.location.pathname;
 
         if (rules.publicOnly) {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('logout')) return;
+            if (!token || !cached || !cached.user) return;
+            const isMgr = cached.user.role === 'owner' || cached.user.role === 'admin';
+            if (isMgr) {
+                window.location.replace('/admin.html');
+                return;
+            }
             const redirectMap = {
                 editor: '/editor.html',
                 orders: '/orders.html',
                 profile: '/profile.html'
             };
             const redirectTarget = redirectMap[urlParams.get('redirect')] || '/dashboard.html';
-            if (token && cached && cached.user) {
-                const isMgr = cached.user.role === 'owner' || cached.user.role === 'admin';
-                if (isMgr) {
-                    window.location.replace('/admin.html');
-                    return;
-                }
-                if (cached.user.has_shipping_setup) {
-                    window.location.replace(redirectTarget);
-                    return;
-                }
+            if (cached.user.has_shipping_setup) {
+                window.location.replace(redirectTarget);
+                return;
             }
             getSession().then(s => {
                 if (s && s.authenticated && s.user) {
-                    const isMgr = s.user.role === 'owner' || s.user.role === 'admin';
-                    if (isMgr) {
+                    const mgr = s.user.role === 'owner' || s.user.role === 'admin';
+                    if (mgr) {
                         window.location.replace('/admin.html');
                     } else if (s.user.has_shipping_setup) {
                         window.location.replace(redirectTarget);
@@ -215,6 +275,7 @@
 
         if (rules.requireManager) {
             if (!token) {
+                clearAuthStorage();
                 window.location.replace('/index.html');
                 return;
             }
@@ -224,6 +285,7 @@
             }
             getSession().then(s => {
                 if (!s || !s.authenticated) {
+                    clearAuthStorage();
                     window.location.replace('/index.html');
                 } else if (s.user.role !== 'owner' && s.user.role !== 'admin') {
                     window.location.replace('/dashboard.html');
@@ -235,6 +297,7 @@
         if (rules.requireCustomer) {
             if (!token) {
                 if (rules.allowGuest) return;
+                clearAuthStorage();
                 window.location.replace('/index.html');
                 return;
             }
@@ -251,6 +314,7 @@
             getSession().then(s => {
                 if (!s || !s.authenticated) {
                     if (rules.allowGuest) return;
+                    clearAuthStorage();
                     window.location.replace('/index.html');
                 } else if (s.user.role === 'owner' || s.user.role === 'admin') {
                     window.location.replace('/admin.html');
@@ -269,6 +333,7 @@
         syncUserToStorage: syncUserToStorage,
         clearAuthStorage: clearAuthStorage,
         logout: logout,
-        guard: guard
+        guard: guard,
+        decodeJwt: decodeJwt
     };
 })();

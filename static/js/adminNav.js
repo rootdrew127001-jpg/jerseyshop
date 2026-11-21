@@ -34,12 +34,24 @@
         const cr = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
         if (cr) role = cr.split('=')[1];
     }
+    if (token) {
+        try {
+            const p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (p && p.role) role = p.role;
+        } catch (e) {}
+    }
 
     if (window.ModelyxSession) {
         ModelyxSession.guard({ requireManager: true });
-    } else if (!token || (role !== 'owner' && role !== 'admin')) {
-        window.location.replace('/index.html');
-        return;
+    } else {
+        if (!token) {
+            window.location.replace('/index.html');
+            return;
+        }
+        if (role !== 'owner' && role !== 'admin') {
+            window.location.replace('/dashboard.html');
+            return;
+        }
     }
 
     if (currentPath === '/staff.html' && role !== 'owner') {

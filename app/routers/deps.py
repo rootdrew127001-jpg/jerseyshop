@@ -35,24 +35,35 @@ def get_current_user(
             db_user = None
             if user_id:
                 db_user = db.query(User).filter(User.id == user_id).first()
-                if db_user and getattr(db_user, "is_active", 1) == 0:
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail="Account has been suspended by store owner"
-                    )
+            if not db_user and user_email:
+                db_user = db.query(User).filter(User.email == user_email).first()
+                if db_user:
+                    user_id = db_user.id
+
+            if not db_user and not is_admin_email(user_email):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="User session invalid"
+                )
+
+            if db_user and getattr(db_user, "is_active", 1) == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Account has been suspended by store owner"
+                )
 
             if redis_service.is_redis_available():
-                session = redis_service.get_session(token)
-                if not session:
-                    raise HTTPException(
-                        status_code=status.HTTP_401_UNAUTHORIZED,
-                        detail="Session expired or logged out"
-                    )
-                if is_admin_email(session.get("email")):
-                    session["role"] = "owner"
-                elif db_user:
-                    session["role"] = db_user.role
-                return session
+                try:
+                    session = redis_service.get_session(token)
+                    if session:
+                        if is_admin_email(session.get("email")):
+                            session["role"] = "owner"
+                        elif db_user:
+                            session["role"] = db_user.role
+                            session["id"] = db_user.id
+                        return session
+                except Exception:
+                    pass
 
             if is_admin_email(user_email):
                 user_role = "owner"
@@ -60,7 +71,7 @@ def get_current_user(
                 user_role = db_user.role
 
             return {
-                "id": user_id,
+                "id": db_user.id if db_user else user_id,
                 "email": user_email,
                 "role": user_role
             }

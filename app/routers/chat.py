@@ -90,6 +90,8 @@ def get_customer_history(
     current_user: dict = Depends(get_current_user)
 ):
     conv = get_or_create_conversation(db, current_user["id"])
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found")
     result = get_messages_cursor(db, conv.id, before_id=before_id, limit=limit)
     return {
         "conversation_id": conv.id,
@@ -114,6 +116,8 @@ def get_chat_delta(
         conv_id = conversation_id
     else:
         conv = get_or_create_conversation(db, current_user["id"])
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
         conv_id = conv.id
 
     messages = db.query(ChatMessage).filter(
@@ -185,6 +189,8 @@ def customer_mark_read(
     current_user: dict = Depends(get_current_user)
 ):
     conv = get_or_create_conversation(db, current_user["id"])
+    if not conv:
+        return {"status": "not_found"}
     mark_conversation_read(db, conv.id, "customer")
     return {"status": "ok"}
 
@@ -240,6 +246,8 @@ async def send_chat_message_http(
         return serialized
     else:
         conv = get_or_create_conversation(db, current_user["id"])
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found.")
         sender_role = "customer"
         sender_name = current_user.get("name") or "Customer"
 
@@ -298,6 +306,8 @@ async def reference_order_http(
         raise HTTPException(status_code=404, detail="Order not found.")
 
     conv = get_or_create_conversation(db, current_user["id"])
+    if not conv:
+        raise HTTPException(status_code=404, detail="Conversation not found.")
     sender_role = "customer"
     sender_name = current_user.get("name") or "Customer"
     order_text = (payload.message or "").strip()
@@ -404,6 +414,8 @@ async def chat_websocket(
                                 target_order_id = None
 
                         conv = get_or_create_conversation(db, user_id)
+                        if not conv:
+                            continue
                         msg = save_chat_message(
                             db, conv.id, user_id, "customer", user_name, msg_text,
                             order_id=target_order_id
@@ -462,6 +474,8 @@ async def chat_websocket(
                         })
                     elif user_role == "customer":
                         conv = get_or_create_conversation(db, user_id)
+                        if not conv:
+                            continue
                         mark_conversation_read(db, conv.id, "customer")
 
             elif action == "ping":

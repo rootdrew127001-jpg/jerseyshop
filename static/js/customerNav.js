@@ -41,6 +41,12 @@
         const cr = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_role='));
         if (cr) role = cr.split('=')[1];
     }
+    if (token) {
+        try {
+            const p = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+            if (p && p.role) role = p.role;
+        } catch (e) {}
+    }
     let setup = localStorage.getItem('modelyx_shipping_setup');
     if (!setup) {
         const cs = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_shipping_setup='));

@@ -145,9 +145,14 @@ def get_order_snippet_by_id(db: Session, order_id: int) -> Optional[dict]:
         "order_type": o.order_type
     }
 
-def get_or_create_conversation(db: Session, customer_id: int) -> ChatConversation:
+def get_or_create_conversation(db: Session, customer_id: int) -> Optional[ChatConversation]:
+    if not customer_id:
+        return None
     conv = db.query(ChatConversation).filter(ChatConversation.customer_id == customer_id).first()
     if not conv:
+        cust = db.query(User.id).filter(User.id == customer_id).first()
+        if not cust:
+            return None
         conv = ChatConversation(
             customer_id=customer_id,
             last_message="",
@@ -155,9 +160,13 @@ def get_or_create_conversation(db: Session, customer_id: int) -> ChatConversatio
             customer_unread=0,
             admin_unread=0
         )
-        db.add(conv)
-        db.commit()
-        db.refresh(conv)
+        try:
+            db.add(conv)
+            db.commit()
+            db.refresh(conv)
+        except Exception:
+            db.rollback()
+            conv = db.query(ChatConversation).filter(ChatConversation.customer_id == customer_id).first()
     return conv
 
 def save_chat_message(
