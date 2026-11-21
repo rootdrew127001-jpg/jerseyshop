@@ -864,7 +864,7 @@
                     </div>
                     <div>
                         <label class="text-xs text-slate-300 mb-1 block">Phone</label>
-                        <input id="shippingPhone" type="tel" placeholder="09..." readonly
+                        <input id="shippingPhone" type="tel" placeholder="+63 9xx xxx xxxx" readonly
                             class="w-full bg-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 border border-slate-700 outline-none cursor-not-allowed">
                     </div>
                 </div>
@@ -2027,11 +2027,22 @@
         setTimeout(() => shippingMap.invalidateSize(), 100);
     }
 
+    function formatPHPhone(val) {
+        if (!val) return '';
+        let d = String(val).replace(/\D/g, '');
+        if (d.startsWith('63')) d = d.slice(2);
+        while (d.startsWith('0')) d = d.slice(1);
+        if (d.length === 10 && d.startsWith('9')) {
+            return '+63 ' + d.slice(0, 3) + ' ' + d.slice(3, 6) + ' ' + d.slice(6);
+        }
+        return val;
+    }
+
     function prefillShippingDetails() {
         const cn = document.cookie.split(';').find(c => c.trim().startsWith('modelyx_name='));
         const cookieName = cn ? decodeURIComponent(cn.split('=')[1] || '') : '';
         document.getElementById('shippingName').value = localStorage.getItem('modelyx_shipping_name') || cookieName || localStorage.getItem('modelyx_user_name') || '';
-        document.getElementById('shippingPhone').value = localStorage.getItem('modelyx_shipping_phone') || localStorage.getItem('modelyx_user_phone') || '';
+        document.getElementById('shippingPhone').value = formatPHPhone(localStorage.getItem('modelyx_shipping_phone') || localStorage.getItem('modelyx_user_phone') || '');
         document.getElementById('shippingAddress').value = localStorage.getItem('modelyx_shipping_address') || '';
         document.getElementById('shippingCity').value = localStorage.getItem('modelyx_shipping_city') || '';
         document.getElementById('shippingState').value = localStorage.getItem('modelyx_shipping_state') || '';
@@ -2052,7 +2063,7 @@
                         }
                         if (prof.phone) {
                             localStorage.setItem('modelyx_shipping_phone', prof.phone);
-                            document.getElementById('shippingPhone').value = prof.phone;
+                            document.getElementById('shippingPhone').value = formatPHPhone(prof.phone);
                         }
                         if (prof.address) {
                             localStorage.setItem('modelyx_shipping_address', prof.address);

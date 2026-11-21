@@ -123,7 +123,10 @@
                 <input type="text" id="rName" placeholder="Full Name" class="w-full p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
                 <div class="grid grid-cols-2 gap-2">
                     <input type="email" id="rEmail" placeholder="Email" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm" required>
-                    <input type="tel" id="rPhone" placeholder="Phone" class="p-3 rounded-xl border border-slate-300 bg-slate-100 text-slate-900 placeholder:text-slate-500 text-sm">
+                    <div class="flex rounded-xl border border-slate-300 bg-slate-100 overflow-hidden focus-within:border-slate-500">
+                        <span class="inline-flex items-center px-2.5 bg-slate-200 text-slate-600 text-xs font-bold border-r border-slate-300 select-none">🇵🇭 +63</span>
+                        <input type="tel" id="rPhone" placeholder="9xx xxx xxxx" maxlength="12" class="w-full bg-transparent px-2.5 py-3 text-xs text-slate-900 placeholder:text-slate-500 focus:outline-none font-semibold">
+                    </div>
                 </div>
                 <div id="rError" aria-live="polite" class="hidden text-xs text-red-300"></div>
                 <div class="relative">
@@ -235,6 +238,23 @@
         setTimeout(() => t.remove(), 2500);
     };
 
+    function extractPHPhone10(raw) {
+        if (!raw) return '';
+        let digits = String(raw).replace(/\D/g, '');
+        if (digits.startsWith('63')) digits = digits.slice(2);
+        while (digits.startsWith('0')) digits = digits.slice(1);
+        if (digits.length > 0 && !digits.startsWith('9')) return '';
+        return digits.slice(0, 10);
+    }
+
+    function formatPHPhoneDisplay(raw) {
+        const digits = extractPHPhone10(raw);
+        if (!digits) return '';
+        if (digits.length <= 3) return digits;
+        if (digits.length <= 6) return digits.slice(0, 3) + ' ' + digits.slice(3);
+        return digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+    }
+
     const setError = (id, msg) => {
         const el = $(id);
         if (!el) return;
@@ -298,13 +318,23 @@
             if (!/[A-Z]/.test(pass)) return setError(errId, 'Password must have at least one uppercase letter');
             if (!/[0-9]/.test(pass)) return setError(errId, 'Password must have at least one number');
 
+            let cleanPhoneVal = '';
+            const rPhoneEl = $('rPhone');
+            if (rPhoneEl && rPhoneEl.value.trim()) {
+                const pDigits = extractPHPhone10(rPhoneEl.value);
+                if (!pDigits || pDigits.length !== 10 || !pDigits.startsWith('9')) {
+                    return setError(errId, 'Please enter a valid 10-digit Philippine phone number starting with 9.');
+                }
+                cleanPhoneVal = '+63' + pDigits;
+            }
+
             try {
                 const res = await fetch('/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         name, email, password: pass, role,
-                        phone: $('rPhone')?.value.trim() || ''
+                        phone: cleanPhoneVal || undefined
                     })
                 });
                 const data = await res.json();
@@ -559,7 +589,18 @@
                 devPanel.classList.add('hidden');
                 devPanel.style.display = 'none';
             }
-        });
+            const rPhoneInput = $('rPhone');
+        if (rPhoneInput) {
+            rPhoneInput.addEventListener('input', function() {
+                this.value = formatPHPhoneDisplay(this.value);
+            });
+            rPhoneInput.addEventListener('paste', function() {
+                setTimeout(() => {
+                    this.value = formatPHPhoneDisplay(this.value);
+                }, 0);
+            });
+        }
+    });
 </script>
 </body>
 </html>

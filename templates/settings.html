@@ -217,7 +217,14 @@
                         </div>
                         <div class="md:col-span-2">
                             <label for="phone" class="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Phone Number <span class="text-rose-500 font-bold">*</span></label>
-                            <input type="tel" id="phone" name="phone" class="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-950" placeholder="09xx xxx xxxx" required>
+                            <div class="flex rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 overflow-hidden focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100 dark:focus-within:ring-indigo-950 transition">
+                                <span class="inline-flex items-center gap-1.5 px-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm font-bold border-r border-slate-200 dark:border-slate-700 select-none">
+                                    <span>🇵🇭</span>
+                                    <span>+63</span>
+                                </span>
+                                <input type="tel" id="phone" name="phone" class="w-full bg-transparent px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none tracking-wider font-semibold" placeholder="9xx xxx xxxx" maxlength="12" autocomplete="tel-national" required>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-1.5">Enter 10 digits starting with 9 (e.g. 912 345 6789)</p>
                         </div>
                     </div>
                 </section>
@@ -405,6 +412,23 @@
             }
         });
 
+        function extractPHPhone10(raw) {
+            if (!raw) return '';
+            let digits = String(raw).replace(/\D/g, '');
+            if (digits.startsWith('63')) digits = digits.slice(2);
+            while (digits.startsWith('0')) digits = digits.slice(1);
+            if (digits.length > 0 && !digits.startsWith('9')) return '';
+            return digits.slice(0, 10);
+        }
+
+        function formatPHPhoneDisplay(raw) {
+            const digits = extractPHPhone10(raw);
+            if (!digits) return '';
+            if (digits.length <= 3) return digits;
+            if (digits.length <= 6) return digits.slice(0, 3) + ' ' + digits.slice(3);
+            return digits.slice(0, 3) + ' ' + digits.slice(3, 6) + ' ' + digits.slice(6);
+        }
+
         const updateSummary = () => {
             const name = localStorage.getItem('modelyx_user_name') || '';
             const email = localStorage.getItem('modelyx_user_email') || '';
@@ -437,7 +461,8 @@
             if (role !== 'customer') return false;
             const name = (localStorage.getItem('modelyx_user_name') || '').trim();
             const email = (localStorage.getItem('modelyx_user_email') || '').trim();
-            const phone = (localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '').replace(/\D/g, '');
+            const rawPhone = localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '';
+            const phone = extractPHPhone10(rawPhone);
             const addr = (localStorage.getItem('modelyx_shipping_address') || '').trim();
             const city = (localStorage.getItem('modelyx_shipping_city') || '').trim();
             const state = (localStorage.getItem('modelyx_shipping_state') || '').trim();
@@ -449,7 +474,8 @@
             if (setup === '1') return false;
             if (setup === '0') return true;
             const hasCoords = lat !== null && lng !== null && lat !== '' && lng !== '' && !isNaN(parseFloat(lat)) && !isNaN(parseFloat(lng));
-            return !name || !email || !email.includes('@') || phone.length < 7 || !addr || !city || !state || !zip || !country || !hasCoords;
+            const hasValidPhone = Boolean(phone && phone.length === 10 && phone.startsWith('9'));
+            return !name || !email || !email.includes('@') || !hasValidPhone || !addr || !city || !state || !zip || !country || !hasCoords;
         };
         const isSetupRequired = (urlParams.get('setup') === 'address' || urlParams.get('required') === '1') && isCustomerProfileIncomplete();
 
@@ -666,9 +692,10 @@
                             $('email').classList.add('opacity-75', 'cursor-not-allowed');
                         }
                         if (prof.phone) {
-                            localStorage.setItem('modelyx_user_phone', prof.phone);
-                            localStorage.setItem('modelyx_shipping_phone', prof.phone);
-                            $('phone').value = prof.phone;
+                            const canonical = '+63' + extractPHPhone10(prof.phone);
+                            localStorage.setItem('modelyx_user_phone', canonical);
+                            localStorage.setItem('modelyx_shipping_phone', canonical);
+                            $('phone').value = formatPHPhoneDisplay(prof.phone);
                         }
                         if (prof.address) {
                             localStorage.setItem('modelyx_shipping_address', prof.address);
@@ -724,7 +751,7 @@
 
             const name = $('name').value || localStorage.getItem('modelyx_user_name') || '';
             const email = $('email').value || localStorage.getItem('modelyx_user_email') || '';
-            const phone = $('phone').value || localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '';
+            const phone = formatPHPhoneDisplay($('phone').value || localStorage.getItem('modelyx_user_phone') || localStorage.getItem('modelyx_shipping_phone') || '');
             const address = $('address').value || localStorage.getItem('modelyx_shipping_address') || '';
             const city = $('city').value || localStorage.getItem('modelyx_shipping_city') || '';
             const state = $('state').value || localStorage.getItem('modelyx_shipping_state') || '';
@@ -831,12 +858,13 @@
                 $('email').focus();
                 return;
             }
-            const cleanPhone = phone.replace(/\D/g, '');
-            if (!phone || cleanPhone.length < 7) {
-                alert('Please enter a valid Phone Number with numbers.');
+            const cleanPhone = extractPHPhone10(phone);
+            if (!cleanPhone || cleanPhone.length !== 10 || !cleanPhone.startsWith('9')) {
+                alert('Please enter a valid 10-digit Philippine mobile number starting with 9 (e.g. 9xx xxx xxxx).');
                 $('phone').focus();
                 return;
             }
+            const canonicalPhone = '+63' + cleanPhone;
             if (!address) {
                 alert('Please enter your House No., Building, Street Name.');
                 $('address').focus();
@@ -894,7 +922,7 @@
                         },
                         body: JSON.stringify({
                             name: name || undefined,
-                            phone: phone || undefined,
+                            phone: canonicalPhone || undefined,
                             address: address || undefined,
                             city: city || undefined,
                             state: state || undefined,
@@ -911,8 +939,8 @@
 
             localStorage.setItem('modelyx_user_name', name);
             localStorage.setItem('modelyx_user_email', email);
-            localStorage.setItem('modelyx_user_phone', phone);
-            localStorage.setItem('modelyx_shipping_phone', phone);
+            localStorage.setItem('modelyx_user_phone', canonicalPhone);
+            localStorage.setItem('modelyx_shipping_phone', canonicalPhone);
             localStorage.setItem('modelyx_shipping_address', address);
             localStorage.setItem('modelyx_shipping_city', city);
             localStorage.setItem('modelyx_shipping_state', state);
@@ -977,6 +1005,17 @@
                     $('termsContainer')?.classList.remove('border-emerald-500/50');
                     $('termsStatusBadge')?.classList.add('hidden');
                 }
+            });
+        }
+        const phoneInputEl = $('phone');
+        if (phoneInputEl) {
+            phoneInputEl.addEventListener('input', function() {
+                this.value = formatPHPhoneDisplay(this.value);
+            });
+            phoneInputEl.addEventListener('paste', function() {
+                setTimeout(() => {
+                    this.value = formatPHPhoneDisplay(this.value);
+                }, 0);
             });
         }
     </script>

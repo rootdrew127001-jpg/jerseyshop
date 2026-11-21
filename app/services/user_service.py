@@ -38,6 +38,20 @@ def verify_password(plain: str, hashed: str) -> bool:
     except Exception:
         return plain == hashed
 
+def normalize_ph_phone(phone: str):
+    if not phone:
+        return None
+    raw = "".join(c for c in str(phone) if c.isdigit())
+    if not raw:
+        return None
+    if raw.startswith("63"):
+        raw = raw[2:]
+    while raw.startswith("0"):
+        raw = raw[1:]
+    if len(raw) == 10 and raw.startswith("9"):
+        return f"+63{raw}"
+    return None
+
 def is_profile_complete(user) -> bool:
     if not user:
         return False
@@ -45,7 +59,7 @@ def is_profile_complete(user) -> bool:
         return True
     has_name = bool(user.name and user.name.strip())
     has_email = bool(user.email and user.email.strip())
-    has_phone = bool(user.phone and sum(1 for c in user.phone if c.isdigit()) >= 7)
+    has_phone = bool(user.phone and normalize_ph_phone(user.phone) is not None)
     has_address = bool(user.address and user.address.strip())
     has_city = bool(user.city and user.city.strip())
     has_state = bool(user.state and user.state.strip())
@@ -80,7 +94,7 @@ def register_user(db: Session, payload: RegisterRequest):
         email=payload.email,
         password=hash_password(payload.password),
         role=assigned_role,
-        phone=payload.phone,
+        phone=normalize_ph_phone(payload.phone) if payload.phone else None,
         address=payload.address,
         city=payload.city,
         state=payload.state,

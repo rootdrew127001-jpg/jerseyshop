@@ -523,6 +523,11 @@ def update_user_profile(payload: ProfileUpdateRequest, current_user: dict = Depe
             user.terms_accepted = 0
             user.terms_accepted_at = None
 
+    if "phone" in update_data and update_data["phone"]:
+        norm_phone = user_service.normalize_ph_phone(update_data["phone"])
+        if norm_phone:
+            update_data["phone"] = norm_phone
+
     for field, val in update_data.items():
         if hasattr(user, field):
             setattr(user, field, val)
