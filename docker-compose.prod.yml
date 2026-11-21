@@ -1,0 +1,64 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: jerseyshop-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-jersey}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: jerseyshop-redis
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: jerseyshop-app
+    restart: always
+    ports:
+      - "127.0.0.1:9100:9100"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9100", "--workers", "2"]
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-http://freellmapi:3001/v1}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  freellmapi:
+    image: ghcr.io/tashfeenahmed/freellmapi:latest
+    container_name: jerseyshop-freellmapi
+    restart: always
+    ports:
+      - "127.0.0.1:3001:3001"
+    environment:
+      - PORT=3001
+      - ENCRYPTION_KEY=${FREELLMAPI_ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    volumes:
+      - freellmapi_data:/app/data
+
+volumes:
+  mysql_data:
+  freellmapi_data:

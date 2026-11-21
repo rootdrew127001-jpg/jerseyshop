@@ -15,28 +15,30 @@ def load_env_files():
         if os.path.exists(p):
             load_dotenv(p, override=True)
 
-    if IS_DOCKER or saved_db_host == "db":
-        os.environ["DB_HOST"] = "db"
-    elif saved_db_host:
+    if saved_db_host:
         os.environ["DB_HOST"] = saved_db_host
+    elif IS_DOCKER and not os.environ.get("DB_HOST"):
+        os.environ["DB_HOST"] = "db"
 
-    if IS_DOCKER or saved_redis_host == "redis":
-        os.environ["REDIS_HOST"] = "redis"
-    elif saved_redis_host:
+    if saved_redis_host:
         os.environ["REDIS_HOST"] = saved_redis_host
+    elif IS_DOCKER and not os.environ.get("REDIS_HOST"):
+        os.environ["REDIS_HOST"] = "redis"
 
-    if IS_DOCKER or (saved_openai_base and "freellmapi" in saved_openai_base):
+    if saved_openai_base:
+        os.environ["OPENAI_API_BASE"] = saved_openai_base
+    elif IS_DOCKER and not os.environ.get("OPENAI_API_BASE"):
         os.environ["OPENAI_API_BASE"] = "http://freellmapi:3001/v1"
 
 load_env_files()
 
-DB_HOST = "db" if IS_DOCKER else os.getenv("DB_HOST", "localhost")
+DB_HOST = os.getenv("DB_HOST") or ("db" if IS_DOCKER else "localhost")
 DB_PORT = os.getenv("DB_PORT", "3306")
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "jersey")
 
-REDIS_HOST = "redis" if IS_DOCKER else os.getenv("REDIS_HOST", "localhost")
+REDIS_HOST = os.getenv("REDIS_HOST") or ("redis" if IS_DOCKER else "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None) or None
 REDIS_DB = int(os.getenv("REDIS_DB", 0))
