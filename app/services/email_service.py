@@ -6,7 +6,7 @@ import string
 import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from app.core.config import parse_gmail_accounts, GMAIL_USER, GMAIL_APP_PASSWORD, DEV_MODE, RESEND_API_KEY, RESEND_FROM_EMAIL
+from app.core.config import parse_gmail_accounts, GMAIL_USER, GMAIL_APP_PASSWORD, DEV_MODE, RESEND_API_KEY, RESEND_FROM_EMAIL, BREVO_API_KEY, BREVO_SENDER_EMAIL
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,33 @@ def build_otp_html(name: str, otp: str) -> str:
     </body>
     </html>
     """
+
+async def send_via_brevo(to_email: str, otp: str, name: str = "User", subject: str = "Modelyx — Your Verification Code") -> bool:
+    api_key = (os.getenv("BREVO_API_KEY") or BREVO_API_KEY or "").strip()
+    if not api_key:
+        return False
+    sender_email = (os.getenv("BREVO_SENDER_EMAIL") or BREVO_SENDER_EMAIL or GMAIL_USER or "syyortega@gmail.com").strip()
+    html = build_otp_html(name, otp)
+    async with httpx.AsyncClient(timeout=8.0) as client:
+        res = await client.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key": api_key,
+                "Content-Type": "application/json"
+            },
+            json={
+                "sender": {"name": "Modelyx", "email": sender_email},
+                "to": [{"email": to_email, "name": name}],
+                "subject": subject,
+                "htmlContent": html
+            }
+        )
+        if res.status_code in (200, 201):
+            print(f"[BREVO] Sent OTP to {to_email} via HTTPS port 443", flush=True)
+            return True
+        else:
+            print(f"[BREVO FAIL] Status {res.status_code}: {res.text}", flush=True)
+            return False
 
 async def send_via_resend(to_email: str, otp: str, name: str = "User", subject: str = "Modelyx — Your Verification Code") -> bool:
     api_key = (os.getenv("RESEND_API_KEY") or RESEND_API_KEY or "").strip()
@@ -64,8 +91,17 @@ async def send_via_resend(to_email: str, otp: str, name: str = "User", subject: 
 async def send_otp_email(to_email: str, otp: str, name: str = "User", subject: str = "Modelyx — Your Verification Code") -> bool:
     global _sender_cursor
 
-    api_key = (os.getenv("RESEND_API_KEY") or RESEND_API_KEY or "").strip()
-    if api_key:
+    brevo_key = (os.getenv("BREVO_API_KEY") or BREVO_API_KEY or "").strip()
+    if brevo_key:
+        try:
+            sent = await send_via_brevo(to_email, otp, name, subject)
+            if sent:
+                return True
+        except Exception as e:
+            print(f"[BREVO FAILOVER] Brevo error ({e}). Trying next...", flush=True)
+
+    resend_key = (os.getenv("RESEND_API_KEY") or RESEND_API_KEY or "").strip()
+    if resend_key:
         try:
             sent = await send_via_resend(to_email, otp, name, subject)
             if sent:
@@ -122,4 +158,4 @@ async def send_otp_email(to_email: str, otp: str, name: str = "User", subject: s
 
     if last_error:
         raise last_error
-    raise RuntimeError("No email senders configured in GMAIL_ACCOUNTS or RESEND_API_KEY")
+    raise RuntimeError("No email senders configured in GMAIL_ACCOUNTS, BREVO_API_KEY or RESEND_API_KEY")

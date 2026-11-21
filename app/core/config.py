@@ -66,6 +66,8 @@ GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "")
 GMAIL_ACCOUNTS_RAW = os.getenv("GMAIL_ACCOUNTS", "")
 RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
 RESEND_FROM_EMAIL = os.getenv("RESEND_FROM_EMAIL", "Modelyx <onboarding@resend.dev>")
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "")
 
 def parse_gmail_accounts() -> list[dict[str, str]]:
     load_env_files()
